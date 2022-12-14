@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block favicon %}<link rel="icon" href="/static/favicon.ico">{% endblock %}
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    <link rel="stylesheet" href="/static/site.css">
+    <meta name="apple-mobile-web-app-title" content="Gemini">
+    <title>Gemini Portal</title>
+</head>
+<body>
+<div class="header">
+    <a class="title" href="/">GEMINI PORTAL</a>
+    <a class="header-item" href="/">home</a>
+    <a class="header-item" href="/about">about</a>
+    <a class="header-item" href="/changes">changes</a>
+    <hr>
+</div>
+{% block body %}{% endblock %}
+</body>
+</html>

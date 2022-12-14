@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block favicon %}
+{% if favicon %}
+<link rel="icon" href="data:image/svg+xml,&lt;svg
+xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100
+100%22&gt;&lt;text y=%22.9em%22
+font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
+{% else %}
+<link rel="icon" href="/static/favicon.ico">
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div>
+    <form class="url-form" method="get">
+        {% if favicon %}
+        <span class="logo">{{ favicon }}</span>
+        {% endif %}
+        <input title="url" class="url-input" type="text" name="url" value="{{ url }}"
+        autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="submit" class="url-submit" value="Load URL">
+    </form>
+</div>
+{% if crumbs %}
+    <div class="crumb-line">{{ crumbs }}</div>
+{% endif %}
+<div class="link-line">
+    {% if parent_url %}<a href="{{ parent_url }}">[parent&nbsp;dir]</a>{% endif %}
+    {% if root_url %}<a href="{{ root_url }}">[root&nbsp;dir]</a>{% endif %}
+    {% if inline_url %}<a href="{{ inline_url }}">[inline&nbsp;images]</a>{% endif %}
+    {% if raw_url %}<a href="{{ raw_url }}">[raw&nbsp;response]</a>{% endif %}
+    {% if cert_url %}<a href="{{ cert_url }}">[view&nbsp;cert]</a>{% endif %}
+</div>
+<div>
+    <table class="response-table">
+        <tr><td>Status</td><td>{{ status }}</td></tr>
+        <tr><td>Meta</td><td>{{ meta }}</td></tr>
+    </table>
+</div>
+{% if query %}
+    <br/>
+    <div>
+        <form method="get">
+            <label>
+                <input type="{{ 'password' if secret else 'text' }}" name="q" size=60>
+            </label>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+{% elif error %}
+    <div>
+        <p>A gateway error has occurred:</p>
+        <p>{{ error }}</p>
+    </div>
+{% elif robots_error %}
+    <div>
+        <p>
+            Web access to this resource has been prohibited by this gemini capsule's
+            <a href="{{ robots_link }}">robots.txt</a>.
+        </p>
+        <p>
+            In order to view this page, try using one of the
+            <a href="https://gemini.circumlunar.space/clients.html">many</a>
+            wonderful gemini clients instead!
+        </p>
+    </div>
+{% else %}
+    <div class="body" {% if lang %}lang="{{ lang }}"{% endif %}>
+        {{ body | safe}}
+    </div>
+{% endif %}
+{% endblock %}

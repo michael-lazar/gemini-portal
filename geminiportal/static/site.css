@@ -1,0 +1,117 @@
+body {
+    margin: 1em;
+}
+table, th, td {
+    border: 1px solid black;
+    min-width: 3em;
+}
+td {
+    padding: 0.2em
+}
+div {
+    margin-bottom: 0.6em;
+}
+img {
+    max-width: 300px;
+}
+.body {
+    max-width: 100ch;
+}
+.link-line {
+    font-size: smaller;
+}
+.logo {
+    text-decoration: none;
+    margin-right: 6px;
+    font-size: 0.8em;
+}
+.url-form {
+    display: flex;
+    align-items: baseline;
+}
+.url-input {
+    flex-grow: 1;
+    max-width: 60ch;
+}
+.url-submit {
+    margin-left: 4px;
+}
+.input-line input {
+    margin-left: 4px;
+    vertical-align: text-bottom;
+}
+.input-line textarea {
+    margin-left: 4px;
+    vertical-align: text-bottom;
+}
+.link-line a {
+    text-decoration: none;
+    padding-right: 0.4em;
+}
+.crumb-line {
+    font-weight: bolder;
+}
+.crumb-line a {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+.anchor {
+    text-decoration: none;
+    color: inherit;
+}
+.gemini {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+.gemini > * {
+    margin: 0;
+}
+.gemini > p {
+    white-space: pre-wrap;
+}
+.gemini > pre {
+    border: solid black 1px;
+    padding: 5px;
+    max-width: fit-content;
+    overflow-x: scroll;
+}
+.gemini > blockquote {
+    white-space: pre-wrap;
+    font-style: italic;
+    border-left: 1px solid;
+    padding-left: 10px;
+}
+.gemini > h1 {
+    font-size: 1.5em;
+}
+.gemini > h2 {
+    font-size: 1.25em;
+}
+.gemini > h3 {
+    font-size: 1.1em;
+}
+.gemini > ul {
+    padding-left: 1em;
+}
+.gemini > figure {
+    margin-bottom: 1em;
+}
+.header {
+    max-width: 120ch;
+    margin-bottom: 1em;
+}
+.header-item {
+    padding-right: 0.4em;
+    text-decoration: underline;
+}
+.title {
+    font-weight: bolder;
+    color: #3f51b5;
+    font-size: 1.2em;
+    font-family: sans-serif;
+    text-decoration: none;
+    padding-right: 0.4em;
+}
+.content {
+    max-width: 80ch;
+}
