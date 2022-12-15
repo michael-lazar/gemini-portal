@@ -33,8 +33,10 @@ pre-commit install
 tools/quart run
 
 # Run the tests, linters, etc.
-tools/pytest
 tools/mypy
+
+tools/pytest
+tools/pytest --run-integration
 
 # Rebuild requirements
 tools/pip-compile

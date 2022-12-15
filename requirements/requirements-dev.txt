@@ -99,9 +99,12 @@ pytest==7.1.2
     #   -r requirements/requirements-dev.in
     #   pytest-asyncio
     #   pytest-cov
+    #   pytest-socket
 pytest-asyncio==0.20.3
     # via -r requirements/requirements-dev.in
 pytest-cov==3.0.0
+    # via -r requirements/requirements-dev.in
+pytest-socket==0.5.1
     # via -r requirements/requirements-dev.in
 python-dotenv==0.21.0
     # via

@@ -2,70 +2,85 @@ import pytest
 
 from geminiportal.protocols import (
     GeminiRequest,
-    ProxyConnectionError,
     SpartanRequest,
     TxtRequest,
     build_proxy_request,
 )
+from geminiportal.urls import URLReference
 
 
 def test_build_proxy_request_gemini():
-    request = build_proxy_request("gemini://mozz.us/hello")
+    url = URLReference("gemini://mozz.us/hello")
+    request = build_proxy_request(url)
     assert isinstance(request, GeminiRequest)
     assert request.port == 1965
     assert request.host == "mozz.us"
 
 
 def test_build_proxy_request_spartan():
-    request = build_proxy_request("spartan://mozz.us:3000/hello")
+    url = URLReference("spartan://mozz.us:3000")
+    request = build_proxy_request(url)
     assert isinstance(request, SpartanRequest)
     assert request.port == 3000
     assert request.host == "mozz.us"
 
 
 def test_build_proxy_request_txt():
-    request = build_proxy_request("text://174.138.124.169/hello")
+    url = URLReference("text://174.138.124.169/hello")
+    request = build_proxy_request(url)
     assert isinstance(request, TxtRequest)
     assert request.port == 1961
     assert request.host == "174.138.124.169"
 
 
 def test_build_proxy_request_missing_host():
-    with pytest.raises(ProxyConnectionError):
-        build_proxy_request("mozz.us")
+    url = URLReference("mozz.us")
+    with pytest.raises(ValueError):
+        build_proxy_request(url)
 
 
 def test_build_proxy_request_blocked_host():
-    with pytest.raises(ProxyConnectionError):
-        build_proxy_request("gemini://vger.cloud/hello")
+    url = URLReference("gemini://vger.cloud/hello")
+    with pytest.raises(ValueError):
+        build_proxy_request(url)
 
 
 def test_build_proxy_request_blocked_port():
-    with pytest.raises(ProxyConnectionError):
-        build_proxy_request("gemini://mozz.us:22")
+    url = URLReference("gemini://mozz.us:22")
+    with pytest.raises(ValueError):
+        build_proxy_request(url)
 
 
-async def test_real_gemini_request():
-    request = build_proxy_request("gemini://mozz.us")
+@pytest.mark.integration
+async def test_gemini_request():
+    url = URLReference("gemini://mozz.us")
+    request = GeminiRequest(url)
+    response = await request.get_response()
 
-    async with request.get_response() as response:
-        assert response.is_success()
-        assert await response.body.read()
+    assert response.is_success()
+    assert await response.get_body()
 
-        # mozz.us (running jetforce) should always send the close notify signal
-        assert response.tls_close_notify_received
-        assert response.tls_cert
-        assert response.tls_version
-        assert response.tls_cipher
-
-    assert request.writer.is_closing()
+    assert response.tls_close_notify_received
+    assert response.tls_cert
+    assert response.tls_version
+    assert response.tls_cipher
 
 
-async def test_real_spartan_request():
-    request = build_proxy_request("spartan://mozz.us/echo?hello%20world")
+@pytest.mark.integration
+async def test_spartan_request():
+    url = URLReference("spartan://mozz.us/echo?hello%20world")
+    request = build_proxy_request(url)
+    response = await request.get_response()
 
-    async with request.get_response() as response:
-        assert response.is_success()
-        assert await response.body.read() == b"hello world"
+    assert response.is_success()
+    assert await response.get_body() == b"hello world"
 
-    assert request.writer.is_closing()
+
+@pytest.mark.integration
+async def test_txt_request():
+    url = URLReference("text://txt.textprotocol.org/")
+    request = build_proxy_request(url)
+    response = await request.get_response()
+
+    assert response.is_success()
+    assert await response.get_body()

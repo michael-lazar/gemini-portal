@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
+import codecs
 import re
 import ssl
-from contextlib import asynccontextmanager
 from typing import AsyncIterator
-from urllib.parse import ParseResult, quote_from_bytes, unquote_to_bytes, urlparse
+from urllib.parse import quote_from_bytes, unquote_to_bytes
+
+from geminiportal.urls import URLReference
 
 # Hosts that have requested that their content be removed from the proxy
 BLOCKED_HOSTS = [
@@ -16,9 +20,31 @@ BLOCKED_HOSTS = [
 ALLOWED_PORTS = set(range(1960, 2021))
 ALLOWED_PORTS |= {7070, 300, 301, 3000, 3333}
 
+# Chunk size for streaming files, taken from the twisted FileSender class
+CHUNK_SIZE = 2**14
+
 
 class ProxyConnectionError(Exception):
     pass
+
+
+class DecodingStreamReader:
+    """
+    https://stackoverflow.com/questions/35036921
+    """
+
+    def __init__(self, stream, encoding="utf-8", errors="strict"):
+        self.stream = stream
+        self.decoder = codecs.getincrementaldecoder(encoding)(errors=errors)
+
+    async def readline(self):
+        data = await self.stream.readline()
+        if isinstance(data, (bytes, bytearray)):
+            data = self.decoder.decode(data)
+        return data
+
+    def at_eof(self):
+        return self.stream.at_eof()
 
 
 class CloseNotifyState:
@@ -42,6 +68,142 @@ class CloseNotifyState:
         return self.received
 
 
+class BaseRequest:
+    """
+    Encapsulates a request to the proxied server.
+    """
+
+    reader: asyncio.StreamReader
+    writer: asyncio.StreamWriter
+
+    allowed_ports = ALLOWED_PORTS
+    blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
+
+    def __init__(self, url: URLReference):
+        host, port = url.conn_info
+
+        for pattern in self.blocked_hosts:
+            if pattern.match(host):
+                raise ValueError(
+                    "This host has kindly requested that their content "
+                    "not be accessed via web proxy."
+                )
+
+        if port not in self.allowed_ports:
+            raise ValueError("Proxied content is not allowed on this port.")
+
+        self.host = host
+        self.port = port
+        self.url = url
+
+    async def get_response(self) -> BaseResponse:
+        raise NotImplementedError
+
+    def close(self) -> None:
+        try:
+            self.writer.close()
+        except Exception:
+            # This will fail if the remote server has already closed the
+            # socket via SSL close_notify, but there is no way to know
+            # that ahead of time.
+            pass
+
+    @staticmethod
+    def parse_header(raw_header: bytes) -> tuple[str, str]:
+        header = raw_header.decode()
+        parts = header.strip().split(maxsplit=1)
+        if len(parts) == 0:
+            status, meta = "", ""
+        elif len(parts) == 1:
+            status, meta = parts[0], ""
+        else:
+            status, meta = parts
+
+        return status, meta
+
+
+class GeminiRequest(BaseRequest):
+    """
+    Encapsulates a gemini:// request.
+    """
+
+    def create_ssl_context(self) -> ssl.SSLContext:
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        return context
+
+    async def get_response(self) -> GeminiResponse:
+        context = self.create_ssl_context()
+        tls_close_notify = CloseNotifyState(context)
+
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port, ssl=context)
+        ssock = self.writer.get_extra_info("ssl_object")
+
+        tls_cert = ssock.getpeercert(True)
+        tls_version = ssock.version()
+        tls_cipher, _, _ = ssock.cipher()
+
+        gemini_url = self.url.get_gemini_request_url()
+        self.writer.write(f"{gemini_url}\r\n".encode())
+        await self.writer.drain()
+
+        raw_header = await self.reader.readline()
+        status, meta = self.parse_header(raw_header)
+
+        return GeminiResponse(
+            request=self,
+            status=status,
+            meta=meta,
+            tls_cert=tls_cert,
+            tls_version=tls_version,
+            tls_cipher=tls_cipher,
+            tls_close_notify=tls_close_notify,
+        )
+
+
+class SpartanRequest(BaseRequest):
+    """
+    Encapsulates a spartan:// request.
+    """
+
+    async def get_response(self) -> SpartanResponse:
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
+
+        path = self.url.path or "/"
+        data = unquote_to_bytes(self.url.query)
+
+        encoded_host = self.host.encode("idna")
+        encoded_path = quote_from_bytes(unquote_to_bytes(path)).encode("ascii")
+
+        request = b"%s %s %d\r\n%b" % (encoded_host, encoded_path, len(data), data)
+        self.writer.write(request)
+        await self.writer.drain()
+
+        raw_header = await self.reader.readline()
+        status, meta = self.parse_header(raw_header)
+
+        return SpartanResponse(self, status, meta)
+
+
+class TxtRequest(BaseRequest):
+    """
+    Encapsulates a text:// request.
+    """
+
+    async def get_response(self) -> TxtResponse:
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
+
+        gemini_url = self.url.get_gemini_request_url()
+        self.writer.write(f"{gemini_url}\r\n".encode())
+        await self.writer.drain()
+
+        raw_header = await self.reader.readline()
+        status, meta = self.parse_header(raw_header)
+
+        return TxtResponse(self, status, meta)
+
+
 class BaseResponse:
     """
     Encapsulates a response from the proxied server.
@@ -49,9 +211,9 @@ class BaseResponse:
 
     STATUS_CODES: dict[str, str] = {}
 
+    request: BaseRequest
     status: str
     meta: str
-    body: asyncio.StreamReader
     charset: str
     lang: str | None
 
@@ -74,6 +236,39 @@ class BaseResponse:
                 params[parts[0].lower()] = parts[1]
         return params
 
+    async def get_body(self) -> bytes:
+        """
+        Return the entire response body as bytes.
+        """
+        data = await self.request.reader.read()
+        self.request.close()
+        return data
+
+    async def stream_body(self) -> AsyncIterator[bytes]:
+        """
+        Return a streaming iterator for the response bytes.
+        """
+        try:
+            while chunk := await self.request.reader.read(CHUNK_SIZE):
+                yield chunk
+        finally:
+            self.request.close()
+
+    async def stream_text(self) -> AsyncIterator[str]:
+        """
+        Return a streaming iterator for the decoded body lines.
+        """
+        try:
+            reader = DecodingStreamReader(
+                self.request.reader,
+                encoding=self.charset,
+                errors="replace",
+            )
+            while line := await reader.readline():
+                yield line
+        finally:
+            self.request.close()
+
     def is_input(self) -> bool:
         return False
 
@@ -93,10 +288,10 @@ class SpartanResponse(BaseResponse):
         "5": "SERVER ERROR",
     }
 
-    def __init__(self, status, meta, body):
+    def __init__(self, request, status, meta):
+        self.request = request
         self.status = status
         self.meta = meta
-        self.body = body
         self.lang = None
 
         meta_params = self.get_meta_params(meta)
@@ -117,10 +312,10 @@ class TxtResponse(BaseResponse):
         "40": "NOK",
     }
 
-    def __init__(self, status, meta, body):
+    def __init__(self, request, status, meta):
+        self.request = request
         self.status = status
         self.meta = meta
-        self.body = body
         self.lang = None
 
         meta_params = self.get_meta_params(meta)
@@ -161,10 +356,19 @@ class GeminiResponse(BaseResponse):
     tls_cipher: str
     tls_close_notify: CloseNotifyState
 
-    def __init__(self, status, meta, body, tls_cert, tls_version, tls_cipher, tls_close_notify):
+    def __init__(
+        self,
+        request,
+        status,
+        meta,
+        tls_cert,
+        tls_version,
+        tls_cipher,
+        tls_close_notify,
+    ):
+        self.request = request
         self.status = status
         self.meta = meta
-        self.body = body
 
         self.tls_cert = tls_cert
         self.tls_version = tls_version
@@ -189,171 +393,10 @@ class GeminiResponse(BaseResponse):
         return self.status.startswith("3")
 
 
-class BaseRequest:
-    """
-    Encapsulates a request to the proxied server.
-    """
-
-    allowed_ports = ALLOWED_PORTS
-    blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
-
-    def __init__(self, url: str, url_parts: ParseResult, host: str, port: int):
-        self.url = url
-        self.url_parts = url_parts
-        self.host = host
-        self.port = port
-
-        self.writer: asyncio.StreamWriter | None = None
-
-        self.validate()
-
-    def validate(self) -> None:
-        if any(pattern.match(self.host) for pattern in self.blocked_hosts):
-            raise ProxyConnectionError(
-                "This host has kindly requested that their content not be accessed via web proxy."
-            )
-
-        if self.port not in self.allowed_ports:
-            raise ProxyConnectionError(f"Proxied content is not allowed on port {self.port}.")
-
-    @asynccontextmanager
-    async def get_response(self) -> AsyncIterator[BaseResponse]:
-        response = await self.connect()
-        try:
-            yield response
-        finally:
-            await self.close()
-
-    async def connect(self) -> BaseResponse:
-        raise NotImplementedError
-
-    async def close(self):
-        if self.writer:
-            self.writer.close()
-            await self.writer.wait_closed()
-
-    @staticmethod
-    def parse_header(raw_header: bytes) -> tuple[str, str]:
-        header = raw_header.decode()
-        parts = header.strip().split(maxsplit=1)
-        if len(parts) == 0:
-            status, meta = "", ""
-        elif len(parts) == 1:
-            status, meta = parts[0], ""
-        else:
-            status, meta = parts
-
-        return status, meta
-
-
-class GeminiRequest(BaseRequest):
-    """
-    Encapsulates a gemini:// request.
-    """
-
-    def create_ssl_context(self) -> ssl.SSLContext:
-        context = ssl.create_default_context()
-        context.check_hostname = False
-        context.verify_mode = ssl.CERT_NONE
-        return context
-
-    async def connect(self) -> BaseResponse:
-        context = self.create_ssl_context()
-        tls_close_notify = CloseNotifyState(context)
-
-        reader, self.writer = await asyncio.open_connection(self.host, self.port, ssl=context)
-        ssock = self.writer.get_extra_info("ssl_object")
-
-        tls_cert = ssock.getpeercert(True)
-        tls_version = ssock.version()
-        tls_cipher, _, _ = ssock.cipher()
-
-        self.writer.write(f"{self.url}\r\n".encode())
-        await self.writer.drain()
-
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
-        return GeminiResponse(
-            status=status,
-            meta=meta,
-            body=reader,
-            tls_cert=tls_cert,
-            tls_version=tls_version,
-            tls_cipher=tls_cipher,
-            tls_close_notify=tls_close_notify,
-        )
-
-
-class SpartanRequest(BaseRequest):
-    """
-    Encapsulates a spartan:// request.
-    """
-
-    async def connect(self) -> BaseResponse:
-        reader, self.writer = await asyncio.open_connection(self.host, self.port)
-
-        path = self.url_parts.path or "/"
-        data = unquote_to_bytes(self.url_parts.query)
-
-        encoded_host = self.host.encode("idna")
-        encoded_path = quote_from_bytes(unquote_to_bytes(path)).encode("ascii")
-
-        self.writer.write(b"%s %s %d\r\n" % (encoded_host, encoded_path, len(data)))
-        await self.writer.drain()
-
-        if data:
-            self.writer.write(data)
-            await self.writer.drain()
-
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
-        return SpartanResponse(status, meta, reader)
-
-
-class TxtRequest(BaseRequest):
-    """
-    Encapsulates a text:// request.
-    """
-
-    async def connect(self) -> BaseResponse:
-        reader, self.writer = await asyncio.open_connection(self.host, self.port)
-
-        self.writer.write(f"{self.url}\r\n".encode())
-        await self.writer.drain()
-
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
-        return TxtResponse(status, meta, reader)
-
-
-def build_proxy_request(url: str, url_parts: ParseResult | None = None) -> BaseRequest:
-    if url_parts is None:
-        url_parts = urlparse(url)
-
-    if url_parts.hostname is None:
-        raise ProxyConnectionError("Invalid proxy URL, missing hostname.")
-
-    if url_parts.scheme == "spartan":
-        return SpartanRequest(
-            url=url,
-            url_parts=url_parts,
-            host=url_parts.hostname,
-            port=url_parts.port or 300,
-        )
-    elif url_parts.scheme == "text":
-        return TxtRequest(
-            url=url,
-            url_parts=url_parts,
-            host=url_parts.hostname,
-            port=url_parts.port or 1961,
-        )
+def build_proxy_request(url: URLReference) -> BaseRequest:
+    if url.scheme == "spartan":
+        return SpartanRequest(url)
+    elif url.scheme == "text":
+        return TxtRequest(url)
     else:
-        return GeminiRequest(
-            url=url,
-            url_parts=url_parts,
-            host=url_parts.hostname,
-            port=url_parts.port or 1965,
-        )
+        return GeminiRequest(url)
