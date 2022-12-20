@@ -7,7 +7,7 @@ repository and never publicly released. This repository is a full
 rewrite (version 2) with following goals:
 
 - Switching to an ASGI framework (quartz) to better support the load
-  profile experienced by an HTTP proxy server (IO bottleneck).
+  profile for an HTTP proxy server (IO bottleneck).
 - Making the codebase more maintainable in the long term by adding
   unit tests, type hints, and linters.
 
