@@ -1,3 +1,5 @@
+[![Build](https://github.com/michael-lazar/gemini-portal/workflows/test/badge.svg)](https://github.com/michael-lazar/gemini-portal/actions/workflows/test.yml)
+
 # Gemini Portal (v2)
 
 This repository contains the code powering https://portal.mozz.us.
