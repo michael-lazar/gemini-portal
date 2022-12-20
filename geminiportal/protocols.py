@@ -4,6 +4,7 @@ import asyncio
 import codecs
 import re
 import ssl
+from asyncio.exceptions import IncompleteReadError
 from typing import AsyncIterator
 from urllib.parse import quote_from_bytes, unquote_to_bytes
 
@@ -22,6 +23,10 @@ ALLOWED_PORTS |= {7070, 300, 301, 3000, 3333}
 
 # Chunk size for streaming files, taken from the twisted FileSender class
 CHUNK_SIZE = 2**14
+
+# When not streaming, limit the maximum response size to avoid running out
+# of RAM when downloading & converting large files to HTML.
+MAX_BODY_SIZE = 2**15
 
 
 class ProxyConnectionError(Exception):
@@ -238,11 +243,22 @@ class BaseResponse:
 
     async def get_body(self) -> bytes:
         """
-        Return the entire response body as bytes.
+        Return the entire response body as bytes, up to the max body size.
         """
-        data = await self.request.reader.read()
-        self.request.close()
-        return data
+        try:
+            try:
+                return await self.request.reader.readexactly(MAX_BODY_SIZE)
+            except IncompleteReadError as e:
+                return e.partial
+        finally:
+            self.request.close()
+
+    async def get_text(self) -> str:
+        """
+        Return the entire response body as text.
+        """
+        data = await self.get_body()
+        return data.decode(self.charset, errors="replace")
 
     async def stream_body(self) -> AsyncIterator[bytes]:
         """

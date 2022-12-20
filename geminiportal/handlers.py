@@ -1,6 +1,5 @@
 import re
 from collections import Counter
-from typing import AsyncIterator, Iterator
 
 from quart import Response, escape, render_template
 
@@ -87,7 +86,10 @@ async def handle_proxy_response(
             else:
                 handler_class = GeminiFlowedHandler
 
-        context["body"] = await handler_class(response.stream_text(), response.request.url).run()
+        text = await response.get_text()
+        handler = handler_class(text, response.request.url)
+
+        context["body"] = handler.process()
         context["lang"] = response.lang
         content = await render_template("gemini.html", **context)
         return Response(content)
@@ -97,17 +99,11 @@ async def handle_proxy_response(
 
 
 class BaseFileHandler:
-    def __init__(self, text: AsyncIterator[str], url: URLReference):
-        self.text = text
+    def __init__(self, text: str, url: URLReference):
+        self.text = ansi_escape.sub("", text)
         self.url = url
 
-    async def run(self) -> str:
-        tokens = []
-        async for token in self.process():  # noqa
-            tokens.append(token)
-        return "".join(tokens)
-
-    async def process(self):
+    def process(self) -> str:
         raise NotImplementedError
 
     def parse_gemini_link_line(self, line: str) -> tuple[URLReference, str]:
@@ -128,11 +124,13 @@ class TextFixedHandler(BaseFileHandler):
     Everything in a single <pre> block.
     """
 
-    async def process(self) -> AsyncIterator[str]:
-        yield "<pre>"
-        async for line in self.text:
-            yield escape(line.rstrip() + "\n")
-        yield "</pre>"
+    def process(self) -> str:
+        buffer = []
+        for line in self.text.splitlines(keepends=False):
+            buffer.append(escape(line))
+
+        body = "\n".join(buffer)
+        return f"<pre>{body}</pre>\n"
 
 
 class GeminiFixedHandler(BaseFileHandler):
@@ -140,17 +138,19 @@ class GeminiFixedHandler(BaseFileHandler):
     Everything in a single <pre> block, with => links supported.
     """
 
-    async def process(self) -> AsyncIterator[str]:
-        yield "<pre>"
-        async for line in self.text:
+    def process(self) -> str:
+        buffer = []
+        for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
             if line.startswith("=>"):
                 url, link_text = self.parse_gemini_link_line(line[2:])
                 proxy_url = url.get_proxy_url()
-                yield f'<a href="{escape(proxy_url)}">{escape(link_text)}</a>\n'
+                buffer.append(f'<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
             else:
-                yield escape(line.rstrip() + "\n")
-        yield "</pre>"
+                buffer.append(escape(line))
+
+        body = "\n".join(buffer)
+        return f"<pre>{body}</pre>\n"
 
 
 class GeminiFlowedHandler(BaseFileHandler):
@@ -160,9 +160,10 @@ class GeminiFlowedHandler(BaseFileHandler):
 
     inline_images = False
 
-    def __init__(self, text: AsyncIterator[str], url: URLReference):
+    def __init__(self, text: str, url: URLReference):
         super().__init__(text, url)
 
+        self.sections: list[str] = []
         self.buffer: list[str] = []
         self.preformat_mode = False
         self.list_mode = False
@@ -182,109 +183,99 @@ class GeminiFlowedHandler(BaseFileHandler):
             text += f"-{self.anchor_counter[text] - 1}"
         return text
 
-    async def process(self) -> AsyncIterator[str]:
-        yield '<div class="gemini">'
-        async for line in self.text:
+    def process(self) -> str:
+        for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
             line = RABBIT_INLINE.sub("🐇", line)
             if line.startswith("```"):
-                # python doesn't support "yield from" inside async functions,
-                # which means I need to use this annoyingly verbose for loop.
-                for token in self.flush():
-                    yield token
+                self.flush()
                 self.preformat_mode = not self.preformat_mode
             elif self.preformat_mode:
                 if line == RABBIT_STANDALONE:
                     line = RABBIT_ART
                 self.buffer.append(escape(line))
             elif line == RABBIT_STANDALONE:
-                for token in self.flush():
-                    yield token
-                yield f"<pre>{RABBIT_ART}</pre>\n"
+                self.flush()
+                self.sections.append(f"<pre>{RABBIT_ART}</pre>")
             elif line.startswith("=>"):
-                for token in self.flush():
-                    yield token
+                self.flush()
                 url, link_text = self.parse_gemini_link_line(line[2:])
                 gemini_link, link_text = self.parse_gemini_link_line(line[2:])
                 mime_type = url.guess_mimetype()
                 if self.inline_images and mime_type and mime_type.startswith("image"):
                     image_url = url.get_proxy_url(raw=True)
-                    yield (
+                    self.sections.append(
                         f'<figure><a href="{escape(image_url)}">'
-                        f'<img src="{escape(image_url)}" alt="{escape(link_text)}"></img>'
-                        f"</a><figcaption>{escape(link_text)}</figcaption></figure>\n"
+                        f'<img src="{escape(image_url)}" alt="{escape(link_text)}">'
+                        f"</a><figcaption>{escape(link_text)}</figcaption></figure>"
                     )
                 else:
                     image_url = url.get_proxy_url()
-                    yield f'<a href="{escape(image_url)}">{escape(link_text)}</a><br/>\n'
+                    self.sections.append(
+                        f'<a href="{escape(image_url)}">{escape(link_text)}</a><br/>'
+                    )
             elif line.startswith("=:"):
-                for token in self.flush():
-                    yield token
+                self.flush()
                 url, link_text = self.parse_gemini_link_line(line[2:])
                 proxy_url = url.get_proxy_url()
-                yield (
+                self.sections.append(
                     f'<form method="get" action="{escape(proxy_url)}" class="input-line">'
                     f"<label>{escape(link_text)}"
                     '<textarea name="q" rows="1" placeholder="Enter text..."></textarea>'
                     "</label>"
                     '<input type="submit" value="Submit">'
-                    "</form>\n"
+                    "</form>"
                 )
             elif line.startswith("###"):
-                for token in self.flush():
-                    yield token
+                self.flush()
                 text = line[3:].lstrip()
                 anchor = self.get_anchor(text)
-                yield f"<h3 id={anchor}>{escape(text)}</h3>\n"
+                self.sections.append(f"<h3 id={anchor}>{escape(text)}</h3>")
             elif line.startswith("##"):
-                for token in self.flush():
-                    yield token
+                self.flush()
                 text = line[2:].lstrip()
                 anchor = self.get_anchor(text)
-                yield f"<h2 id={anchor}>{escape(text)}</h3>\n"
+                self.sections.append(f"<h2 id={anchor}>{escape(text)}</h2>")
             elif line.startswith("#"):
-                for token in self.flush():
-                    yield token
+                self.flush()
                 text = line[1:].lstrip()
                 anchor = self.get_anchor(text)
-                yield f"<h1 id={anchor}>{escape(text)}</h3>\n"
+                self.sections.append(f"<h1 id={anchor}>{escape(text)}</h1>")
             elif line.startswith("* "):
                 if not self.list_mode:
-                    for token in self.flush():
-                        yield token
+                    self.flush()
                     self.list_mode = True
                 self.buffer.append(f"<li>{escape(line[1:].lstrip())}</li>")
             elif line.startswith(">"):
                 if not self.quote_mode:
-                    for token in self.flush():
-                        yield token
+                    self.flush()
                     self.quote_mode = True
                 self.buffer.append(escape(line[1:]))
             else:
                 if self.list_mode or self.quote_mode:
-                    for token in self.flush():
-                        yield token
+                    self.flush()
                 self.buffer.append(escape(line) + "\n")
-        for token in self.flush():
-            yield token
-        yield "</div>"
+        self.flush()
 
-    def flush(self) -> Iterator[str]:
+        body = "\n".join(self.sections)
+        return f'<div class="gemini">{body}</div>\n'
+
+    def flush(self) -> None:
         if self.buffer:
             if self.preformat_mode:
                 text = "\n".join(self.buffer)
-                yield f"<pre>{text}</pre>\n"
+                self.sections.append(f"<pre>{text}</pre>")
             elif self.list_mode:
                 text = "\n".join(self.buffer)
-                yield f"<ul>{text}</ul>\n"
+                self.sections.append(f"<ul>{text}</ul>")
                 self.list_mode = False
             elif self.quote_mode:
                 text = "\n".join(self.buffer)
-                yield f"<blockquote>{text}</blockquote>\n"
+                self.sections.append(f"<blockquote>{text}</blockquote>")
                 self.quote_mode = False
             else:
                 text = "".join(self.buffer)
-                yield f"<p>{text}</p>\n"
+                self.sections.append(f"<p>{text}</p>")
             self.buffer = []
 
 
