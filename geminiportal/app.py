@@ -64,7 +64,7 @@ async def changes() -> Response:
 
 
 @app.route("/")
-async def home() -> Response:
+async def home() -> Response | WerkzeugResponse:
     address = request.args.get("url")
     if address:
         # URL was provided via the address bar, redirect to the canonical endpoint
