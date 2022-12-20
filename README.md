@@ -6,8 +6,7 @@ The origin version was written with Flask, maintained in a personal
 repository and never publicly released. This repository is a full
 rewrite (version 2) with following goals:
 
-- Switching to an ASGI framework (quartz) to better support the load
-  profile for an HTTP proxy server (IO bottleneck).
+- Switching to an ASGI framework (quartz).
 - Making the codebase more maintainable in the long term by adding
   unit tests, type hints, and linters.
 
