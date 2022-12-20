@@ -253,12 +253,12 @@ class BaseResponse:
         finally:
             self.request.close()
 
-    async def get_text(self) -> str:
+    async def get_body_text(self) -> str:
         """
         Return the entire response body as text.
         """
-        data = await self.get_body()
-        return data.decode(self.charset, errors="replace")
+        body = await self.get_body()
+        return body.decode(self.charset, errors="replace")
 
     async def stream_body(self) -> AsyncIterator[bytes]:
         """

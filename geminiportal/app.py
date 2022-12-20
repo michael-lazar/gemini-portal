@@ -125,16 +125,16 @@ async def index(
         content = await render_template("gemini.html", query=1, secret=secret)
         return Response(content)
 
+    if response.is_redirect():
+        location = g.url.join(response.meta).get_proxy_url()
+        return app.redirect(location, 307)
+
     if response.is_success():
         return await handle_proxy_response(
             response=response,
             raw_data=bool(request.args.get("raw")),
             inline_images=bool(request.args.get("inline")),
         )
-
-    if response.is_redirect():
-        location = g.url.join(response.meta).get_proxy_url()
-        return app.redirect(location, 307)
 
     content = await render_template("gemini.html")
     return Response(content)
@@ -151,7 +151,7 @@ async def build_certificate_page_body(response: GeminiResponse) -> str:
     output = stdout.decode(errors="ignore")
 
     body = await render_template(
-        "fragments/certificate_page.html",
+        "fragments/tls_context.html",
         openssl_output=escape(output),
         raw_cert_url=g.url.get_proxy_url(raw_crt=1),
         tls_close_notify=response.tls_close_notify,

@@ -86,7 +86,7 @@ async def handle_proxy_response(
             else:
                 handler_class = GeminiFlowedHandler
 
-        text = await response.get_text()
+        text = await response.get_body_text()
         handler = handler_class(text, response.request.url)
 
         context["body"] = handler.process()
