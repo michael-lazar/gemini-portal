@@ -37,6 +37,7 @@ def pytest_collection_modifyitems(config, items):
 def app():
     _app.config["DEBUG"] = True
     _app.config["TESTING"] = True
+    _app.config["SERVER_NAME"] = "portal.mozz.us"
     return _app
 
 

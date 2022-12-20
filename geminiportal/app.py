@@ -15,8 +15,6 @@ from geminiportal.protocols import (
 from geminiportal.urls import URLReference
 
 app = Quart(__name__)
-app.config["SERVER_NAME"] = "portal.mozz.us"
-app.config["DEFAULT_PROXY_URL"] = "gemini://gemini.circumlunar.space/"
 app.config.from_prefixed_env()
 
 
@@ -65,25 +63,31 @@ async def changes() -> Response:
     return Response(content)
 
 
-@app.route("/", endpoint="index")
-@app.route("/<scheme>/", endpoint="index-scheme")
-@app.route("/<scheme>/<netloc>", endpoint="index-netloc")
-@app.route("/<scheme>/<netloc>/<path:path>", endpoint="index-path")
-async def index(
+@app.route("/")
+async def home() -> Response:
+    address = request.args.get("url")
+    if address:
+        # URL was provided via the address bar, redirect to the canonical endpoint
+        proxy_url = URLReference(address).get_proxy_url()
+        return app.redirect(proxy_url)
+
+    url = "gemini://gemini.circumlunar.space"
+    content = await render_template("home.html", url=url)
+    return Response(content)
+
+
+@app.route("/<scheme>/<netloc>", endpoint="proxy-netloc")
+@app.route("/<scheme>/<netloc>/<path:path>", endpoint="proxy-path")
+async def proxy(
     scheme: str = "gemini", netloc: str | None = None, path: str | None = None
 ) -> Response | WerkzeugResponse:
     """
     The main entrypoint for the web proxy.
     """
-    url_str = request.args.get("url")
-    if url_str:
-        # URL was provided via the input box, redirect to the canonical endpoint
-        proxy_url = URLReference(url_str).get_proxy_url()
-        return app.redirect(proxy_url)
-
-    if netloc is None:
-        # No proxy URL provided, redirect to the default homepage
-        proxy_url = URLReference(app.config["DEFAULT_PROXY_URL"]).get_proxy_url()
+    address = request.args.get("url")
+    if address:
+        # URL was provided via the address bar, redirect to the canonical endpoint
+        proxy_url = URLReference(address).get_proxy_url()
         return app.redirect(proxy_url)
 
     g.url = URLReference(f"{scheme}://{netloc}{'' if path is None else '/' + path}")

@@ -372,7 +372,7 @@ class URLReference:
         path = urlunparse(("", "", self.path, self.params, self.query, ""))
         if path:
             return url_for(
-                "index-path",
+                "proxy-path",
                 scheme=self.scheme,
                 netloc=self.netloc,
                 path=path.lstrip("/"),
@@ -381,7 +381,7 @@ class URLReference:
             )
         else:
             return url_for(
-                "index-netloc",
+                "proxy-netloc",
                 scheme=self.scheme,
                 netloc=self.netloc,
                 _anchor=self.fragment or None,
