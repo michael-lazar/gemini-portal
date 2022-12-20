@@ -30,7 +30,7 @@ tools/boostrap
 pre-commit install
 
 # Launch the dev server
-tools/quart run
+tools/quart --debug run -p 8000
 
 # Run the tests, linters, etc.
 tools/mypy
