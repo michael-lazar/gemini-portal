@@ -10,13 +10,16 @@ async def test_get_robots(client):
 async def test_get_about(client):
     response = await client.get("/about")
     assert response.status_code == 200
-    assert response.mimetype == "text/html"
 
 
 async def test_get_changes(client):
     response = await client.get("/changes")
     assert response.status_code == 200
-    assert response.mimetype == "text/html"
+
+
+async def test_get_home(client):
+    response = await client.get("/")
+    assert response.status_code == 200
 
 
 @pytest.mark.integration
@@ -50,12 +53,6 @@ async def test_input_query_redirect(client):
     assert response.status_code == 302
     # Space is double encoded ($2520)
     assert response.location == "/gemini/mozz.us/%3Fhello%2520world"
-
-
-async def test_index_default_proxy_url(client):
-    response = await client.get("/")
-    assert response.status_code == 302
-    assert response.location == "/gemini/gemini.circumlunar.space"
 
 
 @pytest.mark.integration
