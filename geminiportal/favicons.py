@@ -4,6 +4,7 @@ import os
 import shelve
 import tempfile
 import time
+from typing import cast
 
 from geminiportal.protocols import ProxyConnectionError, build_proxy_request
 from geminiportal.urls import URLReference
@@ -28,14 +29,14 @@ class FaviconCache:
         self.db_name = db_name
 
         # References to coroutines that are currently fetching favicons
-        self.tasks = {}
+        self.tasks: dict[str, asyncio.Task] = {}
 
     def check(self, url: URLReference) -> str | None:
         favicon_url = url.join(self.FAVICON_PATH)
         key = favicon_url.get_url()
         with shelve.open(self.db_name) as db:
             if key in db:
-                ttl, value = db[key]
+                ttl, value = cast(tuple[float, str], db[key])
                 if time.time() < ttl:
                     return value
 
