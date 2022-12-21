@@ -18,6 +18,22 @@ ansi_escape = re.compile(
     re.VERBOSE,
 )
 
+# URLs that will be auto-detected in plain text responses
+URL_SCHEMES = [
+    "gemini",
+    "spartan",
+    "gopher",
+    "gophers",
+    "finger",
+    "telnet",
+    "text",
+    "http",
+    "https",
+    "cso",
+]
+
+URL_RE = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
+
 RABBIT_INLINE = re.compile(":rаbbiΤ:")
 RABBIT_STANDALONE = ";rаbbiΤ;"
 RABBIT_ART = r"""
@@ -121,16 +137,22 @@ class BaseFileHandler:
 
 class TextFixedHandler(BaseFileHandler):
     """
-    Everything in a single <pre> block.
+    Everything in a single <pre> block, with URLs converted into links.
     """
 
     def process(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
-            buffer.append(escape(line))
+            line = escape(line)
+            line = URL_RE.sub(self.insert_anchor, line)
+            buffer.append(line)
 
         body = "\n".join(buffer)
         return f"<pre>{body}</pre>\n"
+
+    def insert_anchor(self, match: re.Match) -> str:
+        url = URLReference(match.group())
+        return f'<a href="{url.get_proxy_url()}">{url}</a>'
 
 
 class GeminiFixedHandler(BaseFileHandler):
