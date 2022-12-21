@@ -75,7 +75,7 @@ async def home() -> Response | WerkzeugResponse:
     address = request.args.get("url")
     if address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url()
+        proxy_url = URLReference(address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     url = "gemini://gemini.circumlunar.space"
@@ -94,7 +94,7 @@ async def proxy(
     address = request.args.get("url")
     if address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url()
+        proxy_url = URLReference(address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     g.url = URLReference(f"{scheme}://{netloc}{'' if path is None else '/' + path}")
@@ -103,7 +103,7 @@ async def proxy(
     if query:
         # Query was provided via the input box, redirect to the canonical endpoint
         g.url.query = quote(query)
-        proxy_url = g.url.get_proxy_url()
+        proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     proxy_request = build_proxy_request(g.url)

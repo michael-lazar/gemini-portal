@@ -23,7 +23,7 @@ BLOCKED_HOSTS = [
 
 # Ports that the proxied servers can be hosted on
 ALLOWED_PORTS = set(range(1960, 2021))
-ALLOWED_PORTS |= {7070, 300, 301, 3000, 3333}
+ALLOWED_PORTS |= {79, 7070, 300, 301, 3000, 3333}
 
 # Chunk size for streaming files, taken from the twisted FileSender class
 CHUNK_SIZE = 2**14
@@ -109,7 +109,7 @@ class BaseRequest:
     def __str__(self) -> str:
         return f"{self.__class__.__name__} {self.url}"
 
-    async def get_response(self) -> BaseResponse:
+    async def get_response(self):
         _logger.info(self)
         try:
             response = await self._fetch()
@@ -228,6 +228,22 @@ class TxtRequest(BaseRequest):
         status, meta = self.parse_header(raw_header)
 
         return TxtResponse(self, status, meta)
+
+
+class FingerRequest(BaseRequest):
+    """
+    Encapsulates a finger:// request.
+    """
+
+    async def _fetch(self) -> FingerResponse:
+        self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
+
+        request = unquote_to_bytes(self.url.finger_request)
+
+        self.writer.write(b"%s\r\n" % request)
+        await self.writer.drain()
+
+        return FingerResponse(self)
 
 
 class BaseResponse:
@@ -368,6 +384,29 @@ class TxtResponse(BaseResponse):
         return self.status.startswith("3")
 
 
+class FingerResponse(BaseResponse):
+
+    STATUS_CODES = {
+        "": "SUCCESS",
+    }
+
+    def __init__(self, request):
+        self.request = request
+        self.status = ""
+        self.meta = "text/plain"
+        self.charset = "UTF-8"
+        self.lang = None
+
+    def is_input(self):
+        return False
+
+    def is_success(self):
+        return True
+
+    def is_redirect(self):
+        return False
+
+
 class GeminiResponse(BaseResponse):
 
     STATUS_CODES = {
@@ -438,5 +477,9 @@ def build_proxy_request(url: URLReference) -> BaseRequest:
         return SpartanRequest(url)
     elif url.scheme == "text":
         return TxtRequest(url)
-    else:
+    elif url.scheme == "finger":
+        return FingerRequest(url)
+    elif url.scheme == "gemini":
         return GeminiRequest(url)
+    else:
+        raise ValueError("Unsupported URL scheme")

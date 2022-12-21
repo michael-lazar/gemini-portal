@@ -1,6 +1,7 @@
 import pytest
 
 from geminiportal.protocols import (
+    FingerRequest,
     GeminiRequest,
     SpartanRequest,
     TxtRequest,
@@ -31,6 +32,14 @@ def test_build_proxy_request_txt():
     assert isinstance(request, TxtRequest)
     assert request.port == 1961
     assert request.host == "174.138.124.169"
+
+
+def test_build_proxy_request_finger():
+    url = URLReference("finger://mozz.us/michael")
+    request = build_proxy_request(url)
+    assert isinstance(request, FingerRequest)
+    assert request.port == 79
+    assert request.host == "mozz.us"
 
 
 def test_build_proxy_request_missing_host():
@@ -79,6 +88,16 @@ async def test_spartan_request():
 @pytest.mark.integration
 async def test_txt_request():
     url = URLReference("text://txt.textprotocol.org/")
+    request = build_proxy_request(url)
+    response = await request.get_response()
+
+    assert response.is_success()
+    assert await response.get_body()
+
+
+@pytest.mark.integration
+async def test_finger_request():
+    url = URLReference("finger://mozz.us/michael")
     request = build_proxy_request(url)
     response = await request.get_response()
 

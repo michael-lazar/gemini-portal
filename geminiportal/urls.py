@@ -362,12 +362,15 @@ class URLReference:
                 raise AssertionError(f"Could not derive directory for url: {self}")
             return parent
 
-    def get_proxy_url(self, **query_params) -> str:
+    def get_proxy_url(self, external=True, **query_params) -> str:
         """
         Build a https://portal.mozz.us/... proxy link for the given URL.
         """
-        if self.scheme not in ("gemini", "spartan", "text"):
-            return self.get_url()
+        if self.scheme not in ("gemini", "spartan", "text", "finger"):
+            if external:
+                return self.get_url()
+
+            raise ValueError("Unsupported URL scheme")
 
         path = urlunparse(("", "", self.path, self.params, self.query, ""))
         if path:
