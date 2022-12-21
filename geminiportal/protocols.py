@@ -68,6 +68,7 @@ class CloseNotifyState:
         def msg_callback(connection, direction, v, c, m, data):
             if m == ssl._TLSAlertType.CLOSE_NOTIFY:  # type: ignore  # noqa
                 if direction == "read":
+                    _logger.info("CLOSE_NOTIFY received")
                     self.received = True
 
         # This is a private debugging hook provided by the SSL library
@@ -109,6 +110,7 @@ class BaseRequest:
         return f"{self.__class__.__name__} {self.url}"
 
     async def get_response(self) -> BaseResponse:
+        _logger.info(self)
         try:
             response = await self._fetch()
         except socket.gaierror:
@@ -116,7 +118,7 @@ class BaseRequest:
         except OSError:
             raise ProxyConnectionError("Connection Error.")
 
-        _logger.info(f'{self} {response.status} "{response.meta}"')
+        _logger.info(response)
         return response
 
     async def _fetch(self) -> BaseResponse:
@@ -124,12 +126,13 @@ class BaseRequest:
 
     def close(self) -> None:
         try:
+            _logger.info("Closing socket")
             self.writer.close()
-        except Exception:
+        except Exception as e:
             # This will fail if the remote server has already closed the
             # socket via SSL close_notify, but there is no way to know
             # that ahead of time.
-            pass
+            _logger.warning(f"Error closing socket: {e}")
 
     @staticmethod
     def parse_header(raw_header: bytes) -> tuple[str, str]:
@@ -239,6 +242,9 @@ class BaseResponse:
     meta: str
     charset: str
     lang: str | None
+
+    def __str__(self) -> str:
+        return f'{self.__class__.__name__} {self.status} "{self.meta}"'
 
     @property
     def status_string(self) -> str:

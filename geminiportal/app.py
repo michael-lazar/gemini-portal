@@ -167,7 +167,7 @@ async def build_certificate_page_body(response: GeminiResponse) -> str:
         "fragments/tls_context.html",
         openssl_output=escape(output),
         raw_cert_url=g.url.get_proxy_url(raw_crt=1),
-        tls_close_notify=response.tls_close_notify,
+        tls_close_notify_received=response.tls_close_notify_received,
         tls_version=response.tls_version,
         tls_cipher=response.tls_cipher,
     )
