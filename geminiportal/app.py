@@ -1,11 +1,14 @@
 import asyncio
+import logging
 import subprocess
 from datetime import datetime
 from urllib.parse import quote
 
 from quart import Quart, Response, escape, g, render_template, request
+from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
+from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import (
     GeminiResponse,
@@ -13,6 +16,10 @@ from geminiportal.protocols import (
     build_proxy_request,
 )
 from geminiportal.urls import URLReference
+
+logger = logging.getLogger("geminiportal")
+logger.setLevel(logging.INFO)
+logger.addHandler(default_handler)
 
 app = Quart(__name__)
 app.config.from_prefixed_env()
@@ -39,7 +46,7 @@ def inject_context():
     if "url" in g:
         kwargs["url"] = g.url.get_url()
         kwargs["root_url"] = g.url.get_root_proxy_url()
-        kwargs["parent_url"] = g.url.get_parent_proxy_url()
+        kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
     if "favicon" in g and g.favicon:
         kwargs["favicon"] = g.favicon
     return kwargs
@@ -102,6 +109,8 @@ async def proxy(
     proxy_request = build_proxy_request(g.url)
     response = await proxy_request.get_response()
     g.response = response
+
+    g.favicon = favicon_cache.check(g.url)
 
     if request.args.get("raw_crt"):
         if not isinstance(response, GeminiResponse):

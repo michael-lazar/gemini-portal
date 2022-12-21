@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import codecs
+import logging
 import re
+import socket
 import ssl
 from asyncio.exceptions import IncompleteReadError
 from typing import AsyncIterator
 from urllib.parse import quote_from_bytes, unquote_to_bytes
 
 from geminiportal.urls import URLReference
+
+_logger = logging.getLogger(__name__)
 
 # Hosts that have requested that their content be removed from the proxy
 BLOCKED_HOSTS = [
@@ -101,7 +105,21 @@ class BaseRequest:
         self.port = port
         self.url = url
 
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__} {self.url}"
+
     async def get_response(self) -> BaseResponse:
+        try:
+            response = await self._fetch()
+        except socket.gaierror:
+            raise ProxyConnectionError(f'Unable to connect to host "{self.host}".')
+        except OSError:
+            raise ProxyConnectionError("Connection Error.")
+
+        _logger.info(f'{self} {response.status} "{response.meta}"')
+        return response
+
+    async def _fetch(self) -> BaseResponse:
         raise NotImplementedError
 
     def close(self) -> None:
@@ -138,7 +156,7 @@ class GeminiRequest(BaseRequest):
         context.verify_mode = ssl.CERT_NONE
         return context
 
-    async def get_response(self) -> GeminiResponse:
+    async def _fetch(self) -> GeminiResponse:
         context = self.create_ssl_context()
         tls_close_notify = CloseNotifyState(context)
 
@@ -172,7 +190,7 @@ class SpartanRequest(BaseRequest):
     Encapsulates a spartan:// request.
     """
 
-    async def get_response(self) -> SpartanResponse:
+    async def _fetch(self) -> SpartanResponse:
         self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
 
         path = self.url.path or "/"
@@ -196,7 +214,7 @@ class TxtRequest(BaseRequest):
     Encapsulates a text:// request.
     """
 
-    async def get_response(self) -> TxtResponse:
+    async def _fetch(self) -> TxtResponse:
         self.reader, self.writer = await asyncio.open_connection(self.host, self.port)
 
         gemini_url = self.url.get_gemini_request_url()
