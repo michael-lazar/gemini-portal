@@ -43,9 +43,9 @@ class BaseRequest:
         try:
             response = await self.fetch()
         except socket.gaierror:
-            raise ProxyConnectionError(f'Unable to connect to host "{self.host}".')
-        except OSError:
-            raise ProxyConnectionError("Connection Error.")
+            raise ProxyConnectionError(f'Unable to establish connection with host "{self.host}"')
+        except OSError as e:
+            raise ProxyConnectionError(f"Connection error: {e}")
 
         _logger.info(f"{self.__class__.__name__}: Response received: {response.status}")
         return response

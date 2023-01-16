@@ -28,7 +28,7 @@ def validate_url(url: URLReference) -> None:
             )
 
     if port not in ALLOWED_PORTS:
-        raise ValueError("Proxied content is not allowed on this port.")
+        raise ValueError(f"Proxied content is disabled over port {port}.")
 
 
 def build_proxy_request(url: URLReference) -> BaseRequest:
