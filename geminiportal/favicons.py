@@ -6,7 +6,8 @@ import tempfile
 import time
 from typing import cast
 
-from geminiportal.protocols import ProxyConnectionError, build_proxy_request
+from geminiportal.protocols import build_proxy_request
+from geminiportal.protocols.base import ProxyConnectionError
 from geminiportal.urls import URLReference
 
 _logger = logging.getLogger(__name__)

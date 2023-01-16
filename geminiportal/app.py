@@ -10,11 +10,9 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
-from geminiportal.protocols import (
-    GeminiResponse,
-    ProxyConnectionError,
-    build_proxy_request,
-)
+from geminiportal.protocols import build_proxy_request
+from geminiportal.protocols.base import ProxyConnectionError
+from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
 
 logger = logging.getLogger("geminiportal")

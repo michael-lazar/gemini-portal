@@ -3,7 +3,7 @@ from collections import Counter
 
 from quart import Response, escape, render_template
 
-from geminiportal.protocols import BaseResponse
+from geminiportal.protocols.base import BaseResponse
 from geminiportal.urls import URLReference
 
 # Strip ANSI color characters
@@ -58,11 +58,11 @@ async def handle_proxy_response(
     """
     Convert a response from the proxy server into an HTTP response object.
     """
-    raw_url = response.request.url.get_proxy_url(raw=1)
-    inline_url = response.request.url.get_proxy_url(inline=1)
+    raw_url = response.url.get_proxy_url(raw=1)
+    inline_url = response.url.get_proxy_url(inline=1)
 
     if hasattr(response, "tls_cert"):
-        cert_url = response.request.url.get_proxy_url(crt=1)
+        cert_url = response.url.get_proxy_url(crt=1)
     else:
         cert_url = None
 
@@ -89,10 +89,10 @@ async def handle_proxy_response(
         return Response(content)
 
     elif response.meta.startswith(("text/plain", "text/gemini")):
-        handler_class: type[BaseFileHandler]
+        handler_class: type[BaseHandler]
 
         if response.meta.startswith("text/plain"):
-            if response.request.url.scheme == "text":
+            if response.url.scheme == "text":
                 handler_class = GeminiFixedHandler
             else:
                 handler_class = TextFixedHandler
@@ -103,7 +103,7 @@ async def handle_proxy_response(
                 handler_class = GeminiFlowedHandler
 
         text = await response.get_body_text()
-        handler = handler_class(text, response.request.url)
+        handler = handler_class(text, response.url)
 
         context["body"] = handler.process()
         context["lang"] = response.lang
@@ -114,10 +114,16 @@ async def handle_proxy_response(
         return Response(response.stream_body(), content_type=response.meta)  # type: ignore
 
 
-class BaseFileHandler:
+class BaseHandler:
     def __init__(self, text: str, url: URLReference):
         self.text = ansi_escape.sub("", text)
         self.url = url
+
+    def get_context(self) -> dict:
+        context = {
+            "body": self.process(),
+        }
+        return context
 
     def process(self) -> str:
         raise NotImplementedError
@@ -135,7 +141,7 @@ class BaseFileHandler:
         return url, link_text
 
 
-class TextFixedHandler(BaseFileHandler):
+class TextFixedHandler(BaseHandler):
     """
     Everything in a single <pre> block, with URLs converted into links.
     """
@@ -155,7 +161,7 @@ class TextFixedHandler(BaseFileHandler):
         return f'<a href="{url.get_proxy_url()}">{url}</a>'
 
 
-class GeminiFixedHandler(BaseFileHandler):
+class GeminiFixedHandler(BaseHandler):
     """
     Everything in a single <pre> block, with => links supported.
     """
@@ -175,7 +181,7 @@ class GeminiFixedHandler(BaseFileHandler):
         return f"<pre>{body}</pre>\n"
 
 
-class GeminiFlowedHandler(BaseFileHandler):
+class GeminiFlowedHandler(BaseHandler):
     """
     The full-featured gemtext -> html converter.
     """

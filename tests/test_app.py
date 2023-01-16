@@ -22,6 +22,34 @@ async def test_get_home(client):
     assert response.status_code == 200
 
 
+async def test_input_url_redirect(client):
+    response = await client.get(
+        "/gemini/mozz.us",
+        query_string={"url": "spartan://mozz.us/test"},
+    )
+    assert response.status_code == 302
+    assert response.location == "/spartan/mozz.us/test"
+
+
+async def test_input_url_preserve_double_slashes(client):
+    response = await client.get(
+        "/gemini/mozz.us",
+        query_string={"url": "spartan://mozz.us/test//.//"},
+    )
+    assert response.status_code == 302
+    assert response.location == "/spartan/mozz.us/test//.//"
+
+
+async def test_input_query_redirect(client):
+    response = await client.get(
+        "/gemini/mozz.us",
+        query_string={"q": "hello world"},
+    )
+    assert response.status_code == 302
+    # Space is double encoded ($2520)
+    assert response.location == "/gemini/mozz.us/%3Fhello%2520world"
+
+
 @pytest.mark.integration
 async def test_download_raw_certificate(client):
     response = await client.get("/gemini/mozz.us?raw_crt=1")
@@ -34,25 +62,6 @@ async def test_view_certificate_page(client):
     response = await client.get("/gemini/mozz.us?crt=1")
     assert response.status_code == 200
     assert response.mimetype == "text/html"
-
-
-async def test_input_url_redirect(client):
-    response = await client.get(
-        "/gemini/mozz.us",
-        query_string={"url": "spartan://mozz.us/test"},
-    )
-    assert response.status_code == 302
-    assert response.location == "/spartan/mozz.us/test"
-
-
-async def test_input_query_redirect(client):
-    response = await client.get(
-        "/gemini/mozz.us",
-        query_string={"q": "hello world"},
-    )
-    assert response.status_code == 302
-    # Space is double encoded ($2520)
-    assert response.location == "/gemini/mozz.us/%3Fhello%2520world"
 
 
 @pytest.mark.integration
