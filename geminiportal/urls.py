@@ -165,7 +165,7 @@ class URLReference:
         """
         Return the normalized netloc value for constructing URLs.
         """
-        if self.port and self.port != self.DEFAULT_PORTS[self.scheme]:
+        if self.port and self.port != self.DEFAULT_PORTS.get(self.scheme):
             return f"{self.hostname}:{self.port}"
         elif self.hostname:
             return self.hostname

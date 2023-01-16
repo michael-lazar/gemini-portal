@@ -80,7 +80,7 @@ async def home() -> Response | WerkzeugResponse:
     return Response(content)
 
 
-@app.route("/<scheme>/<netloc>", endpoint="proxy-netloc")
+@app.route("/<scheme>/<netloc>/", endpoint="proxy-netloc")
 @app.route("/<scheme>/<netloc>/<path:path>", endpoint="proxy-path")
 async def proxy(
     scheme: str = "gemini", netloc: str | None = None, path: str | None = None

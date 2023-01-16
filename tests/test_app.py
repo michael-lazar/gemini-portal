@@ -24,7 +24,7 @@ async def test_get_home(client):
 
 async def test_input_url_redirect(client):
     response = await client.get(
-        "/gemini/mozz.us",
+        "/gemini/mozz.us/",
         query_string={"url": "spartan://mozz.us/test"},
     )
     assert response.status_code == 302
@@ -33,7 +33,7 @@ async def test_input_url_redirect(client):
 
 async def test_input_url_preserve_double_slashes(client):
     response = await client.get(
-        "/gemini/mozz.us",
+        "/gemini/mozz.us/",
         query_string={"url": "spartan://mozz.us/test//.//"},
     )
     assert response.status_code == 302
@@ -42,7 +42,7 @@ async def test_input_url_preserve_double_slashes(client):
 
 async def test_input_query_redirect(client):
     response = await client.get(
-        "/gemini/mozz.us",
+        "/gemini/mozz.us/",
         query_string={"q": "hello world"},
     )
     assert response.status_code == 302

@@ -151,8 +151,13 @@ class TextFixedHandler(BaseHandler):
         return f"<pre>{body}</pre>\n"
 
     def insert_anchor(self, match: re.Match) -> str:
-        url = URLReference(match.group())
-        return f'<a href="{url.get_proxy_url()}">{url}</a>'
+        m = match.group()
+        try:
+            url = URLReference(m)
+        except ValueError:
+            return m
+        else:
+            return f'<a href="{url.get_proxy_url()}">{url}</a>'
 
 
 class GeminiFixedHandler(BaseHandler):

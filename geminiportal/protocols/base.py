@@ -15,7 +15,7 @@ CHUNK_SIZE = 2**14
 
 # When not streaming, limit the maximum response size to avoid running out
 # of RAM when downloading & converting large files to HTML.
-MAX_BODY_SIZE = 2**15
+MAX_BODY_SIZE = 2**25
 
 
 class ProxyConnectionError(Exception):

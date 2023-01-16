@@ -208,21 +208,21 @@ async def test_get_proxy_gemini_link(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("gemini://mozz.us")
-        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/mozz.us/"
 
 
 async def test_get_proxy_spartan_link(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("spartan://mozz.us")
-        assert url.get_proxy_url() == "http://portal.mozz.us/spartan/mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/spartan/mozz.us/"
 
 
 async def test_get_proxy_text_link(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("text://mozz.us")
-        assert url.get_proxy_url() == "http://portal.mozz.us/text/mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/text/mozz.us/"
 
 
 async def test_get_proxy_gopher_link(app):
@@ -250,18 +250,24 @@ async def test_get_proxy_gemini_link_parent(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("..")
-        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/mozz.us/"
 
 
 async def test_get_proxy_gemini_link_different_host(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("gemini://ascii.mozz.us")
-        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/ascii.mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/gemini/ascii.mozz.us/"
 
 
 async def test_get_proxy_gemini_link_different_scheme(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("spartan://mozz.us/")
-        assert url.get_proxy_url() == "http://portal.mozz.us/spartan/mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/spartan/mozz.us/"
+
+
+async def test_get_proxy_unknown_scheme(app):
+    url = URLReference("telnet://mozz.us:23")
+    async with app.app_context():
+        assert url.get_proxy_url() == "telnet://mozz.us:23"
