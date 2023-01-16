@@ -119,12 +119,6 @@ class BaseHandler:
         self.text = ansi_escape.sub("", text)
         self.url = url
 
-    def get_context(self) -> dict:
-        context = {
-            "body": self.process(),
-        }
-        return context
-
     def process(self) -> str:
         raise NotImplementedError
 

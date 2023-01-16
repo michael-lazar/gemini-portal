@@ -10,12 +10,6 @@ from geminiportal.urls import URLReference
 
 _logger = logging.getLogger(__name__)
 
-# Hosts that have requested that their content be removed from the proxy
-BLOCKED_HOSTS = ["vger.cloud", "warpengineer.space"]
-
-# Ports that the proxied servers can be hosted on
-ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, *range(1960, 2021)}
-
 # Chunk size for streaming files, taken from the twisted FileSender class
 CHUNK_SIZE = 2**14
 
@@ -35,17 +29,14 @@ class BaseRequest:
 
     def __init__(self, url: URLReference):
         self.url = url
-        self.host, self.port = url.conn_info
 
-        # for pattern in self.blocked_hosts:
-        #     if pattern.match(host):
-        #         raise ValueError(
-        #             "This host has kindly requested that their content "
-        #             "not be accessed via web proxy."
-        #         )
-        #
-        # if port not in self.allowed_ports:
-        #     raise ValueError("Proxied content is not allowed on this port.")
+    @property
+    def host(self):
+        return self.url.conn_info[0]
+
+    @property
+    def port(self):
+        return self.url.conn_info[1]
 
     async def get_response(self):
         _logger.info(f"{self.__class__.__name__}: Making request to {self.url}")

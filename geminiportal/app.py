@@ -76,8 +76,7 @@ async def home() -> Response | WerkzeugResponse:
         proxy_url = URLReference(address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    url = "gemini://gemini.circumlunar.space"
-    content = await render_template("home.html", url=url)
+    content = await render_template("home.html", url="gemini://gemini.circumlunar.space")
     return Response(content)
 
 
