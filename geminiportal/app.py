@@ -11,7 +11,7 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
-from geminiportal.protocols.base import ProxyConnectionError
+from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
 
@@ -29,7 +29,7 @@ async def handle_value_error(e) -> Response:
     return Response(content, status=400)
 
 
-@app.errorhandler(ProxyConnectionError)
+@app.errorhandler(ProxyError)
 async def handle_unexpected_error(e):
     content = await render_template("gemini.html", error=str(e), url=g.get("url"))
     return Response(content, status=500)
@@ -41,10 +41,14 @@ def inject_context():
     if "response" in g:
         kwargs["status"] = g.response.status_string
         kwargs["meta"] = g.response.meta
+        if hasattr(g.response, "tls_cert"):
+            kwargs["cert_url"] = g.response.url.get_proxy_url(crt=1)
     if "url" in g:
         kwargs["url"] = g.url.get_url()
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
+        kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
+        kwargs["inline_url"] = g.url.get_proxy_url(inline=1)
     if "favicon" in g and g.favicon:
         kwargs["favicon"] = g.favicon
     return kwargs

@@ -124,9 +124,9 @@ class GeminiResponse(BaseResponse):
         self.tls_cipher = tls_cipher
         self.tls_close_notify = tls_close_notify
 
-        meta_params = self.get_meta_params(meta)
-        self.charset = meta_params.get("charset", "UTF-8")
-        self.lang = meta_params.get("lang", None)
+        self.mimetype, params = self.parse_meta(meta)
+        self.charset = params.get("charset", "UTF-8")
+        self.lang = params.get("lang", None)
 
     @property
     def tls_close_notify_received(self):

@@ -31,6 +31,7 @@ class FingerResponse(BaseResponse):
         self.writer = writer
         self.status = ""
         self.meta = "text/plain"
+        self.mimetype = "text/plain"
         self.charset = "UTF-8"
         self.lang = None
 

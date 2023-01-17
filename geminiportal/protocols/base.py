@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import socket
 from asyncio.exceptions import IncompleteReadError
 from typing import AsyncIterator
@@ -15,10 +16,16 @@ CHUNK_SIZE = 2**14
 
 # When not streaming, limit the maximum response size to avoid running out
 # of RAM when downloading & converting large files to HTML.
-MAX_BODY_SIZE = 2**25
+MAX_BODY_SIZE = 2**22
+
+# Hosts that have requested that their content be removed from the proxy
+BLOCKED_HOSTS = ["vger.cloud", "warpengineer.space"]
+
+# Ports that the proxied servers can be hosted on
+ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, *range(1960, 2021)}
 
 
-class ProxyConnectionError(Exception):
+class ProxyError(Exception):
     pass
 
 
@@ -27,25 +34,32 @@ class BaseRequest:
     Encapsulates a request to a protocol.
     """
 
+    _blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
+
     def __init__(self, url: URLReference):
         self.url = url
+        self.host, self.port = url.conn_info
 
-    @property
-    def host(self):
-        return self.url.conn_info[0]
+        self.clean()
 
-    @property
-    def port(self):
-        return self.url.conn_info[1]
+    def clean(self):
+        for pattern in self._blocked_hosts:
+            if pattern.match(self.host):
+                raise ValueError(
+                    "This host has kindly requested that their content "
+                    "not be accessed via web proxy."
+                )
+        if self.port not in ALLOWED_PORTS:
+            raise ValueError(f"Proxied content is disabled over port {self.port}.")
 
     async def get_response(self):
         _logger.info(f"{self.__class__.__name__}: Making request to {self.url}")
         try:
             response = await self.fetch()
         except socket.gaierror:
-            raise ProxyConnectionError(f'Unable to establish connection with host "{self.host}"')
+            raise ProxyError(f'Unable to establish connection with host "{self.host}"')
         except OSError as e:
-            raise ProxyConnectionError(f"Connection error: {e}")
+            raise ProxyError(f"Connection error: {e}")
 
         _logger.info(f"{self.__class__.__name__}: Response received: {response.status}")
         return response
@@ -79,6 +93,7 @@ class BaseResponse:
     writer: asyncio.StreamWriter
     status: str
     meta: str
+    mimetype: str
     charset: str
     lang: str | None
 
@@ -97,16 +112,24 @@ class BaseResponse:
             return self.status
 
     @staticmethod
-    def get_meta_params(meta: str) -> dict[str, str]:
+    def parse_meta(meta: str) -> tuple[str, dict[str, str]]:
         """
         Parse & normalize extra params from the MIME string.
         """
+        parts = meta.split(";", maxsplit=1)
+        if len(parts) == 2:
+            mimetype, extra = parts
+        else:
+            mimetype, extra = parts[0], ""
+        mimetype = mimetype.strip()
+
         params = {}
-        for param in meta.split(";"):
+        for param in extra.split(";"):
             parts = param.strip().split("=", maxsplit=1)
             if len(parts) == 2:
                 params[parts[0].lower()] = parts[1]
-        return params
+
+        return mimetype, params
 
     def close(self) -> None:
         """
@@ -127,18 +150,15 @@ class BaseResponse:
         """
         try:
             try:
-                return await self.reader.readexactly(MAX_BODY_SIZE)
+                await self.reader.readexactly(MAX_BODY_SIZE)
             except IncompleteReadError as e:
                 return e.partial
+            else:
+                raise ProxyError(
+                    f"Response body exceeded maximum size of {MAX_BODY_SIZE // 1024} KB."
+                )
         finally:
             self.close()
-
-    async def get_body_text(self) -> str:
-        """
-        Return the entire response body as a decoded text string.
-        """
-        body = await self.get_body()
-        return body.decode(self.charset, errors="replace")
 
     async def stream_body(self) -> AsyncIterator[bytes]:
         """

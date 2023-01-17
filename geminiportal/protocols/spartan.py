@@ -47,8 +47,8 @@ class SpartanResponse(BaseResponse):
         self.meta = meta
         self.lang = None
 
-        meta_params = self.get_meta_params(meta)
-        self.charset = meta_params.get("charset", "UTF-8")
+        self.mimetype, params = self.parse_meta(meta)
+        self.charset = params.get("charset", "UTF-8")
 
     def is_success(self):
         return self.status == "2"

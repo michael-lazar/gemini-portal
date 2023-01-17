@@ -52,14 +52,14 @@ async def test_input_query_redirect(client):
 
 @pytest.mark.integration
 async def test_download_raw_certificate(client):
-    response = await client.get("/gemini/mozz.us?raw_crt=1")
+    response = await client.get("/gemini/mozz.us/?raw_crt=1")
     assert response.status_code == 200
     assert response.mimetype == "application/x-x509-ca-cert"
 
 
 @pytest.mark.integration
 async def test_view_certificate_page(client):
-    response = await client.get("/gemini/mozz.us?crt=1")
+    response = await client.get("/gemini/mozz.us/?crt=1")
     assert response.status_code == 200
     assert response.mimetype == "text/html"
 
@@ -73,13 +73,13 @@ async def test_gemini_redirect(client):
 
 @pytest.mark.integration
 async def test_gemini_handler_success(client):
-    response = await client.get("/gemini/mozz.us")
+    response = await client.get("/gemini/mozz.us/")
     assert response.status_code == 200
     assert response.mimetype == "text/html"
 
 
 @pytest.mark.integration
 async def test_gemini_handler_raw_response(client):
-    response = await client.get("/gemini/mozz.us?raw=1")
+    response = await client.get("/gemini/mozz.us/?raw=1")
     assert response.status_code == 200
     assert response.mimetype == "text/plain"

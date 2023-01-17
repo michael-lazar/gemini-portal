@@ -1,40 +1,12 @@
 import re
 from collections import Counter
 
-from quart import Response, escape, render_template
+from quart import escape
 
-from geminiportal.protocols.base import BaseResponse
+from geminiportal.handlers.base import TemplateHandler
 from geminiportal.urls import URLReference
 
-# Strip ANSI color characters
-ansi_escape = re.compile(
-    r"""
-    \x1B    # ESC
-    [@-_]   # 7-bit C1 Fe
-    [0-?]*  # Parameter bytes
-    [ -/]*  # Intermediate bytes
-    [@-~]   # Final byte
-""",
-    re.VERBOSE,
-)
-
-# URLs that will be auto-detected in plain text responses
-URL_SCHEMES = [
-    "gemini",
-    "spartan",
-    "gopher",
-    "gophers",
-    "finger",
-    "telnet",
-    "text",
-    "http",
-    "https",
-    "cso",
-]
-
-URL_RE = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
-
-RABBIT_INLINE = re.compile(":rаbbiΤ:")
+RABBIT_INLINE = ":rаbbiΤ:"
 RABBIT_STANDALONE = ";rаbbiΤ;"
 RABBIT_ART = r"""
           /|
@@ -50,127 +22,30 @@ RABBIT_ART = r"""
 """
 
 
-async def handle_proxy_response(
-    response: BaseResponse,
-    raw_data: bool,
-    inline_images: bool,
-) -> Response:
-    """
-    Convert a response from the proxy server into an HTTP response object.
-    """
-    raw_url = response.url.get_proxy_url(raw=1)
-    inline_url = response.url.get_proxy_url(inline=1)
-
-    if hasattr(response, "tls_cert"):
-        cert_url = response.url.get_proxy_url(crt=1)
+def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str]:
+    parts = line.split(maxsplit=1)
+    if len(parts) == 0:
+        link, link_text = "", ""
+    elif len(parts) == 1:
+        link, link_text = parts[0], parts[0]
     else:
-        cert_url = None
+        link, link_text = parts
 
-    context = {
-        "raw_url": raw_url,
-        "inline_url": inline_url,
-        "cert_url": cert_url,
-    }
-
-    if raw_data:
-        meta = response.meta.replace("text/gemini", "text/plain")
-        if meta.startswith("text/plain") and "charset" not in meta:
-            meta += "; charset=UTF-8"
-        return Response(response.stream_body(), content_type=meta)  # type: ignore
-
-    elif response.meta.startswith("image/"):
-        context["body"] = f'<a href="{escape(raw_url)}"><img src="{escape(raw_url)}"></img></a>'
-        content = await render_template("gemini.html", **context)
-        return Response(content)
-
-    elif response.meta.startswith("audio/mpeg"):
-        context["body"] = f'<audio controls="controls"><source src="{escape(raw_url)}"/></audio>'
-        content = await render_template("gemini.html", **context)
-        return Response(content)
-
-    elif response.meta.startswith(("text/plain", "text/gemini")):
-        handler_class: type[BaseHandler]
-
-        if response.meta.startswith("text/plain"):
-            if response.url.scheme == "text":
-                handler_class = GeminiFixedHandler
-            else:
-                handler_class = TextFixedHandler
-        else:
-            if inline_images:
-                handler_class = GeminiInlineFlowedHandler
-            else:
-                handler_class = GeminiFlowedHandler
-
-        text = await response.get_body_text()
-        handler = handler_class(text, response.url)
-
-        context["body"] = handler.process()
-        context["lang"] = response.lang
-        content = await render_template("gemini.html", **context)
-        return Response(content)
-
-    else:
-        return Response(response.stream_body(), content_type=response.meta)  # type: ignore
+    url = base.join(link)
+    return url, link_text
 
 
-class BaseHandler:
-    def __init__(self, text: str, url: URLReference):
-        self.text = ansi_escape.sub("", text)
-        self.url = url
-
-    def process(self) -> str:
-        raise NotImplementedError
-
-    def parse_gemini_link_line(self, line: str) -> tuple[URLReference, str]:
-        parts = line.split(maxsplit=1)
-        if len(parts) == 0:
-            link, link_text = "", ""
-        elif len(parts) == 1:
-            link, link_text = parts[0], parts[0]
-        else:
-            link, link_text = parts
-
-        url = self.url.join(link)
-        return url, link_text
-
-
-class TextFixedHandler(BaseHandler):
-    """
-    Everything in a single <pre> block, with URLs converted into links.
-    """
-
-    def process(self) -> str:
-        buffer = []
-        for line in self.text.splitlines(keepends=False):
-            line = escape(line)
-            line = URL_RE.sub(self.insert_anchor, line)
-            buffer.append(line)
-
-        body = "\n".join(buffer)
-        return f"<pre>{body}</pre>\n"
-
-    def insert_anchor(self, match: re.Match) -> str:
-        m = match.group()
-        try:
-            url = URLReference(m)
-        except ValueError:
-            return m
-        else:
-            return f'<a href="{url.get_proxy_url()}">{url}</a>'
-
-
-class GeminiFixedHandler(BaseHandler):
+class GeminiFixedHandler(TemplateHandler):
     """
     Everything in a single <pre> block, with => links supported.
     """
 
-    def process(self) -> str:
+    def get_body(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
             if line.startswith("=>"):
-                url, link_text = self.parse_gemini_link_line(line[2:])
+                url, link_text = parse_link_line(line[2:], self.url)
                 proxy_url = url.get_proxy_url()
                 buffer.append(f'<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
             else:
@@ -180,15 +55,17 @@ class GeminiFixedHandler(BaseHandler):
         return f"<pre>{body}</pre>\n"
 
 
-class GeminiFlowedHandler(BaseHandler):
+class GeminiFlowedHandler(TemplateHandler):
     """
     The full-featured gemtext -> html converter.
     """
 
     inline_images = False
 
-    def __init__(self, text: str, url: URLReference):
-        super().__init__(text, url)
+    _rabbit_re = re.compile(RABBIT_INLINE)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.sections: list[str] = []
         self.buffer: list[str] = []
@@ -210,10 +87,10 @@ class GeminiFlowedHandler(BaseHandler):
             text += f"-{self.anchor_counter[text] - 1}"
         return text
 
-    def process(self) -> str:
+    def get_body(self) -> str:
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
-            line = RABBIT_INLINE.sub("🐇", line)
+            line = self._rabbit_re.sub("🐇", line)
             if line.startswith("```"):
                 self.flush()
                 self.preformat_mode = not self.preformat_mode
@@ -226,8 +103,8 @@ class GeminiFlowedHandler(BaseHandler):
                 self.sections.append(f"<pre>{RABBIT_ART}</pre>")
             elif line.startswith("=>"):
                 self.flush()
-                url, link_text = self.parse_gemini_link_line(line[2:])
-                gemini_link, link_text = self.parse_gemini_link_line(line[2:])
+                url, link_text = parse_link_line(line[2:], self.url)
+                gemini_link, link_text = parse_link_line(line[2:], self.url)
                 mime_type = url.guess_mimetype()
                 if self.inline_images and mime_type and mime_type.startswith("image"):
                     image_url = url.get_proxy_url(raw=True)
@@ -243,7 +120,7 @@ class GeminiFlowedHandler(BaseHandler):
                     )
             elif line.startswith("=:"):
                 self.flush()
-                url, link_text = self.parse_gemini_link_line(line[2:])
+                url, link_text = parse_link_line(line[2:], self.url)
                 proxy_url = url.get_proxy_url()
                 self.sections.append(
                     f'<form method="get" action="{escape(proxy_url)}" class="input-line">'
@@ -306,5 +183,5 @@ class GeminiFlowedHandler(BaseHandler):
             self.buffer = []
 
 
-class GeminiInlineFlowedHandler(GeminiFlowedHandler):
+class GeminiFlowedHandler2(GeminiFlowedHandler):
     inline_images = True

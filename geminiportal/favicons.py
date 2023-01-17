@@ -7,7 +7,7 @@ import time
 from typing import cast
 
 from geminiportal.protocols import build_proxy_request
-from geminiportal.protocols.base import ProxyConnectionError
+from geminiportal.protocols.base import ProxyError
 from geminiportal.urls import URLReference
 
 _logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class FaviconCache:
         favicon = None
         try:
             favicon = await self._fetch_favicon(favicon_url)
-        except ProxyConnectionError:
+        except ProxyError:
             _logger.warning("Error fetching favicon")
 
         _logger.info(f"Favicon for {favicon_url}: {favicon}")
@@ -70,8 +70,9 @@ class FaviconCache:
         request = build_proxy_request(favicon_url)
         response = await request.get_response()
         if response.is_success() and response.meta.startswith("text/plain"):
-            favicon = await response.get_body_text()
-            favicon = favicon.strip()
+            body = await response.get_body()
+            charset = response.charset or "UTF-8"
+            favicon = body.decode(charset, errors="replace").strip()
             if len(favicon) <= 8:  # Emojis can contain up to 8 code points
                 return favicon
 

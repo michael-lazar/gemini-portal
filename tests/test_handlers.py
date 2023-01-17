@@ -1,11 +1,11 @@
 import os
 
-from geminiportal.handlers import (
+from geminiportal.handlers.gemini import (
     GeminiFixedHandler,
     GeminiFlowedHandler,
-    GeminiInlineFlowedHandler,
-    TextFixedHandler,
+    GeminiFlowedHandler2,
 )
+from geminiportal.handlers.text import TextHandler
 from geminiportal.urls import URLReference
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -16,36 +16,36 @@ def load_file(name: str) -> str:
         return fp.read()
 
 
-SAMPLE_TEXT = load_file("sample.gmi")
+sample_data = load_file("sample.gmi").encode()
 
 
 async def test_text_fixed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
-    handler = TextFixedHandler(SAMPLE_TEXT, url)
+    handler = TextHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        text = handler.process()
-    assert text == load_file("text_fixed.html")
+        body = handler.get_body()
+    assert body == load_file("text_fixed.html")
 
 
 async def test_gemini_fixed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
-    handler = GeminiFixedHandler(SAMPLE_TEXT, url)
+    handler = GeminiFixedHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        text = handler.process()
-    assert text == load_file("gemini_fixed.html")
+        body = handler.get_body()
+    assert body == load_file("gemini_fixed.html")
 
 
 async def test_gemini_flowed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
-    handler = GeminiFlowedHandler(SAMPLE_TEXT, url)
+    handler = GeminiFlowedHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        text = handler.process()
-    assert text == load_file("gemini_flowed.html")
+        body = handler.get_body()
+    assert body == load_file("gemini_flowed.html")
 
 
-async def test_gemini_inline_flowed_handler(app):
+async def test_gemini_flowed_handler_2(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
-    handler = GeminiInlineFlowedHandler(SAMPLE_TEXT, url)
+    handler = GeminiFlowedHandler2(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        text = handler.process()
-    assert text == load_file("gemini_flowed_inline.html")
+        body = handler.get_body()
+    assert body == load_file("gemini_flowed_inline.html")
