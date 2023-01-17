@@ -29,6 +29,10 @@ class ProxyError(Exception):
     pass
 
 
+class ProxyResponseSizeError(ProxyError):
+    pass
+
+
 class BaseRequest:
     """
     Encapsulates a request to a protocol.
@@ -154,9 +158,7 @@ class BaseResponse:
             except IncompleteReadError as e:
                 return e.partial
             else:
-                raise ProxyError(
-                    f"Response body exceeded maximum size of {MAX_BODY_SIZE // 1024} KB."
-                )
+                raise ProxyResponseSizeError()
         finally:
             self.close()
 
