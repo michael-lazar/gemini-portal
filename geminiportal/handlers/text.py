@@ -27,7 +27,7 @@ class TextHandler(TemplateHandler):
 
     url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
 
-    def get_body(self) -> str:
+    async def get_body(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
             line = escape(line)

@@ -96,6 +96,14 @@ img {
 .gemini > figure {
     margin-bottom: 1em;
 }
+.inline-image {
+    cursor: zoom-in;
+}
+.inline-image.selected {
+    max-width: 90vw;
+    max-height: initial;
+    cursor: zoom-out;
+}
 .header {
     max-width: 120ch;
     margin-bottom: 1em;

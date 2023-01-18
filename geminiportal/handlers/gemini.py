@@ -40,7 +40,7 @@ class GeminiFixedHandler(TemplateHandler):
     Everything in a single <pre> block, with => links supported.
     """
 
-    def get_body(self) -> str:
+    async def get_body(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
@@ -87,7 +87,7 @@ class GeminiFlowedHandler(TemplateHandler):
             text += f"-{self.anchor_counter[text] - 1}"
         return text
 
-    def get_body(self) -> str:
+    async def get_body(self) -> str:
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
             line = self._rabbit_re.sub("🐇", line)

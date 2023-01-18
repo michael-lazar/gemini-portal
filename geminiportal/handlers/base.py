@@ -119,16 +119,16 @@ class TemplateHandler(BaseHandler):
         return self._text
 
     async def render(self) -> Response:
-        context = self.get_context()
+        context = await self.get_context()
         content = await render_template(self.BASE_TEMPLATE, **context)
         return Response(content)
 
-    def get_context(self) -> dict:
+    async def get_context(self) -> dict:
         context = {}
-        context["body"] = self.get_body()
+        context["body"] = await self.get_body()
         return context
 
-    def get_body(self) -> str:
+    async def get_body(self) -> str:
         raise NotImplementedError
 
     @classmethod

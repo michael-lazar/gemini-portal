@@ -23,7 +23,7 @@ async def test_text_fixed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
     handler = TextHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        body = handler.get_body()
+        body = await handler.get_body()
     assert body == load_file("text_fixed.html")
 
 
@@ -31,7 +31,7 @@ async def test_gemini_fixed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
     handler = GeminiFixedHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        body = handler.get_body()
+        body = await handler.get_body()
     assert body == load_file("gemini_fixed.html")
 
 
@@ -39,7 +39,7 @@ async def test_gemini_flowed_handler(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
     handler = GeminiFlowedHandler(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        body = handler.get_body()
+        body = await handler.get_body()
     assert body == load_file("gemini_flowed.html")
 
 
@@ -47,5 +47,5 @@ async def test_gemini_flowed_handler_2(app):
     url = URLReference("gemini://mozz.us/test/file.gmi")
     handler = GeminiFlowedHandler2(url, sample_data, "text/gemini", "UTF-8")
     async with app.app_context():
-        body = handler.get_body()
+        body = await handler.get_body()
     assert body == load_file("gemini_flowed_inline.html")
