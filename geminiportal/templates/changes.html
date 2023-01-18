@@ -2,6 +2,26 @@
 {% block body %}
 <div class="content">
     <h2>Changes</h2>
+    <h3>2022-01-18</h3>
+    <p>
+        This release marks a major milestone and rewrite of the proxy server,
+        geared towards improving performance on my poor VPC instance. Please
+        let me know if you encounter any broken links or pages that were
+        previously working, and I'll do my best to fix them.
+    </p>
+    <ul>
+        <li>The proxy codebase is now hosted publicly at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a></li>
+        <li>The server now has an actual <a href="/">homepage</a>.</li>
+        <li>Added proxy support for the <a href="/finger/mozz.us/michael"><i>finger://</i></a> protocol.</li>
+        <li>Added click-to-zoom for images via optional javascript.</li>
+        <li>The server is now enforcing a 10s connect timeout for proxied hosts.</li>
+        <li>Added link detection in <em>text/plain</em> responses via regular expressions.</li>
+        <li>Revamped URL parsing and normalization engine for all protocols.</li>
+        <li>Added graceful handling for pages with invalid character encodings.</li>
+        <li>Large responses (bigger than 8MB) are now handled more efficiently.</li>
+        <li>Removed support for the legacy <em>?reflow=</em> query parameters.</li>
+        <li>And much, much more...</li>
+    </ul>
     <h3>2021-08-01</h3>
     <ul>
         <li>This proxy is now available over port 80! <a href="http://portal.mozz.us">http://portal.mozz.us</a>
