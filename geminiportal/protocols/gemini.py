@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import logging
 import ssl
 
@@ -46,7 +45,7 @@ class GeminiRequest(BaseRequest):
         context = self.create_ssl_context()
         tls_close_notify = CloseNotifyState(context)
 
-        reader, writer = await asyncio.open_connection(self.host, self.port, ssl=context)
+        reader, writer = await self.open_connection(ssl=context)
         ssock = writer.get_extra_info("ssl_object")
 
         tls_cert = ssock.getpeercert(True)

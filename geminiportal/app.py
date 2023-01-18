@@ -38,7 +38,7 @@ async def handle_proxy_response_size_error(e):
     raw_url = g.url.get_proxy_url(raw=1)
     error = (
         f"Proxy response exceeded the maximum inline size of {MAX_BODY_SIZE // 1024} KB, "
-        f"click <a href='{escape(raw_url)}'>here</a> to view the raw document."
+        f"click <a href='{escape(raw_url)}'>here</a> to view the raw file."
     )
     content = await render_template("gemini.html", error=error, url=g.url)
     return Response(content, status=500)

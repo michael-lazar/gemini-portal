@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from urllib.parse import quote_from_bytes, unquote_to_bytes
 
 from geminiportal.protocols.base import BaseRequest, BaseResponse
@@ -12,7 +11,7 @@ class SpartanRequest(BaseRequest):
     """
 
     async def fetch(self) -> SpartanResponse:
-        reader, writer = await asyncio.open_connection(self.host, self.port)
+        reader, writer = await self.open_connection()
 
         path = self.url.path or "/"
         data = unquote_to_bytes(self.url.query)

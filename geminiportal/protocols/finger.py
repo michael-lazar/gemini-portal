@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from urllib.parse import unquote_to_bytes
 
 from geminiportal.protocols.base import BaseRequest, BaseResponse
@@ -12,7 +11,7 @@ class FingerRequest(BaseRequest):
     """
 
     async def fetch(self) -> FingerResponse:
-        reader, writer = await asyncio.open_connection(self.host, self.port)
+        reader, writer = await self.open_connection()
 
         request = unquote_to_bytes(self.url.finger_request)
 

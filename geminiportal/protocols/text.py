@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-
 from geminiportal.protocols.base import BaseRequest, BaseResponse
 
 
@@ -11,7 +9,7 @@ class TxtRequest(BaseRequest):
     """
 
     async def fetch(self) -> TxtResponse:
-        reader, writer = await asyncio.open_connection(self.host, self.port)
+        reader, writer = await self.open_connection()
 
         gemini_url = self.url.get_gemini_request_url()
         writer.write(f"{gemini_url}\r\n".encode())

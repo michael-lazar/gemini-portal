@@ -16,13 +16,16 @@ CHUNK_SIZE = 2**14
 
 # When not streaming, limit the maximum response size to avoid running out
 # of RAM when downloading & converting large files to HTML.
-MAX_BODY_SIZE = 2**22
+MAX_BODY_SIZE = 2**23
 
 # Hosts that have requested that their content be removed from the proxy
 BLOCKED_HOSTS = ["vger.cloud", "warpengineer.space"]
 
 # Ports that the proxied servers can be hosted on
 ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, *range(1960, 2021)}
+
+# Time waiting to establish a connection before aborting
+CONNECT_TIMEOUT = 10
 
 
 class ProxyError(Exception):
@@ -67,6 +70,13 @@ class BaseRequest:
 
         _logger.info(f"{self.__class__.__name__}: Response received: {response.status}")
         return response
+
+    async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+        future = asyncio.open_connection(self.host, self.port, **kwargs)
+        try:
+            return await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
+        except asyncio.TimeoutError:
+            raise ProxyError("Timeout establishing connection with server")
 
     async def fetch(self) -> BaseResponse:
         raise NotImplementedError
