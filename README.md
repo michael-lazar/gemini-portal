@@ -4,7 +4,7 @@
 
 This repository contains the code powering https://portal.mozz.us.
 
-The origin version was written with Flask, maintained in a personal
+The original version was written with Flask, maintained in a personal
 repository and never publicly released. This repository is a full
 rewrite (version 2) with following goals:
 
