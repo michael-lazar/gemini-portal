@@ -29,7 +29,7 @@ app.config.from_prefixed_env()
 
 @app.errorhandler(ValueError)
 async def handle_value_error(e) -> Response:
-    content = await render_template("gemini.html", error=f"{escape(e)}", url=g.get("url"))
+    content = await render_template("proxy.html", error=f"{escape(e)}", url=g.get("url"))
     return Response(content, status=400)
 
 
@@ -40,13 +40,13 @@ async def handle_proxy_response_size_error(e):
         f"Proxy response exceeded the maximum inline size of {MAX_BODY_SIZE // 1024} KB, "
         f"click <a href='{escape(raw_url)}'>here</a> to view the raw file."
     )
-    content = await render_template("gemini.html", error=error, url=g.url)
+    content = await render_template("proxy.html", error=error, url=g.url)
     return Response(content, status=500)
 
 
 @app.errorhandler(ProxyError)
 async def handle_proxy_error(e):
-    content = await render_template("gemini.html", error=f"{escape(e)}", url=g.get("url"))
+    content = await render_template("proxy.html", error=f"{escape(e)}", url=g.get("url"))
     return Response(content, status=500)
 
 
@@ -146,12 +146,12 @@ async def proxy(
 
         await response.get_body()
         body = await build_certificate_page_body(response)
-        content = await render_template("gemini.html", body=body)
+        content = await render_template("proxy.html", body=body)
         return Response(content)
 
     if response.is_input():
         secret = response.status == "11"
-        content = await render_template("gemini.html", query=1, secret=secret)
+        content = await render_template("proxy.html", query=1, secret=secret)
         return Response(content)
 
     if response.is_redirect():
@@ -165,7 +165,7 @@ async def proxy(
             inline_images=bool(request.args.get("inline")),
         )
 
-    content = await render_template("gemini.html")
+    content = await render_template("proxy.html")
     return Response(content)
 
 
