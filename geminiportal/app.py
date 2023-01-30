@@ -23,8 +23,8 @@ app.config.from_prefixed_env()
 
 
 @app.errorhandler(ProxyResponseSizeError)
-async def handle_proxy_size_limit(e):
-    content = await render_template("proxy/size-limit.html")
+async def handle_proxy_size_error(e):
+    content = await render_template("proxy/size-error.html")
     return Response(content, status=500)
 
 
