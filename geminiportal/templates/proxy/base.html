@@ -12,17 +12,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% endblock %}
 
 {% block body %}
-<div>
-    <form class="url-form" method="get">
-        {% if favicon %}
-        <span class="logo">{{ favicon }}</span>
-        {% endif %}
-        <input title="url" class="url-input" type="text" name="url" value="{{ url }}"
-        autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false">
-        <input type="submit" class="url-submit" value="Load URL">
-    </form>
-</div>
-{% block content %}
+{% include "fragments/url-bar.html" %}
 <div class="link-line">
     {% if parent_url %}<a href="{{ parent_url }}">[parent&nbsp;dir]</a>{% endif %}
     {% if root_url %}<a href="{{ root_url }}">[root&nbsp;dir]</a>{% endif %}
@@ -36,6 +26,5 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
         <tr><td>Meta</td><td>{{ meta }}</td></tr>
     </table>
 </div>
-{% block proxy_content %}{% endblock %}
-{% endblock %}
+{% block content %}{% endblock %}
 {% endblock %}

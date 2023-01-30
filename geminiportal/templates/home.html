@@ -1,5 +1,7 @@
-{% extends "proxy/base.html" %}
-{% block content %}
+{% extends "base.html" %}
+
+{% block body %}
+{% include "fragments/url-bar.html" %}
 <div class="content">
     <h2>Welcome, voyager!</h2>
     <p>To get started, type a <i>gemini://</i> URL into the address bar.</p>
