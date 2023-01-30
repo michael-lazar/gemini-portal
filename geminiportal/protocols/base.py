@@ -16,7 +16,7 @@ CHUNK_SIZE = 2**14
 
 # When not streaming, limit the maximum response size to avoid running out
 # of RAM when downloading & converting large files to HTML.
-MAX_BODY_SIZE = 2**23
+MAX_BODY_SIZE = 2**20
 
 # Hosts that have requested that their content be removed from the proxy
 BLOCKED_HOSTS = ["vger.cloud", "warpengineer.space"]

@@ -1,0 +1,13 @@
+{% extends "proxy/base.html" %}
+
+{% block proxy_content %}
+<br/>
+<div>
+    <form method="get">
+        <label>
+            <input type="{{ 'password' if secret else 'text' }}" name="q" size=60>
+        </label>
+        <input type="submit" value="Submit">
+    </form>
+</div>
+{% endblock %}

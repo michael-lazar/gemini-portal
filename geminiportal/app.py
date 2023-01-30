@@ -27,26 +27,21 @@ app = Quart(__name__)
 app.config.from_prefixed_env()
 
 
+@app.errorhandler(ProxyResponseSizeError)
+async def handle_proxy_size_limit(e):
+    content = await render_template("proxy/size-limit.html", max_size=MAX_BODY_SIZE)
+    return Response(content, status=500)
+
+
 @app.errorhandler(ValueError)
 async def handle_value_error(e) -> Response:
-    content = await render_template("proxy.html", error=f"{escape(e)}", url=g.get("url"))
+    content = await render_template("proxy/error.html", error=e)
     return Response(content, status=400)
-
-
-@app.errorhandler(ProxyResponseSizeError)
-async def handle_proxy_response_size_error(e):
-    raw_url = g.url.get_proxy_url(raw=1)
-    error = (
-        f"Proxy response exceeded the maximum inline size of {MAX_BODY_SIZE // 1024} KB, "
-        f"click <a href='{escape(raw_url)}'>here</a> to view the raw file."
-    )
-    content = await render_template("proxy.html", error=error, url=g.url)
-    return Response(content, status=500)
 
 
 @app.errorhandler(ProxyError)
 async def handle_proxy_error(e):
-    content = await render_template("proxy.html", error=f"{escape(e)}", url=g.get("url"))
+    content = await render_template("proxy/error.html", error=e)
     return Response(content, status=500)
 
 
@@ -146,12 +141,12 @@ async def proxy(
 
         await response.get_body()
         body = await build_certificate_page_body(response)
-        content = await render_template("proxy.html", body=body)
+        content = await render_template("proxy/response.html", body=body)
         return Response(content)
 
     if response.is_input():
-        secret = response.status == "11"
-        content = await render_template("proxy.html", query=1, secret=secret)
+        is_secret = response.status == "11"
+        content = await render_template("proxy/query.html", is_secret=is_secret)
         return Response(content)
 
     if response.is_redirect():
@@ -165,7 +160,7 @@ async def proxy(
             inline_images=bool(request.args.get("inline")),
         )
 
-    content = await render_template("proxy.html")
+    content = await render_template("proxy/response.html")
     return Response(content)
 
 

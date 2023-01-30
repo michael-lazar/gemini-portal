@@ -36,25 +36,6 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
         <tr><td>Meta</td><td>{{ meta }}</td></tr>
     </table>
 </div>
-{% if query %}
-    <br/>
-    <div>
-        <form method="get">
-            <label>
-                <input type="{{ 'password' if secret else 'text' }}" name="q" size=60>
-            </label>
-            <input type="submit" value="Submit">
-        </form>
-    </div>
-{% elif error %}
-    <div>
-        <p>A gateway error has occurred</p>
-        <p><i>{{ error | safe }}</i></p>
-    </div>
-{% else %}
-    <div class="body">
-        {{ body | safe}}
-    </div>
-{% endif %}
+{% block proxy_content %}{% endblock %}
 {% endblock %}
 {% endblock %}

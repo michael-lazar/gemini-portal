@@ -86,7 +86,7 @@ class TemplateHandler(BaseHandler):
     Render the proxied response as HTML and insert it inside the page.
     """
 
-    BASE_TEMPLATE = "proxy.html"
+    BASE_TEMPLATE = "proxy/response.html"
 
     _text: str | None
 
