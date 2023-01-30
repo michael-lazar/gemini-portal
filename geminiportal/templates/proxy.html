@@ -51,18 +51,6 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
         <p>A gateway error has occurred</p>
         <p><i>{{ error | safe }}</i></p>
     </div>
-{% elif robots_error %}
-    <div>
-        <p>
-            Web access to this resource has been prohibited by this gemini capsule's
-            <a href="{{ robots_link }}">robots.txt</a>.
-        </p>
-        <p>
-            In order to view this page, try using one of the
-            <a href="https://gemini.circumlunar.space/clients.html">many</a>
-            wonderful gemini clients instead!
-        </p>
-    </div>
 {% else %}
     <div class="body">
         {{ body | safe}}
