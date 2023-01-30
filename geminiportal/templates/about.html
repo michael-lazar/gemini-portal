@@ -1,63 +1,62 @@
 {% extends "base.html" %}
+
 {% block body %}
-<div class="content">
-    <h2>About</h2>
-    <p>
-        This site is a full-featured <em>gemini://</em> to <em>https://</em> web proxy service.
-        If you haven't heard of <a href="https://gemini.circumlunar.space/docs/faq.html">gemini</a> yet,
-        it's a wonderful new protocol inspired by gopher!
-    </p>
-    <p>
-        This site was launched in August 2019, making it the first public gemini proxy and one of the earliest graphical clients for gemini!
-    </p>
-    <h3>design</h3>
-    <p>
-        This site is unapologetically <a href="https://brutalistwebsites.com/">brutalist</a> by design.
-        All pages are static with no javascript or tracking. If the style is a bit too extreme for your
-        taste, I recommend creating your own user stylesheet through your browser (if you're into that
-        sort of thing).
-    </p>
-    <h3>certificates</h3>
-    <p>
-        All gemini connections are made securely over TLS. This proxy does not attempt to
-        validate the TLS certificates for gemini servers, nor will it compare them against any
-        previously seen fingerprints (TOFU scheme). The proxied server's x509 certificate can be
-        manually inspected by clicking the <a href="https://portal.mozz.us/gemini/mozz.us/?crt=1">[view cert]</a> link at the top of the page.
-    </p>
-    <h3>favicons</h3>
-    <p>
-        This proxy provides experimental support for gemini emoji favicons, as outlined in this
-        <a href="https://portal.mozz.us/gemini/mozz.us/files/rfc_gemini_favicon.gmi">draft specification</a>.
-        If a valid favicon is found, it will be displayed on the left side of the URL bar. Favicons are
-        cached per-domain for up to 4 hours.
-    </p>
-    <h3>blocking access</h3>
-    <p>
-        This proxy used to honor the gemini
-        <a href="https://portal.mozz.us/gemini/gemini.circumlunar.space/docs/companion/robots.gmi">robots.txt</a>
-        specification as the <em>webproxy</em> user agent, but support for this was turned off because it posed some
-        technical challenges and user adoption was inconsistent and confusing.
-    </p>
-    <p>
-        If you host content on gemini and you would prefer that it <strong>not</strong> to be accessible through this web proxy
-        for whatever reason, please send me an email and I'll add you to the list of blocked hosts. The following
-        error message will be displayed for these servers:
-    </p>
-    <p>
-        <em>This host has kindly requested that their content not be accessed via web proxy.</em>
-    </p>
-    <h3>source code</h3>
-    <p>
-        You can find the source for this server at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a>.
-    </p>
-    <h3>contact</h3>
-    <p>
-        Please email me at <a href="mailto:michael@mozz.us">michael@mozz.us</a> if you find any
-        bugs or have any questions about how this proxy works. My home on port 1965 is
-        <a href="https://portal.mozz.us/gemini/mozz.us/">gemini://mozz.us</a>.
-    </p>
-    <p>
-        © Michael Lazar {{ year }}
-    </p>
-</div>
+<h2>About</h2>
+<p>
+    This site is a full-featured <em>gemini://</em> to <em>https://</em> web proxy service.
+    If you haven't heard of <a href="https://gemini.circumlunar.space/docs/faq.html">gemini</a> yet,
+    it's a wonderful new protocol inspired by gopher!
+</p>
+<p>
+    This site was launched in August 2019, making it the first public gemini proxy and one of the earliest graphical clients for gemini!
+</p>
+<h3>design</h3>
+<p>
+    This site is unapologetically <a href="https://brutalistwebsites.com/">brutalist</a> by design.
+    All pages are static with no javascript or tracking. If the style is a bit too extreme for your
+    taste, I recommend creating your own user stylesheet through your browser (if you're into that
+    sort of thing).
+</p>
+<h3>certificates</h3>
+<p>
+    All gemini connections are made securely over TLS. This proxy does not attempt to
+    validate the TLS certificates for gemini servers, nor will it compare them against any
+    previously seen fingerprints (TOFU scheme). The proxied server's x509 certificate can be
+    manually inspected by clicking the <a href="https://portal.mozz.us/gemini/mozz.us/?crt=1">[view cert]</a> link at the top of the page.
+</p>
+<h3>favicons</h3>
+<p>
+    This proxy provides experimental support for gemini emoji favicons, as outlined in this
+    <a href="https://portal.mozz.us/gemini/mozz.us/files/rfc_gemini_favicon.gmi">draft specification</a>.
+    If a valid favicon is found, it will be displayed on the left side of the URL bar. Favicons are
+    cached per-domain for up to 4 hours.
+</p>
+<h3>blocking access</h3>
+<p>
+    This proxy used to honor the gemini
+    <a href="https://portal.mozz.us/gemini/gemini.circumlunar.space/docs/companion/robots.gmi">robots.txt</a>
+    specification as the <em>webproxy</em> user agent, but support for this was turned off because it posed some
+    technical challenges and user adoption was inconsistent and confusing.
+</p>
+<p>
+    If you host content on gemini and you would prefer that it <strong>not</strong> to be accessible through this web proxy
+    for whatever reason, please send me an email and I'll add you to the list of blocked hosts. The following
+    error message will be displayed for these servers:
+</p>
+<p>
+    <em>This host has kindly requested that their content not be accessed via web proxy.</em>
+</p>
+<h3>source code</h3>
+<p>
+    You can find the source for this server at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a>.
+</p>
+<h3>contact</h3>
+<p>
+    Please email me at <a href="mailto:michael@mozz.us">michael@mozz.us</a> if you find any
+    bugs or have any questions about how this proxy works. My home on port 1965 is
+    <a href="https://portal.mozz.us/gemini/mozz.us/">gemini://mozz.us</a>.
+</p>
+<p>
+    © Michael Lazar {{ year }}
+</p>
 {% endblock %}

@@ -14,9 +14,6 @@ div {
 img {
     max-width: 300px;
 }
-.body {
-    max-width: 100ch;
-}
 .link-line {
     font-size: smaller;
 }
@@ -36,28 +33,28 @@ img {
 .url-submit {
     margin-left: 4px;
 }
-.input-line input {
-    margin-left: 4px;
-    vertical-align: text-bottom;
-}
-.input-line textarea {
-    margin-left: 4px;
-    vertical-align: text-bottom;
-}
 .link-line a {
     text-decoration: none;
     padding-right: 0.4em;
 }
-.crumb-line {
+.header {
+    max-width: 120ch;
+    margin-bottom: 1em;
+}
+.header-item {
+    padding-right: 0.4em;
+    text-decoration: underline;
+}
+.title {
     font-weight: bolder;
-}
-.crumb-line a {
-    padding-left: 0.2em;
-    padding-right: 0.2em;
-}
-.anchor {
+    color: #3f51b5;
+    font-size: 1.2em;
+    font-family: sans-serif;
     text-decoration: none;
-    color: inherit;
+    padding-right: 0.4em;
+}
+.body {
+    max-width: 80ch;
 }
 .gemini {
     margin-top: 1em;
@@ -96,30 +93,19 @@ img {
 .gemini > figure {
     margin-bottom: 1em;
 }
-.inline-image {
+.gemini > .input-line input {
+    margin-left: 4px;
+    vertical-align: text-bottom;
+}
+.gemini > .input-line textarea {
+    margin-left: 4px;
+    vertical-align: text-bottom;
+}
+.gemini > .inline-image {
     cursor: zoom-in;
 }
-.inline-image.selected {
+.gemini > .inline-image.selected {
     max-width: 90vw;
     max-height: initial;
     cursor: zoom-out;
-}
-.header {
-    max-width: 120ch;
-    margin-bottom: 1em;
-}
-.header-item {
-    padding-right: 0.4em;
-    text-decoration: underline;
-}
-.title {
-    font-weight: bolder;
-    color: #3f51b5;
-    font-size: 1.2em;
-    font-family: sans-serif;
-    text-decoration: none;
-    padding-right: 0.4em;
-}
-.content {
-    max-width: 80ch;
 }

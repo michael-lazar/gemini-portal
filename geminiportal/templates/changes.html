@@ -1,82 +1,82 @@
 {% extends "base.html" %}
+
 {% block body %}
-<div class="content">
-    <h2>Changes</h2>
-    <h3>2023-01-18</h3>
-    <p>
-        This release marks a major milestone and rewrite of the proxy server,
-        geared towards improving performance on my poor VPC instance. Please
-        let me know if you encounter any broken links or pages that were
-        previously working, and I'll do my best to fix them.
-    </p>
-    <ul>
-        <li>The proxy codebase is now hosted publicly at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a></li>
-        <li>The server now has an actual <a href="/">homepage</a>.</li>
-        <li>Added proxy support for the <a href="/finger/mozz.us/michael"><i>finger://</i></a> protocol.</li>
-        <li>Added click-to-zoom for images via optional javascript.</li>
-        <li>The server is now enforcing a 10s connect timeout for proxied hosts.</li>
-        <li>Added link detection in <em>text/plain</em> responses via regular expressions.</li>
-        <li>Revamped URL parsing and normalization engine for all protocols.</li>
-        <li>Added graceful handling for pages with invalid character encodings.</li>
-        <li>Large responses (bigger than 8MB) are now handled more efficiently.</li>
-        <li>Removed support for the legacy <em>?reflow=</em> query parameters.</li>
-        <li>And much, much more...</li>
-    </ul>
-    <h3>2021-08-01</h3>
-    <ul>
-        <li>This proxy is now available over port 80! <a href="http://portal.mozz.us">http://portal.mozz.us</a>
-        </li>
-        <li>Removed the &lt;a&gt; tags from headers, because they render poorly in some browsers.
-    </ul>
-    <h3>2021-07-03</h3>
-    <ul>
-        <li>
-            URL fragments on gemini URLs will now anchor to page headers in text/gemini documents.
-            See the <a href="https://gitlab.com/gemini-specification/gemini-text/-/issues/3#note_519439831">protocol discussion thread</a> for more details.
-        </li>
-    </ul>
-    <h3>2021-04-18</h3>
-    <ul>
-        <li>Added proxy support for the <a href="/text/txt.textprotocol.org/">text://</a> protocol.</li>
-    </ul>
-    <h3>2021-04-17</h3>
-    <ul>
-        <li>Updated networking to support IPv6 gemini servers.</li>
-        <li>Updated OpenSSL library - TLS 1.3 and Ed25519 keys are now supported.</li>
-    </ul>
-    <h3>2021-03-24</h3>
-    <ul>
-        <li>Disabled autocomplete & spell checking on the URL input bar.</li>
-        <li>Added proxy support for the spartan:// protocol.</li>
-    </ul>
-    <h3>2021-03-05</h3>
-    <ul>
-        <li>Added "blocking access" section to the <a href="/about">about</a> page.</li>
-    </ul>
-    <h3>2021-02-07</h3>
-    <ul>
-        <li>Prevent automatic redirects from <em>gemini://example.com</em> to <em>gemini://example.com/</em>.</li>
-    </ul>
-    <h3>2021-02-07</h3>
-    <ul>
-        <li>Better error handling if a link line contains an invalid URL.</li>
-    </ul>
-    <h3>2021-02-06</h3>
-    <ul>
-        <li>Emoji favicons will now be rendered as the <em>actual</em> site favicon thanks to a neat svg hack.</li>
-    </ul>
-    <h3>2021-01-05</h3>
-    <ul>
-        <li>Dropped the css <em>max-width</em> from 120ch to 100ch.</li>
-    </ul>
-    <h3>2020-12-28</h3>
-    <ul>
-        <li>Added a new <a href="/gemini/mozz.us/?inline=1">[inline images]</a> button to toggle viewing images in <em>text/gemini</em> documents.</li>
-        <li>Gemini capsule robots.txt files are no longer checked, since nobody seems to care about this in the context of a web proxy...</li>
-    </ul>
-    <h3>2020-12-15</h3>
-    <ul>
-        <li>Added support for <em>;rаbbiΤ;</em> formatting flags.<pre>
+<h2>Changes</h2>
+<h3>2023-01-18</h3>
+<p>
+    This release marks a major milestone and rewrite of the proxy server,
+    geared towards improving performance on my poor VPC instance. Please
+    let me know if you encounter any broken links or pages that were
+    previously working, and I'll do my best to fix them.
+</p>
+<ul>
+    <li>The proxy codebase is now hosted publicly at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a></li>
+    <li>The server now has an actual <a href="/">homepage</a>.</li>
+    <li>Added proxy support for the <a href="/finger/mozz.us/michael"><i>finger://</i></a> protocol.</li>
+    <li>Added click-to-zoom for images via optional javascript.</li>
+    <li>The server is now enforcing a 10s connect timeout for proxied hosts.</li>
+    <li>Added link detection in <em>text/plain</em> responses via regular expressions.</li>
+    <li>Revamped URL parsing and normalization engine for all protocols.</li>
+    <li>Added graceful handling for pages with invalid character encodings.</li>
+    <li>Large responses (bigger than 8MB) are now handled more efficiently.</li>
+    <li>Removed support for the legacy <em>?reflow=</em> query parameters.</li>
+    <li>And much, much more...</li>
+</ul>
+<h3>2021-08-01</h3>
+<ul>
+    <li>This proxy is now available over port 80! <a href="http://portal.mozz.us">http://portal.mozz.us</a>
+    </li>
+    <li>Removed the &lt;a&gt; tags from headers, because they render poorly in some browsers.
+</ul>
+<h3>2021-07-03</h3>
+<ul>
+    <li>
+        URL fragments on gemini URLs will now anchor to page headers in text/gemini documents.
+        See the <a href="https://gitlab.com/gemini-specification/gemini-text/-/issues/3#note_519439831">protocol discussion thread</a> for more details.
+    </li>
+</ul>
+<h3>2021-04-18</h3>
+<ul>
+    <li>Added proxy support for the <a href="/text/txt.textprotocol.org/">text://</a> protocol.</li>
+</ul>
+<h3>2021-04-17</h3>
+<ul>
+    <li>Updated networking to support IPv6 gemini servers.</li>
+    <li>Updated OpenSSL library - TLS 1.3 and Ed25519 keys are now supported.</li>
+</ul>
+<h3>2021-03-24</h3>
+<ul>
+    <li>Disabled autocomplete & spell checking on the URL input bar.</li>
+    <li>Added proxy support for the spartan:// protocol.</li>
+</ul>
+<h3>2021-03-05</h3>
+<ul>
+    <li>Added "blocking access" section to the <a href="/about">about</a> page.</li>
+</ul>
+<h3>2021-02-07</h3>
+<ul>
+    <li>Prevent automatic redirects from <em>gemini://example.com</em> to <em>gemini://example.com/</em>.</li>
+</ul>
+<h3>2021-02-07</h3>
+<ul>
+    <li>Better error handling if a link line contains an invalid URL.</li>
+</ul>
+<h3>2021-02-06</h3>
+<ul>
+    <li>Emoji favicons will now be rendered as the <em>actual</em> site favicon thanks to a neat svg hack.</li>
+</ul>
+<h3>2021-01-05</h3>
+<ul>
+    <li>Dropped the css <em>max-width</em> from 120ch to 100ch.</li>
+</ul>
+<h3>2020-12-28</h3>
+<ul>
+    <li>Added a new <a href="/gemini/mozz.us/?inline=1">[inline images]</a> button to toggle viewing images in <em>text/gemini</em> documents.</li>
+    <li>Gemini capsule robots.txt files are no longer checked, since nobody seems to care about this in the context of a web proxy...</li>
+</ul>
+<h3>2020-12-15</h3>
+<ul>
+    <li>Added support for <em>;rаbbiΤ;</em> formatting flags.<pre>
           /|
     /\   //
    |/\'-'/ .::.
@@ -87,20 +87,19 @@
    {/ |/  \
   __\  _  /__
  '----' '----'
-        </pre></li>
-    </ul>
-    <h3>2020-11-27</h3>
-    <ul>
-        <li>Fixed Apache behavior that was causing repeated slashes to be normalized inside of gemini URLs.</li>
-    </ul>
-    <h3>2020-11-10</h3>
-    <ul>
-        <li>Added more TLS connection information to the <a href="/gemini/mozz.us/?crt=1">[view cert]</a> page.</li>
-    </ul>
-    <h3>2020-10-11</h3>
-    <ul>
-        <li>Added a site header with links to the new <a href="/changes">changes</a> & <a href="/about">about</a> sections.</li>
-        <li>Gemini capsule robots.txt files are now checked and respected by this proxy.</li>
-    </ul>
-</div>
+    </pre></li>
+</ul>
+<h3>2020-11-27</h3>
+<ul>
+    <li>Fixed Apache behavior that was causing repeated slashes to be normalized inside of gemini URLs.</li>
+</ul>
+<h3>2020-11-10</h3>
+<ul>
+    <li>Added more TLS connection information to the <a href="/gemini/mozz.us/?crt=1">[view cert]</a> page.</li>
+</ul>
+<h3>2020-10-11</h3>
+<ul>
+    <li>Added a site header with links to the new <a href="/changes">changes</a> & <a href="/about">about</a> sections.</li>
+    <li>Gemini capsule robots.txt files are now checked and respected by this proxy.</li>
+</ul>
 {% endblock %}
