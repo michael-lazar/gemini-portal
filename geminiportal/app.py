@@ -9,11 +9,7 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
-from geminiportal.protocols.base import (
-    MAX_BODY_SIZE,
-    ProxyError,
-    ProxyResponseSizeError,
-)
+from geminiportal.protocols.base import ProxyError, ProxyResponseSizeError
 from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
 from geminiportal.utils import describe_tls_cert
@@ -28,7 +24,7 @@ app.config.from_prefixed_env()
 
 @app.errorhandler(ProxyResponseSizeError)
 async def handle_proxy_size_limit(e):
-    content = await render_template("proxy/size-limit.html", max_size=MAX_BODY_SIZE)
+    content = await render_template("proxy/size-limit.html")
     return Response(content, status=500)
 
 
