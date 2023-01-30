@@ -20,11 +20,13 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     {% if raw_url %}<a href="{{ raw_url }}">[raw&nbsp;response]</a>{% endif %}
     {% if cert_url %}<a href="{{ cert_url }}">[view&nbsp;cert]</a>{% endif %}
 </div>
+{% if response %}
 <div>
     <table class="response-table">
         <tr><td>Status</td><td>{{ status }}</td></tr>
         <tr><td>Meta</td><td>{{ meta }}</td></tr>
     </table>
 </div>
+{% endif %}
 {% block content %}{% endblock %}
 {% endblock %}

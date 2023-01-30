@@ -1,3 +1,6 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
 <h3>TLS Context</h3>
 <ul>
     <li>received <em>close_notify</em> alert: {{ "yes ✅" if tls_close_notify_received else "no ❌" }}</li>
@@ -5,4 +8,5 @@
     <li>negotiated cipher: {{ tls_cipher }}</li>
 </ul>
 <a href="{{ raw_cert_url }}">Download x509 certificate</a>
-<pre>{{ openssl_output }}</pre>
+<pre>{{ cert_description }}</pre>
+{% endblock %}

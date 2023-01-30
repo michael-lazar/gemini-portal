@@ -1,10 +1,8 @@
-import asyncio
 import logging
-import subprocess
 from datetime import datetime
 from urllib.parse import quote
 
-from quart import Quart, Response, escape, g, render_template, request
+from quart import Quart, Response, g, render_template, request
 from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
@@ -18,6 +16,7 @@ from geminiportal.protocols.base import (
 )
 from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
+from geminiportal.utils import describe_tls_cert
 
 logger = logging.getLogger("geminiportal")
 logger.setLevel(logging.INFO)
@@ -49,6 +48,7 @@ async def handle_proxy_error(e):
 def inject_context():
     kwargs = {}
     if "response" in g:
+        kwargs["response"] = g.response
         kwargs["status"] = g.response.status_string
         kwargs["meta"] = g.response.meta
         if hasattr(g.response, "tls_cert"):
@@ -139,9 +139,19 @@ async def proxy(
         if not isinstance(response, GeminiResponse):
             raise ValueError("Cannot download certificate for non-TLS schemes")
 
+        # Consume the request, so we can check for the close_notify signal
         await response.get_body()
-        body = await build_certificate_page_body(response)
-        content = await render_template("proxy/response.html", body=body)
+
+        cert_description = await describe_tls_cert(response.tls_cert)
+
+        content = await render_template(
+            "proxy/tls-context.html",
+            cert_description=cert_description,
+            raw_cert_url=g.url.get_proxy_url(raw_crt=1),
+            tls_close_notify_received=response.tls_close_notify_received,
+            tls_version=response.tls_version,
+            tls_cipher=response.tls_cipher,
+        )
         return Response(content)
 
     if response.is_input():
@@ -162,27 +172,6 @@ async def proxy(
 
     content = await render_template("proxy/response.html")
     return Response(content)
-
-
-async def build_certificate_page_body(response: GeminiResponse) -> str:
-    proc = await asyncio.create_subprocess_exec(
-        *["openssl", "x509", "-inform", "DER", "-text"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdout, stderr = await proc.communicate(response.tls_cert)
-    output = stdout.decode(errors="ignore")
-
-    body = await render_template(
-        "fragments/tls_context.html",
-        openssl_output=escape(output),
-        raw_cert_url=g.url.get_proxy_url(raw_crt=1),
-        tls_close_notify_received=response.tls_close_notify_received,
-        tls_version=response.tls_version,
-        tls_cipher=response.tls_cipher,
-    )
-    return body
 
 
 if __name__ == "__main__":
