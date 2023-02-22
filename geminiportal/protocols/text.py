@@ -22,7 +22,6 @@ class TxtRequest(BaseRequest):
 
 
 class TxtResponse(BaseResponse):
-
     STATUS_CODES = {
         "20": "OK",
         "30": "REDIRECT",

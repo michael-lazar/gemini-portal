@@ -30,7 +30,6 @@ class SpartanRequest(BaseRequest):
 
 
 class SpartanResponse(BaseResponse):
-
     STATUS_CODES = {
         "2": "SUCCESS",
         "3": "REDIRECT",

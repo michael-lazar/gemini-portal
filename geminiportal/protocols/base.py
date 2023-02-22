@@ -5,7 +5,7 @@ import logging
 import re
 import socket
 from asyncio.exceptions import IncompleteReadError
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from geminiportal.urls import URLReference
 

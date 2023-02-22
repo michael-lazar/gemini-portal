@@ -132,7 +132,7 @@ async def proxy(
         )
 
     if request.args.get("crt"):
-        if not isinstance(response, GeminiResponse):
+        if not hasattr(response, "tls_cert"):
             raise ValueError("Cannot download certificate for non-TLS schemes")
 
         # Consume the request, so we can check for the close_notify signal

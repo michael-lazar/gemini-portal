@@ -24,11 +24,11 @@ def _extend(container: list, schemes: list):
 
 _extend(
     urllib.parse.uses_relative,
-    ["gemini", "gopher", "gophers", "spartan", "text"],
+    ["gemini", "gopher", "gophers", "spartan", "text", "finger"],
 )
 _extend(
     urllib.parse.uses_netloc,
-    ["gemini", "gopher", "gophers", "spartan", "text"],
+    ["gemini", "gopher", "gophers", "spartan", "text", "finger"],
 )
 
 
