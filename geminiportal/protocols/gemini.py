@@ -73,7 +73,6 @@ class GeminiRequest(BaseRequest):
 
 
 class GeminiResponse(BaseResponse):
-
     STATUS_CODES = {
         "10": "INPUT",
         "11": "SENSITIVE INPUT",
