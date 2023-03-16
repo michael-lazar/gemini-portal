@@ -5,4 +5,7 @@ set -o pipefail
 set -o nounset
 
 source venv/bin/activate
-python -m gunicorn geminiportal.app:app --worker-class uvicorn.workers.UvicornWorker "$@"
+python -m gunicorn geminiportal.app:app \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --keep-alive 0 \
+    "$@"
