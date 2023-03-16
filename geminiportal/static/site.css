@@ -101,10 +101,10 @@ img {
     margin-left: 4px;
     vertical-align: text-bottom;
 }
-.gemini > .inline-image {
+.inline-image {
     cursor: zoom-in;
 }
-.gemini > .inline-image.selected {
+.inline-image.selected {
     max-width: 90vw;
     max-height: initial;
     cursor: zoom-out;
