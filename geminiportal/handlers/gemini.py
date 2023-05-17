@@ -1,6 +1,7 @@
 import re
 from collections import Counter
 
+from emoji import is_emoji
 from quart import escape
 
 from geminiportal.handlers.base import TemplateHandler
@@ -22,7 +23,11 @@ RABBIT_ART = r"""
 """
 
 
-def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str]:
+def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, str]:
+    # Prefix is part of the text at the beginning of the link
+    # description that shouldn't be underlined.
+    prefix = ""
+
     parts = line.split(maxsplit=1)
     if len(parts) == 0:
         link, link_text = "", ""
@@ -30,9 +35,12 @@ def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str]:
         link, link_text = parts[0], parts[0]
     else:
         link, link_text = parts
+        if is_emoji(link_text[0]):
+            prefix = link_text[0] + " "
+            link_text = link_text[1:].lstrip()
 
     url = base.join(link)
-    return url, link_text
+    return url, link_text, prefix
 
 
 class GeminiFixedHandler(TemplateHandler):
@@ -45,9 +53,9 @@ class GeminiFixedHandler(TemplateHandler):
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
             if line.startswith("=>"):
-                url, link_text = parse_link_line(line[2:], self.url)
+                url, link_text, prefix = parse_link_line(line[2:], self.url)
                 proxy_url = url.get_proxy_url()
-                buffer.append(f'<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
+                buffer.append(f'{prefix}<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
             else:
                 buffer.append(escape(line))
 
@@ -103,28 +111,27 @@ class GeminiFlowedHandler(TemplateHandler):
                 self.sections.append(f"<pre>{RABBIT_ART}</pre>")
             elif line.startswith("=>"):
                 self.flush()
-                url, link_text = parse_link_line(line[2:], self.url)
-                gemini_link, link_text = parse_link_line(line[2:], self.url)
+                url, link_text, prefix = parse_link_line(line[2:], self.url)
                 mime_type = url.guess_mimetype()
                 if self.inline_images and mime_type and mime_type.startswith("image"):
                     image_url = url.get_proxy_url(raw=True)
                     self.sections.append(
                         f'<figure><a href="{escape(image_url)}">'
                         f'<img src="{escape(image_url)}" alt="{escape(link_text)}">'
-                        f"</a><figcaption>{escape(link_text)}</figcaption></figure>"
+                        f"</a><figcaption>{prefix}{escape(link_text)}</figcaption></figure>"
                     )
                 else:
                     image_url = url.get_proxy_url()
                     self.sections.append(
-                        f'<a href="{escape(image_url)}">{escape(link_text)}</a><br/>'
+                        f'{prefix}<a href="{escape(image_url)}">{escape(link_text)}</a><br/>'
                     )
             elif line.startswith("=:"):
                 self.flush()
-                url, link_text = parse_link_line(line[2:], self.url)
+                url, link_text, prefix = parse_link_line(line[2:], self.url)
                 proxy_url = url.get_proxy_url()
                 self.sections.append(
                     f'<form method="get" action="{escape(proxy_url)}" class="input-line">'
-                    f"<label>{escape(link_text)}"
+                    f"<label>{prefix}{escape(link_text)}"
                     '<textarea name="q" rows="1" placeholder="Enter text..."></textarea>'
                     "</label>"
                     '<input type="submit" value="Submit">'
