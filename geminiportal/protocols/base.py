@@ -19,7 +19,11 @@ CHUNK_SIZE = 2**14
 MAX_BODY_SIZE = 2**20
 
 # Hosts that have requested that their content be removed from the proxy
-BLOCKED_HOSTS = ["vger.cloud", "warpengineer.space"]
+BLOCKED_HOSTS = [
+    "vger.cloud",
+    "warpengineer.space",
+    "michaelnordmeyer.com",
+]
 
 # Ports that the proxied servers can be hosted on
 ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, *range(1960, 2021)}
