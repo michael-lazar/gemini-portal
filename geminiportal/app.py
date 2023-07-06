@@ -24,19 +24,19 @@ app.config.from_prefixed_env()
 
 @app.errorhandler(ProxyResponseSizeError)
 async def handle_proxy_size_error(e):
-    content = await render_template("proxy/errors/size-limit.html", error=e)
+    content = await render_template("proxy/size-error.html", error=e)
     return Response(content, status=500)
 
 
 @app.errorhandler(ValueError)
 async def handle_value_error(e) -> Response:
-    content = await render_template("proxy/errors/gateway.html", error=e)
+    content = await render_template("proxy/gateway-error.html", error=e)
     return Response(content, status=400)
 
 
 @app.errorhandler(ProxyError)
 async def handle_proxy_error(e):
-    content = await render_template("proxy/errors/gateway.html", error=e)
+    content = await render_template("proxy/gateway-error.html", error=e)
     return Response(content, status=500)
 
 
@@ -166,7 +166,7 @@ async def proxy(
             inline_images=bool(request.args.get("inline")),
         )
 
-    content = await render_template("proxy/response.html")
+    content = await render_template("proxy/base.html")
     return Response(content)
 
 

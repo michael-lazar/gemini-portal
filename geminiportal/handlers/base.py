@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
+from typing import ClassVar
 
 from quart import Response, render_template
 
@@ -86,9 +87,7 @@ class TemplateHandler(BaseHandler):
     Render the proxied response as HTML and insert it inside the page.
     """
 
-    BASE_TEMPLATE = "proxy/response.html"
-
-    _text: str | None
+    template: ClassVar[str]
 
     def __init__(
         self,
@@ -101,8 +100,7 @@ class TemplateHandler(BaseHandler):
         self.content = content
         self.mimetype = mimetype
         self.charset = charset
-
-        self._text = None
+        self._text: str | None = None
 
     @property
     def text(self) -> str:
@@ -119,17 +117,9 @@ class TemplateHandler(BaseHandler):
         return self._text
 
     async def render(self) -> Response:
-        context = await self.get_context()
-        content = await render_template(self.BASE_TEMPLATE, **context)
+        context = self.get_context()
+        content = await render_template(self.template, **context)
         return Response(content)
-
-    async def get_context(self) -> dict:
-        context = {}
-        context["body"] = await self.get_body()
-        return context
-
-    async def get_body(self) -> str:
-        raise NotImplementedError
 
     @classmethod
     async def from_response(cls, response: BaseResponse) -> TemplateHandler:
@@ -139,3 +129,6 @@ class TemplateHandler(BaseHandler):
             response.mimetype,
             response.charset,
         )
+
+    def get_context(self) -> dict:
+        return {}

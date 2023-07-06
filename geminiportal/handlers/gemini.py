@@ -1,5 +1,7 @@
 import re
 from collections import Counter
+from collections.abc import Iterable
+from typing import Any
 
 from emoji import is_emoji
 from quart import escape
@@ -48,7 +50,14 @@ class GeminiFixedHandler(TemplateHandler):
     Everything in a single <pre> block, with => links supported.
     """
 
-    async def get_body(self) -> str:
+    template = "proxy/handlers/text.html"
+
+    def get_context(self):
+        context = super().get_context()
+        context["body"] = self.get_body()
+        return context
+
+    def get_body(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
             line = line.rstrip()
@@ -60,7 +69,7 @@ class GeminiFixedHandler(TemplateHandler):
                 buffer.append(escape(line))
 
         body = "\n".join(buffer)
-        return f"<pre>{body}</pre>\n"
+        return body
 
 
 class GeminiFlowedHandler(TemplateHandler):
@@ -68,19 +77,14 @@ class GeminiFlowedHandler(TemplateHandler):
     The full-featured gemtext -> html converter.
     """
 
-    inline_images = False
-
     _rabbit_re = re.compile(RABBIT_INLINE)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    template = "proxy/handlers/gemini.html"
+    inline_images = False
 
-        self.sections: list[str] = []
-        self.buffer: list[str] = []
-        self.preformat_mode = False
-        self.list_mode = False
-        self.quote_mode = False
-        self.anchor_counter: Counter[str] = Counter()
+    line_buffer: list[str]
+    active_type: str | None
+    anchor_counter: Counter[str]
 
     def get_anchor(self, text: str) -> str:
         """
@@ -95,99 +99,112 @@ class GeminiFlowedHandler(TemplateHandler):
             text += f"-{self.anchor_counter[text] - 1}"
         return text
 
-    async def get_body(self) -> str:
-        for line in self.text.splitlines(keepends=False):
+    def get_context(self) -> dict[str, Any]:
+        context = super().get_context()
+        context["content"] = self.iter_content()
+        return context
+
+    def iter_content(self) -> Iterable[dict]:
+        self.line_buffer = []
+        self.active_type = None
+        self.anchor_counter = Counter()
+
+        for line in self.text.splitlines():
             line = line.rstrip()
             line = self._rabbit_re.sub("🐇", line)
             if line.startswith("```"):
-                self.flush()
-                self.preformat_mode = not self.preformat_mode
-            elif self.preformat_mode:
+                if self.active_type == "pre":
+                    yield from self.flush()
+                else:
+                    yield from self.flush("pre")
+
+            elif self.active_type == "pre":
                 if line == RABBIT_STANDALONE:
                     line = RABBIT_ART
-                self.buffer.append(escape(line))
+                self.line_buffer.append(line)
+
             elif line == RABBIT_STANDALONE:
-                self.flush()
-                self.sections.append(f"<pre>{RABBIT_ART}</pre>")
+                yield from self.flush()
+                yield {
+                    "item_type": "pre",
+                    "lines": RABBIT_ART.splitlines(keepends=False),
+                }
+
             elif line.startswith("=>"):
-                self.flush()
+                yield from self.flush()
                 url, link_text, prefix = parse_link_line(line[2:], self.url)
                 mime_type = url.guess_mimetype()
                 if self.inline_images and mime_type and mime_type.startswith("image"):
-                    image_url = url.get_proxy_url(raw=True)
-                    self.sections.append(
-                        f'<figure><a href="{escape(image_url)}">'
-                        f'<img src="{escape(image_url)}" alt="{escape(link_text)}">'
-                        f"</a><figcaption>{prefix}{escape(link_text)}</figcaption></figure>"
-                    )
+                    yield {
+                        "item_type": "image",
+                        "url": url.get_proxy_url(raw=True),
+                        "text": link_text,
+                        "prefix": prefix,
+                    }
                 else:
-                    image_url = url.get_proxy_url()
-                    self.sections.append(
-                        f'{prefix}<a href="{escape(image_url)}">{escape(link_text)}</a><br/>'
-                    )
+                    yield {
+                        "item_type": "link",
+                        "url": url.get_proxy_url(),
+                        "text": link_text,
+                        "prefix": prefix,
+                    }
+
             elif line.startswith("=:"):
-                self.flush()
+                yield from self.flush()
                 url, link_text, prefix = parse_link_line(line[2:], self.url)
-                proxy_url = url.get_proxy_url()
-                self.sections.append(
-                    f'<form method="get" action="{escape(proxy_url)}" class="input-line">'
-                    f"<label>{prefix}{escape(link_text)}"
-                    '<textarea name="q" rows="1" placeholder="Enter text..."></textarea>'
-                    "</label>"
-                    '<input type="submit" value="Submit">'
-                    "</form>"
-                )
+                yield {
+                    "item_type": "prompt",
+                    "url": url.get_proxy_url(),
+                    "text": link_text,
+                    "prefix": prefix,
+                }
+
             elif line.startswith("###"):
-                self.flush()
+                yield from self.flush()
                 text = line[3:].lstrip()
                 anchor = self.get_anchor(text)
-                self.sections.append(f"<h3 id={anchor}>{escape(text)}</h3>")
+                yield {"item_type": "h3", "text": text, "anchor": anchor}
+
             elif line.startswith("##"):
-                self.flush()
+                yield from self.flush()
                 text = line[2:].lstrip()
                 anchor = self.get_anchor(text)
-                self.sections.append(f"<h2 id={anchor}>{escape(text)}</h2>")
+                yield {"item_type": "h2", "text": text, "anchor": anchor}
+
             elif line.startswith("#"):
-                self.flush()
+                yield from self.flush()
                 text = line[1:].lstrip()
                 anchor = self.get_anchor(text)
-                self.sections.append(f"<h1 id={anchor}>{escape(text)}</h1>")
+                yield {"item_type": "h1", "text": text, "anchor": anchor}
+
             elif line.startswith("* "):
-                if not self.list_mode:
-                    self.flush()
-                    self.list_mode = True
-                self.buffer.append(f"<li>{escape(line[1:].lstrip())}</li>")
-            elif line.startswith(">"):
-                if not self.quote_mode:
-                    self.flush()
-                    self.quote_mode = True
-                self.buffer.append(escape(line[1:]))
-            else:
-                if self.list_mode or self.quote_mode:
-                    self.flush()
-                self.buffer.append(escape(line) + "\n")
-        self.flush()
+                yield from self.flush("ul")
+                self.line_buffer.append(line[1:].lstrip())
 
-        body = "\n".join(self.sections)
-        return f'<div class="gemini">{body}</div>\n'
+            elif line.startswith("> ") or line == ">":
+                yield from self.flush("blockquote")
+                self.line_buffer.append(line[1:])
 
-    def flush(self) -> None:
-        if self.buffer:
-            if self.preformat_mode:
-                text = "\n".join(self.buffer)
-                self.sections.append(f"<pre>{text}</pre>")
-            elif self.list_mode:
-                text = "\n".join(self.buffer)
-                self.sections.append(f"<ul>{text}</ul>")
-                self.list_mode = False
-            elif self.quote_mode:
-                text = "\n".join(self.buffer)
-                self.sections.append(f"<blockquote>{text}</blockquote>")
-                self.quote_mode = False
+            elif line.startswith("---"):
+                yield from self.flush()
+                yield {"item_type": "hr"}
+
             else:
-                text = "".join(self.buffer)
-                self.sections.append(f"<p>{text}</p>")
-            self.buffer = []
+                yield from self.flush("p")
+                self.line_buffer.append(line)
+
+        yield from self.flush()
+
+    def flush(self, new_type: str | None = None) -> Iterable[dict]:
+        if self.active_type != new_type:
+            if self.line_buffer and self.active_type:
+                yield {
+                    "item_type": self.active_type,
+                    "lines": self.line_buffer,
+                }
+
+            self.line_buffer = []
+            self.active_type = new_type
 
 
 class GeminiFlowedHandler2(GeminiFlowedHandler):

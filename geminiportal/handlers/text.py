@@ -20,22 +20,30 @@ URL_SCHEMES = [
 ]
 
 
+url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
+
+
 class TextHandler(TemplateHandler):
     """
     Everything in a single <pre> block, with URLs converted into links.
     """
 
-    url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
+    template = "proxy/handlers/text.html"
 
-    async def get_body(self) -> str:
+    def get_context(self):
+        context = super().get_context()
+        context["body"] = self.get_body()
+        return context
+
+    def get_body(self) -> str:
         buffer = []
         for line in self.text.splitlines(keepends=False):
             line = escape(line)
-            line = self.url_re.sub(self.insert_anchor, line)
+            line = url_re.sub(self.insert_anchor, line)
             buffer.append(line)
 
         body = "\n".join(buffer)
-        return f"<pre>{body}</pre>\n"
+        return body
 
     def insert_anchor(self, match: re.Match) -> str:
         m = match.group()

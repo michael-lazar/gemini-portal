@@ -12,7 +12,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% endblock %}
 
 {% block body %}
-{% include "fragments/url-bar.html" %}
+{% include "url-bar.html" %}
 <div class="link-line">
     {% if parent_url %}<a href="{{ parent_url }}">[parent&nbsp;dir]</a>{% endif %}
     {% if root_url %}<a href="{{ root_url }}">[root&nbsp;dir]</a>{% endif %}
@@ -28,5 +28,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     </table>
 </div>
 {% endif %}
-{% block content %}{% endblock %}
+{% block content %}
+{{ content | safe}}
+{%- endblock %}
 {% endblock %}
