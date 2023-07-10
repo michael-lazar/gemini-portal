@@ -24,20 +24,22 @@ async def handle_proxy_response(
 
     if raw_data:
         handler_class = StreamHandler
-    elif response.meta.startswith("image/"):
+    elif response.mimetype.startswith("image/"):
         handler_class = ImageHandler
-    elif response.meta.startswith("audio/mpeg"):
+    elif response.mimetype.startswith("audio/mpeg"):
         handler_class = AudioHandler
-    elif response.meta.startswith("text/plain"):
+    elif response.mimetype.startswith("text/plain"):
         if response.url.scheme == "text":
             handler_class = GeminiFixedHandler
         else:
             handler_class = TextHandler
-    elif response.meta.startswith("text/gemini"):
+    elif response.mimetype.startswith("text/gemini"):
         if inline_images:
             handler_class = GeminiFlowedHandler2
         else:
             handler_class = GeminiFlowedHandler
+    elif response.mimetype.startswith("text/nex"):
+        handler_class = GeminiFixedHandler
     else:
         handler_class = StreamHandler
 

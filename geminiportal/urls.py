@@ -24,11 +24,11 @@ def _extend(container: list, schemes: list):
 
 _extend(
     urllib.parse.uses_relative,
-    ["gemini", "gopher", "gophers", "spartan", "text", "finger"],
+    ["gemini", "gopher", "gophers", "spartan", "text", "finger", "nex"],
 )
 _extend(
     urllib.parse.uses_netloc,
-    ["gemini", "gopher", "gophers", "spartan", "text", "finger"],
+    ["gemini", "gopher", "gophers", "spartan", "text", "finger", "nex"],
 )
 
 
@@ -54,6 +54,7 @@ class URLReference:
         "gemini": 1965,
         "text": 1961,
         "finger": 79,
+        "nex": 1900,
     }
 
     def __init__(self, url: str, base: str | None = None):
@@ -366,7 +367,7 @@ class URLReference:
         """
         Build a https://portal.mozz.us/... proxy link for the given URL.
         """
-        if self.scheme not in ("gemini", "spartan", "text", "finger"):
+        if self.scheme not in ("gemini", "spartan", "text", "finger", "nex"):
             if external:
                 return self.get_url()
 

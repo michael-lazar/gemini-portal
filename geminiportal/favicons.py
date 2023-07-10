@@ -33,6 +33,9 @@ class FaviconCache:
         self.tasks: dict[str, asyncio.Task] = {}
 
     def check(self, url: URLReference) -> str | None:
+        if url.scheme not in ("gemini", "spartan"):
+            return None
+
         favicon_url = url.join(self.FAVICON_PATH)
         key = favicon_url.get_url()
         with shelve.open(self.db_name) as db:

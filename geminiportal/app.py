@@ -102,6 +102,11 @@ async def proxy(
     The main entrypoint for the web proxy.
     """
     address = request.args.get("url")
+
+    # Set this temporarily so if there is an error resolving the URLReference,
+    # the 400 response page will be populated with the URL in the address bar.
+    g.url = address
+
     if address:
         # URL was provided via the address bar, redirect to the canonical endpoint
         proxy_url = URLReference(address).get_proxy_url(external=False)
