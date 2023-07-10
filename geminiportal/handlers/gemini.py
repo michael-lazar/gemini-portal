@@ -45,33 +45,6 @@ def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, s
     return url, link_text, prefix
 
 
-class GeminiFixedHandler(TemplateHandler):
-    """
-    Everything in a single <pre> block, with => links supported.
-    """
-
-    template = "proxy/handlers/text.html"
-
-    def get_context(self):
-        context = super().get_context()
-        context["body"] = self.get_body()
-        return context
-
-    def get_body(self) -> str:
-        buffer = []
-        for line in self.text.splitlines(keepends=False):
-            line = line.rstrip()
-            if line.startswith("=>"):
-                url, link_text, prefix = parse_link_line(line[2:], self.url)
-                proxy_url = url.get_proxy_url()
-                buffer.append(f'{prefix}<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
-            else:
-                buffer.append(escape(line))
-
-        body = "\n".join(buffer)
-        return body
-
-
 class GeminiFlowedHandler(TemplateHandler):
     """
     The full-featured gemtext -> html converter.
@@ -79,7 +52,7 @@ class GeminiFlowedHandler(TemplateHandler):
 
     _rabbit_re = re.compile(RABBIT_INLINE)
 
-    template = "proxy/handlers/gemini.html"
+    template = "proxy/handlers/gemini-flowed.html"
     inline_images = False
 
     line_buffer: list[str]
@@ -183,9 +156,9 @@ class GeminiFlowedHandler(TemplateHandler):
 
             elif line.startswith("> ") or line == ">":
                 yield from self.flush("blockquote")
-                self.line_buffer.append(line[1:])
+                self.line_buffer.append(line[2:])
 
-            elif line.startswith("---"):
+            elif line == "---":
                 yield from self.flush()
                 yield {"item_type": "hr"}
 
@@ -209,3 +182,30 @@ class GeminiFlowedHandler(TemplateHandler):
 
 class GeminiFlowedHandler2(GeminiFlowedHandler):
     inline_images = True
+
+
+class GeminiFixedHandler(TemplateHandler):
+    """
+    Everything in a single <pre> block, with => links supported.
+    """
+
+    template = "proxy/handlers/gemini-fixed.html"
+
+    def get_context(self):
+        context = super().get_context()
+        context["body"] = self.get_body()
+        return context
+
+    def get_body(self) -> str:
+        buffer = []
+        for line in self.text.splitlines(keepends=False):
+            line = line.rstrip()
+            if line.startswith("=>"):
+                url, link_text, prefix = parse_link_line(line[2:], self.url)
+                proxy_url = url.get_proxy_url()
+                buffer.append(f'{prefix}<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
+            else:
+                buffer.append(escape(line))
+
+        body = "\n".join(buffer)
+        return body

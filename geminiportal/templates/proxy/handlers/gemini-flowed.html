@@ -10,7 +10,7 @@
     {% elif item.item_type == "h3" -%}
         <h3 id="{{ item.anchor }}">{{ item.text }}</h3>
     {% elif item.item_type == "link" -%}
-        {{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}}</a>
+        {{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a><br/>
     {% elif item.item_type == "image" -%}
         <figure>
           <a href="{{ item.url }}"><img src="{{ item.url }}" alt="{{ item.text }}"></a>
@@ -22,10 +22,8 @@
         <blockquote>{{ "\n".join(item.lines) }}</blockquote>
     {% elif item.item_type == "ul" -%}
         <ul>
-        {% for line in item.lines %}
-            <li>{{ line }}</li>
-        {% endfor %}
-        </ul>
+        {% for line in item.lines %}<li>{{ line }}</li>
+        {% endfor %}</ul>
     {% elif item.item_type == "p" -%}
         <p>{% for line in item.lines %}{{ line }}
         {% endfor %}</p>

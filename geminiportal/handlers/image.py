@@ -8,7 +8,7 @@ class ImageHandler(TemplateHandler):
     Render images using an inline <image> tag.
     """
 
-    template = "proxy/protocols/image.html"
+    template = "proxy/handlers/image.html"
 
     def get_context(self):
         context = super().get_context()

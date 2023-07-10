@@ -21,3 +21,5 @@ This is a normal [1;31mparagraph[0m
 =>https://mozz.us external link
 
 =: / this is a prompt line
+
+---

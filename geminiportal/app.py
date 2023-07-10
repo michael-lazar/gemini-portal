@@ -19,6 +19,9 @@ logger.setLevel(logging.INFO)
 logger.addHandler(default_handler)
 
 app = Quart(__name__)
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
+app.jinja_env.keep_trailing_newline = True
 app.config.from_prefixed_env()
 
 
@@ -172,5 +175,5 @@ async def proxy(
 
 if __name__ == "__main__":
     app.config["DEBUG"] = True
-    app.config["SERVER_NAME"] = None
+    app.config["SERVER_NAME"] = "localhost:8000"
     app.run()
