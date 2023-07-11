@@ -436,7 +436,7 @@ class URLReference:
         Attempt to guess a specific mimetype for a gopher selector based on the
         selector's item type and the extension on the selector.
         """
-        mimetype, _ = mimetypes.guess_type(selector)
+        mimetype, encoding = mimetypes.guess_type(selector)
 
         if item_type in ("1", "7"):
             mimetype = "application/gopher-menu"
@@ -446,10 +446,16 @@ class URLReference:
             mimetype = "image/gif"
         elif item_type == "4":
             mimetype = "application/binhex"
+        elif item_type == "6":
+            mimetype = "text/x-uuencode"
         elif item_type == "d":
             mimetype = mimetype or "application/pdf"
         elif item_type in ("5", "9"):
-            mimetype = mimetype or "application/octet-stream"
+            if encoding:
+                # For example, gzipped text files
+                mimetype = "application/octet-stream"
+            else:
+                mimetype = mimetype or "application/octet-stream"
         elif item_type == "s":
             if mimetype and mimetype.startswith("audio/"):
                 mimetype = mimetype

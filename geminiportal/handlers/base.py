@@ -8,6 +8,7 @@ from quart import Response, render_template
 
 from geminiportal.protocols.base import BaseResponse
 from geminiportal.urls import URLReference
+from geminiportal.utils import prepend_bytes_to_iterator
 
 # Strip ANSI color characters from text responses
 ANSI_ESCAPE = re.compile(
@@ -63,6 +64,8 @@ class StreamHandler(BaseHandler):
         """
         if self.mimetype == "text/gemini":
             mimetype = "text/plain"
+        elif self.mimetype == "application/gopher-menu":
+            mimetype = "text/plain"
         else:
             mimetype = self.mimetype
 
@@ -77,6 +80,19 @@ class StreamHandler(BaseHandler):
         return cls(
             response.url,
             response.stream_body(),
+            response.mimetype,
+            response.charset,
+        )
+
+    @classmethod
+    async def from_partial_response(
+        cls,
+        response: BaseResponse,
+        partial_data: bytes,
+    ) -> StreamHandler:
+        return cls(
+            response.url,
+            prepend_bytes_to_iterator(partial_data, response.stream_body()),
             response.mimetype,
             response.charset,
         )

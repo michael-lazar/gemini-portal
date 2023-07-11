@@ -12,8 +12,9 @@
         <td class="type-description">{{ item.type_description}}</td>
     {% if item.is_query %}
         <td class="query-form">
+          {{ item.item_text }}
           <form method="get" action="{{ item.url.get_proxy_url() }}" class="input-line">
-              <input title="{{ item.item_text }}" name="q" placeholder="{{ item.item_text }}" autocomplete="off">
+              <input title="{{ item.item_text }}" name="q" autocomplete="off">
               <input type="submit" value="Submit">
           </form>
         </td>

@@ -9,7 +9,7 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
-from geminiportal.protocols.base import ProxyError, ProxyResponseSizeError
+from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
 from geminiportal.utils import describe_tls_cert
@@ -23,12 +23,6 @@ app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 app.jinja_env.keep_trailing_newline = True
 app.config.from_prefixed_env()
-
-
-@app.errorhandler(ProxyResponseSizeError)
-async def handle_proxy_size_error(e):
-    content = await render_template("proxy/size-error.html", error=e)
-    return Response(content, status=500)
 
 
 @app.errorhandler(ValueError)
@@ -169,10 +163,8 @@ async def proxy(
         return app.redirect(location, 307)
 
     if response.is_success():
-        return await handle_proxy_response(
-            response=response,
-            raw_data=bool(request.args.get("raw")),
-        )
+        raw_data = bool(request.args.get("raw"))
+        return await handle_proxy_response(response=response, raw_data=raw_data)
 
     content = await render_template("proxy/base.html")
     return Response(content)

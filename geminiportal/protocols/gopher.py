@@ -42,7 +42,7 @@ class GopherResponse(BaseResponse):
         self.meta = ""
         self.lang = None
 
-        self.mimetype = self.url.guess_mimetype()
+        self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
         self.charset = "UTF-8"
 
     def is_success(self):

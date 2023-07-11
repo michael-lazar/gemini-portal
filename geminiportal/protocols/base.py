@@ -16,7 +16,7 @@ CHUNK_SIZE = 2**14
 
 # When not streaming, limit the maximum response size to avoid running out
 # of RAM when downloading & converting large files to HTML.
-MAX_BODY_SIZE = 2**22
+MAX_BODY_SIZE = 2**20
 
 # Hosts that have requested that their content be removed from the proxy
 BLOCKED_HOSTS = [
@@ -47,7 +47,9 @@ class ProxyError(Exception):
 
 
 class ProxyResponseSizeError(ProxyError):
-    pass
+    def __init__(self, partial: bytes):
+        super().__init__(f"Maximum response size of {len(partial)} bytes read.")
+        self.partial = partial
 
 
 class BaseRequest:
@@ -178,11 +180,11 @@ class BaseResponse:
         """
         try:
             try:
-                await self.reader.readexactly(MAX_BODY_SIZE)
+                data = await self.reader.readexactly(MAX_BODY_SIZE)
             except IncompleteReadError as e:
                 return e.partial
             else:
-                raise ProxyResponseSizeError()
+                raise ProxyResponseSizeError(data)
         finally:
             self.close()
 
