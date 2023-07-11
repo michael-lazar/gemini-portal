@@ -1,0 +1,30 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+<table class="gopher">
+<tbody>
+{% for item in content %}
+    {% if item.url and not item.is_query %}
+    <tr class="selectable">
+    {% else %}
+    <tr>
+    {% endif %}
+        <td class="type-description">{{ item.type_description}}</td>
+    {% if item.is_query %}
+        <td class="query-form">
+          <form method="get" action="{{ item.url.get_proxy_url() }}" class="input-line">
+              <input title="{{ item.item_text }}" name="q" placeholder="{{ item.item_text }}" autocomplete="off">
+              <input type="submit" value="Submit">
+          </form>
+        </td>
+    {% elif item.url %}
+        <td><a href="{{ item.url.get_proxy_url() }}">{{ item.item_text }}</a>{% if item.url.get_external_indicator() %} <span>({{ item.url.get_external_indicator() }})</span>{% endif %}</td>
+    {% else %}
+        <td>{{ item.item_text }}</td>
+    {% endif %}
+    <td class="mimetype">{{ item.mimetype or "" }}</td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

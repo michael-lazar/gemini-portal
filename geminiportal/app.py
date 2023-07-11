@@ -57,7 +57,9 @@ def inject_context():
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
         kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
-        kwargs["inline_url"] = g.url.get_proxy_url(inline=1)
+    elif "address" in g:
+        kwargs["url"] = g.address
+
     if "favicon" in g and g.favicon:
         kwargs["favicon"] = g.favicon
     return kwargs
@@ -83,10 +85,10 @@ async def changes() -> Response:
 
 @app.route("/")
 async def home() -> Response | WerkzeugResponse:
-    address = request.args.get("url")
-    if address:
+    g.address = request.args.get("url")
+    if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url(external=False)
+        proxy_url = URLReference(g.address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     content = await render_template("home.html", url="gemini://gemini.circumlunar.space")
@@ -101,15 +103,10 @@ async def proxy(
     """
     The main entrypoint for the web proxy.
     """
-    address = request.args.get("url")
-
-    # Set this temporarily so if there is an error resolving the URLReference,
-    # the 400 response page will be populated with the URL in the address bar.
-    g.url = address
-
-    if address:
+    g.address = request.args.get("url")
+    if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url(external=False)
+        proxy_url = URLReference(g.address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     g.url = URLReference(f"{scheme}://{netloc}{'' if path is None else '/' + path}")
@@ -117,7 +114,11 @@ async def proxy(
     query = request.args.get("q")
     if query:
         # Query was provided via the input box, redirect to the canonical endpoint
-        g.url.query = quote(query)
+        if g.url.scheme in ("gopher", "gophers"):
+            g.url.gopher_search = query
+        else:
+            g.url.query = quote(query)
+
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
@@ -171,7 +172,6 @@ async def proxy(
         return await handle_proxy_response(
             response=response,
             raw_data=bool(request.args.get("raw")),
-            inline_images=bool(request.args.get("inline")),
         )
 
     content = await render_template("proxy/base.html")

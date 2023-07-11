@@ -1,11 +1,17 @@
 body {
     margin: 1em;
 }
-table, th, td {
+table.response-table {
     border: 1px solid black;
     min-width: 3em;
 }
-td {
+table.response-table th {
+    border: 1px solid black;
+    min-width: 3em;
+}
+.response-table td {
+    border: 1px solid black;
+    min-width: 3em;
     padding: 0.2em
 }
 div {
@@ -56,6 +62,14 @@ img {
 .body {
     max-width: 80ch;
 }
+.inline-image {
+    cursor: zoom-in;
+}
+.inline-image.selected {
+    max-width: 90vw;
+    max-height: initial;
+    cursor: zoom-out;
+}
 .gemini {
     margin-top: 1em;
     margin-bottom: 1em;
@@ -101,11 +115,51 @@ img {
     margin-left: 4px;
     vertical-align: text-bottom;
 }
-.inline-image {
-    cursor: zoom-in;
+.gopher {
+    white-space: pre;
+    font-family: monospace;
+    border-spacing: 0;
 }
-.inline-image.selected {
-    max-width: 90vw;
-    max-height: initial;
-    cursor: zoom-out;
+.gopher table {
+    border-collapse: collapse;
+    border: 0 solid gray;
+    overflow: auto;
+    margin: auto;
+}
+.gopher tr.selectable:hover {
+    background: lightgray;
+}
+.gopher td {
+    padding-right: 1em;
+    border: 0 solid gray;
+}
+.gopher td.type-description, td.mimetype {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 20em;
+    font-size: smaller;
+    vertical-align: bottom;
+}
+.gopher span {
+    font-size: smaller;
+}
+.gopher td.link-icon > img {
+    height: 1em;
+    vertical-align: bottom;
+}
+.gopher td.query-form {
+    white-space: normal;
+}
+.gopher td.query-form > form {
+    display: inline-flex;
+}
+.gopher td.query-form > form > * {
+    margin-right: 5px;
+}
+.gopher input::placeholder {
+    white-space: pre;
+    font-family: monospace;
+}
+.gopher a {
+    text-decoration: none;
 }

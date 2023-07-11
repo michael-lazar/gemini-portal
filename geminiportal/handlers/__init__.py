@@ -2,11 +2,8 @@ from quart import Response
 
 from geminiportal.handlers.audio import AudioHandler
 from geminiportal.handlers.base import BaseHandler, StreamHandler
-from geminiportal.handlers.gemini import (
-    GeminiFixedHandler,
-    GeminiFlowedHandler,
-    GeminiFlowedHandler2,
-)
+from geminiportal.handlers.gemini import GeminiFixedHandler, GeminiFlowedHandler
+from geminiportal.handlers.gopher import GopherHandler
 from geminiportal.handlers.image import ImageHandler
 from geminiportal.handlers.text import TextHandler
 from geminiportal.protocols.base import BaseResponse
@@ -15,7 +12,6 @@ from geminiportal.protocols.base import BaseResponse
 async def handle_proxy_response(
     response: BaseResponse,
     raw_data: bool,
-    inline_images: bool,
 ) -> Response:
     """
     Convert a response from the proxy server into an HTTP response object.
@@ -34,12 +30,11 @@ async def handle_proxy_response(
         else:
             handler_class = TextHandler
     elif response.mimetype.startswith("text/gemini"):
-        if inline_images:
-            handler_class = GeminiFlowedHandler2
-        else:
-            handler_class = GeminiFlowedHandler
+        handler_class = GeminiFlowedHandler
     elif response.mimetype.startswith("text/nex"):
         handler_class = GeminiFixedHandler
+    elif response.mimetype.startswith("application/gopher-menu"):
+        handler_class = GopherHandler
     else:
         handler_class = StreamHandler
 

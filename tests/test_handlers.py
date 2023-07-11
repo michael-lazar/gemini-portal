@@ -1,10 +1,6 @@
 import os
 
-from geminiportal.handlers.gemini import (
-    GeminiFixedHandler,
-    GeminiFlowedHandler,
-    GeminiFlowedHandler2,
-)
+from geminiportal.handlers.gemini import GeminiFixedHandler, GeminiFlowedHandler
 from geminiportal.handlers.text import TextHandler
 from geminiportal.urls import URLReference
 
@@ -44,12 +40,3 @@ async def test_gemini_flowed_handler(app):
         response = await handler.render()
         body = await response.data
         assert load_file("test_handlers/gemini_flowed.html") == body.decode()
-
-
-async def test_gemini_flowed_2_handler(app):
-    url = URLReference("gemini://mozz.us/test/file.gmi")
-    handler = GeminiFlowedHandler2(url, demo_data, "text/gemini", "UTF-8")
-    async with app.app_context():
-        response = await handler.render()
-        body = await response.data
-        assert load_file("test_handlers/gemini_flowed_2.html") == body.decode()

@@ -20,7 +20,7 @@ URL_SCHEMES = [
 ]
 
 
-url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+\w", flags=re.UNICODE)
+url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://[\S]+[\w/]", flags=re.UNICODE)
 
 
 class TextHandler(TemplateHandler):

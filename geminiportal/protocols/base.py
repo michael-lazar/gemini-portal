@@ -26,7 +26,17 @@ BLOCKED_HOSTS = [
 ]
 
 # Ports that the proxied servers can be hosted on
-ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, 1900, *range(1960, 2021)}
+ALLOWED_PORTS = {
+    70,
+    79,
+    300,
+    301,
+    3000,
+    3333,
+    1900,
+    *range(1960, 2021),
+    *range(7000, 7100),
+}
 
 # Time waiting to establish a connection before aborting
 CONNECT_TIMEOUT = 10

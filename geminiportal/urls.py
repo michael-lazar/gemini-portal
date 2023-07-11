@@ -14,6 +14,16 @@ mimetypes.add_type("text/gemini", ".gemini")
 mimetypes.add_type("text/x-rst", ".rst")
 mimetypes.add_type("application/gopher-menu", ".goph")
 
+PROXY_SCHEMES = [
+    "gemini",
+    "spartan",
+    "text",
+    "finger",
+    "nex",
+    "gopher",
+    "gophers",
+]
+
 
 # Patch hardcoded URL schemes to support our niche protocols
 def _extend(container: list, schemes: list):
@@ -22,14 +32,8 @@ def _extend(container: list, schemes: list):
             container.append(scheme)
 
 
-_extend(
-    urllib.parse.uses_relative,
-    ["gemini", "gopher", "gophers", "spartan", "text", "finger", "nex"],
-)
-_extend(
-    urllib.parse.uses_netloc,
-    ["gemini", "gopher", "gophers", "spartan", "text", "finger", "nex"],
-)
+_extend(urllib.parse.uses_relative, PROXY_SCHEMES)
+_extend(urllib.parse.uses_netloc, PROXY_SCHEMES)
 
 
 class URLReference:
@@ -135,8 +139,8 @@ class URLReference:
             # assuming most modern gopher servers are going to use HTTP-style
             # paths for file names.
             return self.guess_gopher_mimetype(self.gopher_item_type, self.path)
-        else:
-            return mimetypes.guess_type(self.path, strict=False)[0]
+
+        return mimetypes.guess_type(self.path, strict=False)[0]
 
     def get_external_indicator(self) -> str | None:
         """
@@ -185,32 +189,40 @@ class URLReference:
         else:
             return self.hostname, self.port
 
-    def _get_finger_url(self) -> str:
+    def get_finger_path(self) -> str:
         if self.finger_request:
-            return f"{self.scheme}://{self.netloc}/{self.finger_request}"
+            return f"/{self.finger_request}"
         else:
-            return f"{self.scheme}://{self.netloc}"
+            return ""
 
-    def _get_gopher_url(self) -> str:
+    def get_finger_url(self) -> str:
+        path = self.get_finger_path()
+        return f"{self.scheme}://{self.netloc}{path}"
+
+    def get_gopher_path(self) -> str:
         selector = self.gopher_selector
         if self.gopher_search:
             selector = f"{selector}%09{self.gopher_search}"
 
-        if selector:
-            return f"{self.scheme}://{self.netloc}/{self.gopher_item_type}{selector}"
+        if selector and selector != "/":
+            return f"/{self.gopher_item_type}{selector}"
         elif self.gopher_item_type != "1":
-            return f"{self.scheme}://{self.netloc}/{self.gopher_item_type}"
+            return f"/{self.gopher_item_type}"
         else:
-            return f"{self.scheme}://{self.netloc}"
+            return ""
+
+    def get_gopher_url(self) -> str:
+        path = self.get_gopher_path()
+        return f"{self.scheme}://{self.netloc}{path}"
 
     def get_url(self, include_query: bool = True, include_fragment: bool = True) -> str:
         """
         Construct a normalized URL string.
         """
         if self.scheme == "finger":
-            return self._get_finger_url()
+            return self.get_finger_url()
         elif self.scheme in ("gopher", "gophers"):
-            return self._get_gopher_url()
+            return self.get_gopher_url()
 
         query = self.query
         if not include_query:
@@ -367,13 +379,19 @@ class URLReference:
         """
         Build a https://portal.mozz.us/... proxy link for the given URL.
         """
-        if self.scheme not in ("gemini", "spartan", "text", "finger", "nex"):
+        if self.scheme not in PROXY_SCHEMES:
             if external:
                 return self.get_url()
+            else:
+                raise ValueError(f"Unsupported URL scheme: {self.scheme}")
 
-            raise ValueError("Unsupported URL scheme")
+        if self.scheme == "finger":
+            path = self.get_finger_path()
+        elif self.scheme in ("gopher", "gophers"):
+            path = self.get_gopher_path()
+        else:
+            path = urlunparse(("", "", self.path, self.params, self.query, ""))
 
-        path = urlunparse(("", "", self.path, self.params, self.query, ""))
         if path:
             return url_for(
                 "proxy-path",

@@ -11,11 +11,6 @@
         <h3 id="{{ item.anchor }}">{{ item.text }}</h3>
     {% elif item.item_type == "link" -%}
         {{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a><br/>
-    {% elif item.item_type == "image" -%}
-        <figure>
-          <a href="{{ item.url }}"><img src="{{ item.url }}" alt="{{ item.text }}"></a>
-          <figcaption>{{ item.prefix }}{{ item.text }}</figcaption>
-        </figure>
     {% elif item.item_type == "pre" -%}
         <pre>{{ "\n".join(item.lines) }}</pre>
     {% elif item.item_type == "blockquote" -%}

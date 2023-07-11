@@ -52,8 +52,7 @@ class GeminiFlowedHandler(TemplateHandler):
 
     _rabbit_re = re.compile(RABBIT_INLINE)
 
-    template = "proxy/handlers/gemini-flowed.html"
-    inline_images = False
+    template = "proxy/handlers/gemini.html"
 
     line_buffer: list[str]
     active_type: str | None
@@ -106,21 +105,12 @@ class GeminiFlowedHandler(TemplateHandler):
             elif line.startswith("=>"):
                 yield from self.flush()
                 url, link_text, prefix = parse_link_line(line[2:], self.url)
-                mime_type = url.guess_mimetype()
-                if self.inline_images and mime_type and mime_type.startswith("image"):
-                    yield {
-                        "item_type": "image",
-                        "url": url.get_proxy_url(raw=True),
-                        "text": link_text,
-                        "prefix": prefix,
-                    }
-                else:
-                    yield {
-                        "item_type": "link",
-                        "url": url.get_proxy_url(),
-                        "text": link_text,
-                        "prefix": prefix,
-                    }
+                yield {
+                    "item_type": "link",
+                    "url": url.get_proxy_url(),
+                    "text": link_text,
+                    "prefix": prefix,
+                }
 
             elif line.startswith("=:"):
                 yield from self.flush()
@@ -180,16 +170,12 @@ class GeminiFlowedHandler(TemplateHandler):
             self.active_type = new_type
 
 
-class GeminiFlowedHandler2(GeminiFlowedHandler):
-    inline_images = True
-
-
 class GeminiFixedHandler(TemplateHandler):
     """
     Everything in a single <pre> block, with => links supported.
     """
 
-    template = "proxy/handlers/gemini-fixed.html"
+    template = "proxy/handlers/text.html"
 
     def get_context(self):
         context = super().get_context()
