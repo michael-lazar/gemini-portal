@@ -23,7 +23,7 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
             handler_class = TextHandler
     elif response.mimetype.startswith("text/gemini"):
         handler_class = GeminiFlowedHandler
-    elif response.mimetype.startswith("text/nex"):
+    elif response.mimetype.startswith("application/nex"):
         handler_class = GeminiFixedHandler
     elif response.mimetype.startswith("application/gopher-menu"):
         handler_class = GopherHandler

@@ -1,26 +1,68 @@
 {% extends "base.html" %}
 
 {% block body %}
-{% include "url-bar.html" %}
-<h2>Welcome, voyager!</h2>
-<p>To get started, type a <i>gemini://</i> URL into the address bar.</p>
-<h3>Quick links</h3>
-<ul>
-    <li><a href="/gemini/gemini.circumlunar.space">Gemini Project Homepage</a></li>
-    <li><a href="/gemini/kennedy.gemi.dev">Kennedy: Search Gemini Space</a></li>
-    <li><a href="/gemini/warmedal.se/~antenna">Antenna Feed Aggregator</a></li>
-    <li><a href="/gemini/station.martinrue.com">Station - Where Capsuleers Hang Out</a></li>
-    <li><a href="/gemini/mozz.us">mozz.us (my own capsule)</a></li>
-</ul>
-<h3>Supported protocols</h3>
-<ul>
-    <li><a href="/gemini/gemini.circumlunar.space/docs/"><i>gemini://</i></a></li>
-    <li><a href="/spartan/spartan.mozz.us/"><i>spartan://</i></a></li>
-    <li><a href="/text/txt.textprotocol.org/"><i>text://</i></a></li>
-    <li><a href="/finger/mozz.us/michael"><i>finger://</i></a></li>
-    <li><a href="/nex/nex.nightfall.city/"><i>nex://</i></a></li>
-</ul>
-<a href="https://en.wikipedia.org/wiki/Pillars_of_Creation">
-    <img src="/static/pillars.jpg" alt="Pillars of Creation">
-</a>
+  <h2>Welcome, voyager!</h2>
+  <p>This website is a free, public service for exploring alternate internet protocols.</p>
+  <p>To get started, type a URL into the address bar, or click on a link below.</p>
+
+  {% include "url-bar.html" %}
+
+  <div class="protocol-grid">
+    <div>
+      <h3><i>gemini://</i></h3>
+      <ul>
+        <li><a href="/gemini/gemini.circumlunar.space">Gemini Project Homepage</a></li>
+        <li><a href="/gemini/kennedy.gemi.dev">Kennedy Search Engine</a></li>
+        <li><a href="/gemini/warmedal.se/~antenna">Antenna Feed Aggregator</a></li>
+        <li><a href="/gemini/station.martinrue.com">Station - Where Capsuleers Hang Out</a></li>
+        <li><a href="/gemini/bbs.geminispace.org">Geminispace BBS</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3><i>gopher://</i></h3>
+      <ul>
+        <li><a href="/gopher/gopher.floodgap.com/">Floodgap Systems</a></li>
+        <li><a href="/gopher/quux.org/">quux.org</a></li>
+        <li><a href="/gopher/i-logout.cz/1/bongusta">Bongusta!</a></li>
+        <li><a href="/gopher/magical.fish">Magical Fish</a></li>
+        <li><a href="/gopher/bitreich.org/">Bitreich.org</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3><i>finger://</i></h3>
+      <ul>
+        <li><a href="/finger/thebackupbox.net/ring">Finger Ring</a></li>
+        <li><a href="/finger/happynetbox.com">Happy Net Box</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3><i>spartan://</i></h3>
+      <ul>
+        <li><a href="/spartan/spartan.mozz.us/">💪 The Spartan Protocol Homepage</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3><i>text://</i></h3>
+      <ul>
+        <li><a href="/text/txt.textprotocol.org/">TEXT://PROTOCOL</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3><i>nex://</i></h3>
+      <ul>
+        <li><a href="/nex/nex.nightfall.city/">Nightfall Express</a></li>
+      </ul>
+    </div>
+  </div>
+  <figure>
+    <a href="https://en.wikipedia.org/wiki/Pillars_of_Creation">
+      <img src="/static/pillars.jpg" alt="Pillars of Creation">
+    </a>
+    <figcaption><i>Pillars of Creation, 1995</i></figcaption>
+  </figure>
 {% endblock %}

@@ -135,7 +135,7 @@ class BaseResponse:
         return self.request.url
 
     @property
-    def status_string(self) -> str:
+    def status_display(self) -> str:
         if self.status in self.STATUS_CODES:
             return f"{self.status} {self.STATUS_CODES[self.status].title()}"
         else:

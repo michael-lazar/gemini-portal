@@ -22,8 +22,13 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% if response %}
 <div>
     <table class="response-table">
+        <tr><th colspan="2">Server Response</th></tr>
+        {% if status %}
         <tr><td>Status</td><td>{{ status }}</td></tr>
         <tr><td>Meta</td><td>{{ meta }}</td></tr>
+        {% else %}
+        <tr><td>Content-Type</td><td>{{ mimetype }}</td></tr>
+        {% endif %}
     </table>
 </div>
 {% endif %}

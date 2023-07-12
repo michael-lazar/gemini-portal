@@ -19,8 +19,6 @@ class NexRequest(BaseRequest):
 
 
 class NexResponse(BaseResponse):
-    STATUS_CODES = {"": "SUCCESS"}
-
     def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader
@@ -29,7 +27,7 @@ class NexResponse(BaseResponse):
         self.meta = ""
 
         if not self.url.path or self.url.path.endswith("/"):
-            self.mimetype = "text/nex"
+            self.mimetype = "application/nex"
         else:
             self.mimetype = self.url.guess_mimetype() or "text/plain"
 

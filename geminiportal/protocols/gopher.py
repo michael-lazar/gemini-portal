@@ -32,8 +32,6 @@ class GopherRequest(BaseRequest):
 
 
 class GopherResponse(BaseResponse):
-    STATUS_CODES = {"": "SUCCESS"}
-
     def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader

@@ -28,6 +28,7 @@ class GopherItem:
         "s": "(SND)",
         "m": "(MIME)",
         "T": "(TEL)",
+        "p": "(PNG)",
     }
 
     url: URLReference | None

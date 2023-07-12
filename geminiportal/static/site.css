@@ -70,6 +70,14 @@ img {
     max-height: initial;
     cursor: zoom-out;
 }
+.protocol-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10%;
+}
+.protocol-grid > div {
+    width: 45%;
+}
 .gemini {
     margin-top: 1em;
     margin-bottom: 1em;

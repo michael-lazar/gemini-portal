@@ -22,23 +22,15 @@ class FingerRequest(BaseRequest):
 
 
 class FingerResponse(BaseResponse):
-    STATUS_CODES = {"": "SUCCESS"}
-
     def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader
         self.writer = writer
         self.status = ""
-        self.meta = "text/plain"
+        self.meta = ""
         self.mimetype = "text/plain"
         self.charset = "UTF-8"
         self.lang = None
 
-    def is_input(self):
-        return False
-
     def is_success(self):
         return True
-
-    def is_redirect(self):
-        return False
