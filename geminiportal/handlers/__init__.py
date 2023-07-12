@@ -10,6 +10,8 @@ from geminiportal.protocols.base import BaseResponse, ProxyResponseSizeError
 
 
 def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
+    handler_class: type[BaseHandler]
+
     if response.mimetype is None:
         handler_class = StreamHandler
     elif response.mimetype.startswith("image/"):
