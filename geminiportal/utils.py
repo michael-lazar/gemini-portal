@@ -2,6 +2,10 @@ import asyncio
 import subprocess
 from collections.abc import AsyncIterator
 
+from emoji import is_emoji
+
+from geminiportal.urls import URLReference
+
 
 async def describe_tls_cert(tls_cert: bytes) -> str:
     """
@@ -18,9 +22,29 @@ async def describe_tls_cert(tls_cert: bytes) -> str:
 
 
 async def prepend_bytes_to_iterator(
-    partial_bytes: bytes,
-    content_iter: AsyncIterator[bytes],
+    partial_bytes: bytes, content_iter: AsyncIterator[bytes]
 ) -> AsyncIterator[bytes]:
     yield partial_bytes
+
     async for chunk in content_iter:
         yield chunk
+
+
+def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, str]:
+    # Prefix is part of the text at the beginning of the link
+    # description that shouldn't be underlined.
+    prefix = ""
+
+    parts = line.split(maxsplit=1)
+    if len(parts) == 0:
+        link, link_text = "", ""
+    elif len(parts) == 1:
+        link, link_text = parts[0], parts[0]
+    else:
+        link, link_text = parts
+        if is_emoji(link_text[0]):
+            prefix = link_text[0] + " "
+            link_text = link_text[1:].lstrip()
+
+    url = base.join(link)
+    return url, link_text, prefix

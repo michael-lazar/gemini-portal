@@ -3,11 +3,8 @@ from collections import Counter
 from collections.abc import Iterable
 from typing import Any
 
-from emoji import is_emoji
-from quart import escape
-
 from geminiportal.handlers.base import TemplateHandler
-from geminiportal.urls import URLReference
+from geminiportal.utils import parse_link_line
 
 RABBIT_INLINE = ":rаbbiΤ:"
 RABBIT_STANDALONE = ";rаbbiΤ;"
@@ -25,27 +22,7 @@ RABBIT_ART = r"""
 """
 
 
-def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, str]:
-    # Prefix is part of the text at the beginning of the link
-    # description that shouldn't be underlined.
-    prefix = ""
-
-    parts = line.split(maxsplit=1)
-    if len(parts) == 0:
-        link, link_text = "", ""
-    elif len(parts) == 1:
-        link, link_text = parts[0], parts[0]
-    else:
-        link, link_text = parts
-        if is_emoji(link_text[0]):
-            prefix = link_text[0] + " "
-            link_text = link_text[1:].lstrip()
-
-    url = base.join(link)
-    return url, link_text, prefix
-
-
-class GeminiFlowedHandler(TemplateHandler):
+class GeminiHandler(TemplateHandler):
     """
     The full-featured gemtext -> html converter.
     """
@@ -110,6 +87,7 @@ class GeminiFlowedHandler(TemplateHandler):
                     "url": url.get_proxy_url(),
                     "text": link_text,
                     "prefix": prefix,
+                    "external_indicator": url.get_external_indicator(),
                 }
 
             elif line.startswith("=:"):
@@ -120,6 +98,7 @@ class GeminiFlowedHandler(TemplateHandler):
                     "url": url.get_proxy_url(),
                     "text": link_text,
                     "prefix": prefix,
+                    "external_indicator": url.get_external_indicator(),
                 }
 
             elif line.startswith("###"):
@@ -168,30 +147,3 @@ class GeminiFlowedHandler(TemplateHandler):
 
             self.line_buffer = []
             self.active_type = new_type
-
-
-class GeminiFixedHandler(TemplateHandler):
-    """
-    Everything in a single <pre> block, with => links supported.
-    """
-
-    template = "proxy/handlers/text.html"
-
-    def get_context(self):
-        context = super().get_context()
-        context["body"] = self.get_body()
-        return context
-
-    def get_body(self) -> str:
-        buffer = []
-        for line in self.text.splitlines(keepends=False):
-            line = line.rstrip()
-            if line.startswith("=>"):
-                url, link_text, prefix = parse_link_line(line[2:], self.url)
-                proxy_url = url.get_proxy_url()
-                buffer.append(f'{prefix}<a href="{escape(proxy_url)}">{escape(link_text)}</a>')
-            else:
-                buffer.append(escape(line))
-
-        body = "\n".join(buffer)
-        return body

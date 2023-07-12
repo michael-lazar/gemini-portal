@@ -88,6 +88,9 @@ img {
 .gemini > p {
     white-space: pre-wrap;
 }
+.gemini span {
+    font-size: smaller;
+}
 .gemini > pre {
     border: solid black 1px;
     padding: 5px;
@@ -170,4 +173,7 @@ img {
 }
 .gopher a {
     text-decoration: none;
+}
+.nex span {
+    font-size: smaller;
 }
