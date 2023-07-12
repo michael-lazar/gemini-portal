@@ -9,7 +9,7 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.favicons import favicon_cache
 from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
-from geminiportal.protocols.base import ProxyError, ProxyResponseSizeError
+from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference
 from geminiportal.utils import describe_tls_cert
@@ -19,24 +19,21 @@ logger.setLevel(logging.INFO)
 logger.addHandler(default_handler)
 
 app = Quart(__name__)
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
+app.jinja_env.keep_trailing_newline = True
 app.config.from_prefixed_env()
-
-
-@app.errorhandler(ProxyResponseSizeError)
-async def handle_proxy_size_error(e):
-    content = await render_template("proxy/errors/size-limit.html", error=e)
-    return Response(content, status=500)
 
 
 @app.errorhandler(ValueError)
 async def handle_value_error(e) -> Response:
-    content = await render_template("proxy/errors/gateway.html", error=e)
+    content = await render_template("proxy/gateway-error.html", error=e)
     return Response(content, status=400)
 
 
 @app.errorhandler(ProxyError)
 async def handle_proxy_error(e):
-    content = await render_template("proxy/errors/gateway.html", error=e)
+    content = await render_template("proxy/gateway-error.html", error=e)
     return Response(content, status=500)
 
 
@@ -45,8 +42,9 @@ def inject_context():
     kwargs = {}
     if "response" in g:
         kwargs["response"] = g.response
-        kwargs["status"] = g.response.status_string
+        kwargs["status"] = g.response.status_display
         kwargs["meta"] = g.response.meta
+        kwargs["mimetype"] = g.response.mimetype
         if hasattr(g.response, "tls_cert"):
             kwargs["cert_url"] = g.response.url.get_proxy_url(crt=1)
     if "url" in g:
@@ -54,7 +52,9 @@ def inject_context():
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
         kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
-        kwargs["inline_url"] = g.url.get_proxy_url(inline=1)
+    elif "address" in g:
+        kwargs["url"] = g.address
+
     if "favicon" in g and g.favicon:
         kwargs["favicon"] = g.favicon
     return kwargs
@@ -80,14 +80,19 @@ async def changes() -> Response:
 
 @app.route("/")
 async def home() -> Response | WerkzeugResponse:
-    address = request.args.get("url")
-    if address:
+    g.address = request.args.get("url")
+    if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url(external=False)
+        proxy_url = URLReference(g.address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    content = await render_template("home.html", url="gemini://gemini.circumlunar.space")
+    content = await render_template("home.html")
     return Response(content)
+
+
+@app.route("/<scheme>", strict_slashes=False)
+async def old_scheme(scheme: str) -> Response | WerkzeugResponse:
+    return app.redirect("/", 301)
 
 
 @app.route("/<scheme>/<netloc>/", endpoint="proxy-netloc")
@@ -98,10 +103,10 @@ async def proxy(
     """
     The main entrypoint for the web proxy.
     """
-    address = request.args.get("url")
-    if address:
+    g.address = request.args.get("url")
+    if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(address).get_proxy_url(external=False)
+        proxy_url = URLReference(g.address).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     g.url = URLReference(f"{scheme}://{netloc}{'' if path is None else '/' + path}")
@@ -109,7 +114,11 @@ async def proxy(
     query = request.args.get("q")
     if query:
         # Query was provided via the input box, redirect to the canonical endpoint
-        g.url.query = quote(query)
+        if g.url.scheme in ("gopher", "gophers"):
+            g.url.gopher_search = query
+        else:
+            g.url.query = quote(query)
+
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
@@ -160,17 +169,22 @@ async def proxy(
         return app.redirect(location, 307)
 
     if response.is_success():
-        return await handle_proxy_response(
-            response=response,
-            raw_data=bool(request.args.get("raw")),
-            inline_images=bool(request.args.get("inline")),
-        )
+        raw_data = bool(request.args.get("raw"))
+        return await handle_proxy_response(response=response, raw_data=raw_data)
 
-    content = await render_template("proxy/response.html")
+    if response.is_error():
+        content = await render_template("proxy/proxy-error.html")
+        return Response(content)
+
+    if response.is_cert_required():
+        content = await render_template("proxy/cert-required.html")
+        return Response(content)
+
+    content = await render_template("proxy/base.html")
     return Response(content)
 
 
 if __name__ == "__main__":
     app.config["DEBUG"] = True
-    app.config["SERVER_NAME"] = None
+    app.config["SERVER_NAME"] = "localhost:8000"
     app.run()

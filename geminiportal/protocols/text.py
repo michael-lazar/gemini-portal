@@ -44,3 +44,6 @@ class TxtResponse(BaseResponse):
 
     def is_redirect(self):
         return self.status.startswith("3")
+
+    def is_error(self):
+        return self.status.startswith(("4", "5"))

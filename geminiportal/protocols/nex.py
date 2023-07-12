@@ -1,34 +1,36 @@
 from __future__ import annotations
 
-from urllib.parse import unquote_to_bytes
-
 from geminiportal.protocols.base import BaseRequest, BaseResponse
 
 
-class FingerRequest(BaseRequest):
+class NexRequest(BaseRequest):
     """
-    Encapsulates a finger:// request.
+    Encapsulates a nex:// request.
     """
 
-    async def fetch(self) -> FingerResponse:
+    async def fetch(self) -> NexResponse:
         reader, writer = await self.open_connection()
 
-        request = unquote_to_bytes(self.url.finger_request)
-
-        writer.write(b"%s\r\n" % request)
+        selector = self.url.path
+        writer.write(f"{selector}\r\n".encode())
         await writer.drain()
 
-        return FingerResponse(self, reader, writer)
+        return NexResponse(self, reader, writer)
 
 
-class FingerResponse(BaseResponse):
+class NexResponse(BaseResponse):
     def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader
         self.writer = writer
         self.status = ""
         self.meta = ""
-        self.mimetype = "text/plain"
+
+        if not self.url.path or self.url.path.endswith("/"):
+            self.mimetype = "application/nex"
+        else:
+            self.mimetype = self.url.guess_mimetype() or "text/plain"
+
         self.charset = "UTF-8"
         self.lang = None
 

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
+from typing import ClassVar
 
 from quart import Response, render_template
 
 from geminiportal.protocols.base import BaseResponse
 from geminiportal.urls import URLReference
+from geminiportal.utils import prepend_bytes_to_iterator
 
 # Strip ANSI color characters from text responses
 ANSI_ESCAPE = re.compile(
@@ -60,7 +62,7 @@ class StreamHandler(BaseHandler):
         Adjust the content type for text/gemini responses to allow streaming in
         the browser.
         """
-        if self.mimetype == "text/gemini":
+        if self.mimetype in ("text/gemini", "application/gopher-menu", "application/nex"):
             mimetype = "text/plain"
         else:
             mimetype = self.mimetype
@@ -80,15 +82,26 @@ class StreamHandler(BaseHandler):
             response.charset,
         )
 
+    @classmethod
+    async def from_partial_response(
+        cls,
+        response: BaseResponse,
+        partial_data: bytes,
+    ) -> StreamHandler:
+        return cls(
+            response.url,
+            prepend_bytes_to_iterator(partial_data, response.stream_body()),
+            response.mimetype,
+            response.charset,
+        )
+
 
 class TemplateHandler(BaseHandler):
     """
     Render the proxied response as HTML and insert it inside the page.
     """
 
-    BASE_TEMPLATE = "proxy/response.html"
-
-    _text: str | None
+    template: ClassVar[str]
 
     def __init__(
         self,
@@ -101,8 +114,7 @@ class TemplateHandler(BaseHandler):
         self.content = content
         self.mimetype = mimetype
         self.charset = charset
-
-        self._text = None
+        self._text: str | None = None
 
     @property
     def text(self) -> str:
@@ -119,17 +131,9 @@ class TemplateHandler(BaseHandler):
         return self._text
 
     async def render(self) -> Response:
-        context = await self.get_context()
-        content = await render_template(self.BASE_TEMPLATE, **context)
+        context = self.get_context()
+        content = await render_template(self.template, **context)
         return Response(content)
-
-    async def get_context(self) -> dict:
-        context = {}
-        context["body"] = await self.get_body()
-        return context
-
-    async def get_body(self) -> str:
-        raise NotImplementedError
 
     @classmethod
     async def from_response(cls, response: BaseResponse) -> TemplateHandler:
@@ -139,3 +143,6 @@ class TemplateHandler(BaseHandler):
             response.mimetype,
             response.charset,
         )
+
+    def get_context(self) -> dict:
+        return {}

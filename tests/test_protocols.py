@@ -3,6 +3,7 @@ import pytest
 from geminiportal.protocols import (
     FingerRequest,
     GeminiRequest,
+    NexRequest,
     SpartanRequest,
     TxtRequest,
     build_proxy_request,
@@ -39,6 +40,14 @@ def test_build_proxy_request_finger():
     request = build_proxy_request(url)
     assert isinstance(request, FingerRequest)
     assert request.port == 79
+    assert request.host == "mozz.us"
+
+
+def test_build_proxy_request_nex():
+    url = URLReference("nex://mozz.us")
+    request = build_proxy_request(url)
+    assert isinstance(request, NexRequest)
+    assert request.port == 1900
     assert request.host == "mozz.us"
 
 
@@ -98,6 +107,16 @@ async def test_txt_request():
 @pytest.mark.integration
 async def test_finger_request():
     url = URLReference("finger://mozz.us/michael")
+    request = build_proxy_request(url)
+    response = await request.get_response()
+
+    assert response.is_success()
+    assert await response.get_body()
+
+
+@pytest.mark.integration
+async def test_nex_request():
+    url = URLReference("nex://nex.nightfall.city")
     request = build_proxy_request(url)
     response = await request.get_response()
 

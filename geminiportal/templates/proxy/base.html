@@ -12,21 +12,27 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% endblock %}
 
 {% block body %}
-{% include "fragments/url-bar.html" %}
+{% include "url-bar.html" %}
 <div class="link-line">
     {% if parent_url %}<a href="{{ parent_url }}">[parent&nbsp;dir]</a>{% endif %}
     {% if root_url %}<a href="{{ root_url }}">[root&nbsp;dir]</a>{% endif %}
-    {% if inline_url %}<a href="{{ inline_url }}">[inline&nbsp;images]</a>{% endif %}
     {% if raw_url %}<a href="{{ raw_url }}">[raw&nbsp;response]</a>{% endif %}
     {% if cert_url %}<a href="{{ cert_url }}">[view&nbsp;cert]</a>{% endif %}
 </div>
 {% if response %}
 <div>
     <table class="response-table">
+        <tr><th colspan="2">Proxy Response</th></tr>
+        {% if status %}
         <tr><td>Status</td><td>{{ status }}</td></tr>
         <tr><td>Meta</td><td>{{ meta }}</td></tr>
+        {% else %}
+        <tr><td>Content-Type</td><td>{{ mimetype }}</td></tr>
+        {% endif %}
     </table>
 </div>
 {% endif %}
-{% block content %}{% endblock %}
+{% block content %}
+{{ content | safe}}
+{%- endblock %}
 {% endblock %}

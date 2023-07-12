@@ -53,3 +53,6 @@ class SpartanResponse(BaseResponse):
 
     def is_redirect(self):
         return self.status == "3"
+
+    def is_error(self):
+        return self.status.startswith(("4", "5"))

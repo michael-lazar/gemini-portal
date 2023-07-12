@@ -138,3 +138,9 @@ class GeminiResponse(BaseResponse):
 
     def is_redirect(self):
         return self.status.startswith("3")
+
+    def is_error(self):
+        return self.status.startswith(("4", "5"))
+
+    def is_cert_required(self):
+        return self.status.startswith("6")

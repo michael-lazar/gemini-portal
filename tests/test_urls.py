@@ -229,7 +229,7 @@ async def test_get_proxy_gopher_link(app):
     base = URLReference("gemini://mozz.us/test/")
     async with app.app_context():
         url = base.join("gopher://mozz.us")
-        assert url.get_proxy_url() == "gopher://mozz.us"
+        assert url.get_proxy_url() == "http://portal.mozz.us/gopher/mozz.us/"
 
 
 async def test_get_proxy_gemini_link_relative(app):

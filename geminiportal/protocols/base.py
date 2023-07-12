@@ -26,7 +26,17 @@ BLOCKED_HOSTS = [
 ]
 
 # Ports that the proxied servers can be hosted on
-ALLOWED_PORTS = {79, 7070, 300, 301, 3000, 3333, *range(1960, 2021)}
+ALLOWED_PORTS = {
+    70,
+    79,
+    300,
+    301,
+    3000,
+    3333,
+    1900,
+    *range(1960, 2021),
+    *range(7000, 7100),
+}
 
 # Time waiting to establish a connection before aborting
 CONNECT_TIMEOUT = 10
@@ -37,7 +47,9 @@ class ProxyError(Exception):
 
 
 class ProxyResponseSizeError(ProxyError):
-    pass
+    def __init__(self, partial: bytes):
+        super().__init__(f"Maximum response size of {len(partial)} bytes read.")
+        self.partial = partial
 
 
 class BaseRequest:
@@ -123,7 +135,7 @@ class BaseResponse:
         return self.request.url
 
     @property
-    def status_string(self) -> str:
+    def status_display(self) -> str:
         if self.status in self.STATUS_CODES:
             return f"{self.status} {self.STATUS_CODES[self.status].title()}"
         else:
@@ -168,11 +180,11 @@ class BaseResponse:
         """
         try:
             try:
-                await self.reader.readexactly(MAX_BODY_SIZE)
+                data = await self.reader.readexactly(MAX_BODY_SIZE)
             except IncompleteReadError as e:
                 return e.partial
             else:
-                raise ProxyResponseSizeError()
+                raise ProxyResponseSizeError(data)
         finally:
             self.close()
 
@@ -193,4 +205,10 @@ class BaseResponse:
         return False
 
     def is_redirect(self) -> bool:
+        return False
+
+    def is_error(self) -> bool:
+        return False
+
+    def is_cert_required(self) -> bool:
         return False
