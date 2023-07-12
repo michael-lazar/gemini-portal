@@ -1,7 +1,8 @@
 <div>
     <form class="url-form" method="get">
         {% if favicon %}<span class="logo">{{ favicon }}</span>{% endif %}
-        <input title="url" class="url-input" type="text" name="url" value="{{ url }}"
+        <input title="url" class="url-input" type="text" name="url" value="{{ url or "" }}"
+        placeholder="gemini://..."
         autocapitalize="none" autocomplete="off" autocorrect="off" spellcheck="false">
         <input type="submit" class="url-submit" value="Go">
     </form>
