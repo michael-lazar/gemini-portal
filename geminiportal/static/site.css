@@ -1,5 +1,6 @@
 body {
     margin: 1em;
+    -webkit-text-size-adjust: 100%;
 }
 table.response-table {
     border: 1px solid black;
@@ -73,10 +74,9 @@ img {
 .protocol-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10%;
 }
 .protocol-grid > div {
-    width: 45%;
+    width: 50%;
 }
 .gemini {
     margin-top: 1em;
