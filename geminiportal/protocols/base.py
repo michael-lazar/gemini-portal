@@ -206,3 +206,9 @@ class BaseResponse:
 
     def is_redirect(self) -> bool:
         return False
+
+    def is_error(self) -> bool:
+        return False
+
+    def is_cert_required(self) -> bool:
+        return False

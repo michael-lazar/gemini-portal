@@ -172,6 +172,14 @@ async def proxy(
         raw_data = bool(request.args.get("raw"))
         return await handle_proxy_response(response=response, raw_data=raw_data)
 
+    if response.is_error():
+        content = await render_template("proxy/proxy-error.html")
+        return Response(content)
+
+    if response.is_cert_required():
+        content = await render_template("proxy/cert-required.html")
+        return Response(content)
+
     content = await render_template("proxy/base.html")
     return Response(content)
 
