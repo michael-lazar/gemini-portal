@@ -160,6 +160,7 @@ img {
 }
 .gopher td.query-form {
     white-space: normal;
+    padding-top: 5px;
 }
 .gopher td.query-form > form {
     display: inline-flex;
