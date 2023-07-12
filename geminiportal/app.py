@@ -90,6 +90,11 @@ async def home() -> Response | WerkzeugResponse:
     return Response(content)
 
 
+@app.route("/<scheme>", strict_slashes=False)
+async def old_scheme(scheme: str) -> Response | WerkzeugResponse:
+    return app.redirect("/", 301)
+
+
 @app.route("/<scheme>/<netloc>/", endpoint="proxy-netloc")
 @app.route("/<scheme>/<netloc>/<path:path>", endpoint="proxy-path")
 async def proxy(
