@@ -97,6 +97,9 @@ img {
     max-width: fit-content;
     overflow-x: scroll;
 }
+.gemini a {
+    line-height: 1.5em;
+}
 .gemini > blockquote {
     white-space: pre-wrap;
     font-style: italic;
