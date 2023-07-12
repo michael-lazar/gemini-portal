@@ -149,7 +149,7 @@ img {
     text-overflow: ellipsis;
     max-width: 20em;
     font-size: smaller;
-    vertical-align: bottom;
+    vertical-align: middle;
 }
 .gopher span {
     font-size: smaller;
@@ -163,6 +163,8 @@ img {
 }
 .gopher td.query-form > form {
     display: inline-flex;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 .gopher td.query-form > form > * {
     margin-right: 5px;
