@@ -88,12 +88,7 @@ class BaseRequest:
         return response
 
     async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-        future = asyncio.open_connection(
-            self.host,
-            self.port,
-            happy_eyeballs_delay=0.25,
-            **kwargs,
-        )
+        future = asyncio.open_connection(self.host, self.port, **kwargs)
         try:
             return await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
         except asyncio.TimeoutError:
