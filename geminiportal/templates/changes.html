@@ -4,6 +4,13 @@
   <h2>Changes</h2>
   <h3>2023-07-12</h3>
   <ul>
+    <li>Fixed bug causing large responses to be truncated.</li>
+    <li>Added support for <em><a href="https://datatracker.ietf.org/doc/html/rfc8305.html">RFC 8305: Happy Eyeballs</a></em>,
+      which should help connecting to servers with some unreachable IP addresses (i.e. broken IPv6).
+    </li>
+  </ul>
+  <h3>2023-07-12</h3>
+  <ul>
     <li>Renamed the project from "Gemini Portal" to "SmolNet Portal", and revamped the homepage.</li>
     <li>Added protocol support for <i>gopher://</i> and <i>gophers://</i> (finally!).</li>
     <li>Added protocol support for the brand new <i>nex://</i> protocol.</li>

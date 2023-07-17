@@ -88,7 +88,12 @@ class BaseRequest:
         return response
 
     async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-        future = asyncio.open_connection(self.host, self.port, **kwargs)
+        future = asyncio.open_connection(
+            self.host,
+            self.port,
+            happy_eyeballs_delay=0.25,
+            **kwargs,
+        )
         try:
             return await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
         except asyncio.TimeoutError:
@@ -179,14 +184,20 @@ class BaseResponse:
         Return the entire response body as bytes, up to the max body size.
         """
         try:
-            try:
-                data = await self.reader.readexactly(MAX_BODY_SIZE)
-            except IncompleteReadError as e:
-                return e.partial
-            else:
-                raise ProxyResponseSizeError(data)
-        finally:
+            data = await self.reader.readexactly(MAX_BODY_SIZE)
+        except IncompleteReadError as e:
+            # If EOF was received before the MAX_BODY_SIZE, success!
+            # Even though this says "partial", it's the entire body.
             self.close()
+            return e.partial
+        except Exception:
+            self.close()
+            raise
+        else:
+            # We have reached the MAX_BODY_SIZE before the EOF was
+            # received. Don't close the connection just yet, because
+            # we may want to continue streaming the connection.
+            raise ProxyResponseSizeError(data)
 
     async def stream_body(self) -> AsyncIterator[bytes]:
         """
