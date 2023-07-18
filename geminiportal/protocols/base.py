@@ -97,19 +97,6 @@ class BaseRequest:
     async def fetch(self) -> BaseResponse:
         raise NotImplementedError
 
-    @staticmethod
-    def parse_header(raw_header: bytes) -> tuple[str, str]:
-        header = raw_header.decode()
-        parts = header.strip().split(maxsplit=1)
-        if len(parts) == 0:
-            status, meta = "", ""
-        elif len(parts) == 1:
-            status, meta = parts[0], ""
-        else:
-            status, meta = parts
-
-        return status, meta
-
 
 class BaseResponse:
     """
@@ -136,15 +123,33 @@ class BaseResponse:
 
     @property
     def status_display(self) -> str:
+        """
+        A human-readable status message for the response, if available.
+        """
         if self.status in self.STATUS_CODES:
             return f"{self.status} {self.STATUS_CODES[self.status].title()}"
         else:
             return self.status
 
     @staticmethod
+    def parse_header(raw_header: bytes) -> tuple[str, str]:
+        header = raw_header.decode()
+        parts = header.strip().split(maxsplit=1)
+        if len(parts) == 0:
+            status, meta = "", ""
+        elif len(parts) == 1:
+            status, meta = parts[0], ""
+        else:
+            status, meta = parts
+
+        return status, meta
+
+    @staticmethod
     def parse_meta(meta: str) -> tuple[str, dict[str, str]]:
         """
         Parse & normalize extra params from the MIME string.
+
+        Used for gemini/spartan style responses.
         """
         parts = meta.split(";", maxsplit=1)
         if len(parts) == 2:

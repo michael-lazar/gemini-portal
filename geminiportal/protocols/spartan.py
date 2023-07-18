@@ -23,10 +23,7 @@ class SpartanRequest(BaseRequest):
         writer.write(request)
         await writer.drain()
 
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
-        return SpartanResponse(self, reader, writer, status, meta)
+        return SpartanResponse(self, reader, writer)
 
 
 class SpartanResponse(BaseResponse):
@@ -37,16 +34,17 @@ class SpartanResponse(BaseResponse):
         "5": "SERVER ERROR",
     }
 
-    def __init__(self, request, reader, writer, status, meta):
+    def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader
         self.writer = writer
-        self.status = status
-        self.meta = meta
-        self.lang = None
 
-        self.mimetype, params = self.parse_meta(meta)
+        raw_header = await reader.readline()
+        self.status, self.meta = self.parse_header(raw_header)
+
+        self.mimetype, params = self.parse_meta(self.meta)
         self.charset = params.get("charset", "UTF-8")
+        self.lang = None
 
     def is_success(self):
         return self.status == "2"

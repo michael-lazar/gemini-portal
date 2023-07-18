@@ -15,10 +15,7 @@ class TxtRequest(BaseRequest):
         writer.write(f"{gemini_url}\r\n".encode())
         await writer.drain()
 
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
-        return TxtResponse(self, reader, writer, status, meta)
+        return TxtResponse(self, reader, writer)
 
 
 class TxtResponse(BaseResponse):
@@ -28,16 +25,17 @@ class TxtResponse(BaseResponse):
         "40": "NOK",
     }
 
-    def __init__(self, request, reader, writer, status, meta):
+    def __init__(self, request, reader, writer):
         self.request = request
         self.reader = reader
         self.writer = writer
-        self.status = status
-        self.meta = meta
-        self.lang = None
 
-        self.mimetype, params = self.parse_meta(meta)
+        raw_header = await reader.readline()
+        self.status, self.meta = self.parse_header(raw_header)
+
+        self.mimetype, params = self.parse_meta(self.meta)
         self.charset = params.get("charset", "UTF-8")
+        self.lang = None
 
     def is_success(self):
         return self.status.startswith("2")

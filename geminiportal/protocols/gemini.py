@@ -56,15 +56,10 @@ class GeminiRequest(BaseRequest):
         writer.write(f"{gemini_url}\r\n".encode())
         await writer.drain()
 
-        raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
-
         return GeminiResponse(
             request=self,
             reader=reader,
             writer=writer,
-            status=status,
-            meta=meta,
             tls_cert=tls_cert,
             tls_version=tls_version,
             tls_cipher=tls_cipher,
@@ -104,8 +99,6 @@ class GeminiResponse(BaseResponse):
         request,
         reader,
         writer,
-        status,
-        meta,
         tls_cert,
         tls_version,
         tls_cipher,
@@ -114,15 +107,16 @@ class GeminiResponse(BaseResponse):
         self.request = request
         self.reader = reader
         self.writer = writer
-        self.status = status
-        self.meta = meta
+
+        raw_header = await reader.readline()
+        self.status, self.meta = self.parse_header(raw_header)
 
         self.tls_cert = tls_cert
         self.tls_version = tls_version
         self.tls_cipher = tls_cipher
         self.tls_close_notify = tls_close_notify
 
-        self.mimetype, params = self.parse_meta(meta)
+        self.mimetype, params = self.parse_meta(self.meta)
         self.charset = params.get("charset", "UTF-8")
         self.lang = params.get("lang", None)
 
