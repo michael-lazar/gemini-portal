@@ -104,6 +104,7 @@ class URLReference:
         self.gopher_item_type = ""
         self.gopher_selector = ""
         self.gopher_search = ""
+        self.gopher_plus_string = ""
         if self.scheme in ("gopher", "gophers"):
             if len(sections) < 4 or sections[3] == "":
                 self.gopher_item_type = "1"
@@ -112,10 +113,13 @@ class URLReference:
                 self.gopher_item_type = sections[3][0]
                 self.gopher_selector = sections[3][1:]
 
+        # Strip the search string & gopher+ data out of the selector and path
         if "%09" in self.gopher_selector:
-            # Strip the search string & gopher+ data out of the selector and path
             self.gopher_selector, self.gopher_search = self.gopher_selector.split("%09", maxsplit=1)
-            self.path = self.path.split("%09", maxsplit=1)[0]
+            self.path = self.gopher_selector
+
+        if "%09" in self.gopher_search:
+            self.gopher_plus_string = self.gopher_search.split("%09", maxsplit=1)[1]
 
     def __str__(self):
         return self.get_url()
