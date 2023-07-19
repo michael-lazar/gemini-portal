@@ -127,7 +127,10 @@ class BaseResponse:
         A human-readable status message for the response, if available.
         """
         if self.status in self.STATUS_CODES:
-            return f"{self.status} {self.STATUS_CODES[self.status].title()}"
+            if self.status:
+                return f"{self.status} {self.STATUS_CODES[self.status].title()}"
+            else:
+                return f"{self.STATUS_CODES[self.status].title()}"
         else:
             return self.status
 
