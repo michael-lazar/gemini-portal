@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from quart import Response, render_template
 
-from geminiportal.protocols.base import BaseResponse
 from geminiportal.urls import URLReference
 from geminiportal.utils import prepend_bytes_to_iterator
+
+if TYPE_CHECKING:
+    from geminiportal.protocols.base import BaseResponse
 
 # Strip ANSI color characters from text responses
 ANSI_ESCAPE = re.compile(

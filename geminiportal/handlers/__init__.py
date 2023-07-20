@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from geminiportal.protocols.base import BaseResponse
+
 from geminiportal.handlers.audio import AudioHandler
 from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.handlers.gemini import GeminiHandler
@@ -5,7 +12,6 @@ from geminiportal.handlers.gopher import GopherHandler
 from geminiportal.handlers.image import ImageHandler
 from geminiportal.handlers.nex import NexHandler
 from geminiportal.handlers.text import TextHandler
-from geminiportal.protocols.base import BaseResponse
 
 
 def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
