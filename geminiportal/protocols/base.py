@@ -7,6 +7,13 @@ import socket
 from asyncio.exceptions import IncompleteReadError
 from collections.abc import AsyncIterator
 
+from quart import Response as QuartResponse
+from quart import render_template
+from werkzeug.utils import redirect
+from werkzeug.wrappers.response import Response as WerkzeugResponse
+
+from geminiportal.handlers import get_handler_class
+from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.urls import URLReference
 
 _logger = logging.getLogger(__name__)
@@ -59,9 +66,10 @@ class BaseRequest:
 
     _blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
 
-    def __init__(self, url: URLReference):
+    def __init__(self, url: URLReference, raw_mode: bool = False):
         self.url = url
         self.host, self.port = url.conn_info
+        self.raw_mode = raw_mode
 
         self.clean()
 
@@ -86,6 +94,19 @@ class BaseRequest:
 
         _logger.info(f"{self.__class__.__name__}: Response received: {response.status}")
         return response
+
+    @staticmethod
+    def parse_response_header(raw_header: bytes) -> tuple[str, str]:
+        header = raw_header.decode()
+        parts = header.strip().split(maxsplit=1)
+        if len(parts) == 0:
+            status, meta = "", ""
+        elif len(parts) == 1:
+            status, meta = parts[0], ""
+        else:
+            status, meta = parts
+
+        return status, meta
 
     async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         future = asyncio.open_connection(self.host, self.port, **kwargs)
@@ -113,6 +134,7 @@ class BaseResponse:
     mimetype: str
     charset: str
     lang: str | None
+    proxy_response_builder: BaseProxyResponseBuilder
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} {self.status} "{self.meta}"'
@@ -133,19 +155,6 @@ class BaseResponse:
                 return f"{self.STATUS_CODES[self.status].title()}"
         else:
             return self.status
-
-    @staticmethod
-    def parse_header(raw_header: bytes) -> tuple[str, str]:
-        header = raw_header.decode()
-        parts = header.strip().split(maxsplit=1)
-        if len(parts) == 0:
-            status, meta = "", ""
-        elif len(parts) == 1:
-            status, meta = parts[0], ""
-        else:
-            status, meta = parts
-
-        return status, meta
 
     @staticmethod
     def parse_meta(meta: str) -> tuple[str, dict[str, str]]:
@@ -212,17 +221,54 @@ class BaseResponse:
         finally:
             self.close()
 
-    def is_input(self) -> bool:
-        return False
+    async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
+        """
+        Return the proxy server represented as an HTTP proxy response.
+        """
+        return await self.proxy_response_builder.build_proxy_response()
 
-    def is_success(self) -> bool:
-        return False
 
-    def is_redirect(self) -> bool:
-        return False
+class BaseProxyResponseBuilder:
+    """
+    Convert a response from the proxy server into an HTTP response object.
+    """
 
-    def is_error(self) -> bool:
-        return False
+    def __init__(self, response: BaseResponse):
+        self.response = response
 
-    def is_cert_required(self) -> bool:
-        return False
+    async def render_from_handler(self) -> QuartResponse:
+        handler_class: type[BaseHandler]
+
+        if self.response.request.raw_mode:
+            handler_class = StreamHandler
+        else:
+            handler_class = get_handler_class(self.response)
+
+        try:
+            handler = await handler_class.from_response(self.response)
+            response = await handler.render()
+        except ProxyResponseSizeError as e:
+            # The file is too large to render in an HTML template, add the
+            # data back into the read buffer and re-render as a data stream.
+            handler = await StreamHandler.from_partial_response(self.response, e.partial)
+            response = await handler.render()
+
+        return response
+
+    async def render_redirect(self, redirect_url: str, code: int = 307) -> WerkzeugResponse:
+        location = self.response.url.join(redirect_url).get_proxy_url()
+        return redirect(location, code=code)
+
+    async def render_error(self, error: str) -> QuartResponse:
+        content = await render_template("proxy/proxy-error.html", error=error)
+        return QuartResponse(content)
+
+    async def render_unhandled(self):
+        content = await render_template(
+            "proxy/gateway-error.html",
+            error="The response from the proxied server is unrecognized or invalid.",
+        )
+        return QuartResponse(content)
+
+    async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
+        raise NotImplementedError

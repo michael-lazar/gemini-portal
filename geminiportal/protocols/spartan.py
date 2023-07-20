@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from urllib.parse import quote_from_bytes, unquote_to_bytes
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class SpartanRequest(BaseRequest):
@@ -23,7 +27,10 @@ class SpartanRequest(BaseRequest):
         writer.write(request)
         await writer.drain()
 
-        return SpartanResponse(self, reader, writer)
+        raw_header = await reader.readline()
+        status, meta = self.parse_response_header(raw_header)
+
+        return SpartanResponse(self, reader, writer, status, meta)
 
 
 class SpartanResponse(BaseResponse):
@@ -34,23 +41,29 @@ class SpartanResponse(BaseResponse):
         "5": "SERVER ERROR",
     }
 
-    def __init__(self, request, reader, writer):
+    def __init__(self, request, reader, writer, status, meta):
         self.request = request
         self.reader = reader
         self.writer = writer
-
-        raw_header = await reader.readline()
-        self.status, self.meta = self.parse_header(raw_header)
+        self.status = status
+        self.meta = meta
 
         self.mimetype, params = self.parse_meta(self.meta)
         self.charset = params.get("charset", "UTF-8")
         self.lang = None
 
-    def is_success(self):
-        return self.status == "2"
+        self.proxy_response_builder = SpartanProxyResponseBuilder(self)
 
-    def is_redirect(self):
-        return self.status == "3"
 
-    def is_error(self):
-        return self.status.startswith(("4", "5"))
+class SpartanProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: SpartanResponse
+
+    async def build_proxy_response(self):
+        if self.response.status.startswith("2"):
+            return await self.render_from_handler()
+        elif self.response.status.startswith("3"):
+            return self.render_redirect(self.response.meta)
+        elif self.response.status.startswith(("4", "5")):
+            return await self.render_error(self.response.meta)
+        else:
+            return await self.render_unhandled()

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from urllib.parse import unquote_to_bytes
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class FingerRequest(BaseRequest):
@@ -31,6 +35,11 @@ class FingerResponse(BaseResponse):
         self.mimetype = "text/plain"
         self.charset = "UTF-8"
         self.lang = None
+        self.proxy_response_builder = FingerProxyResponseBuilder(self)
 
-    def is_success(self):
-        return True
+
+class FingerProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: FingerResponse
+
+    async def build_proxy_response(self):
+        return await self.render_from_handler()

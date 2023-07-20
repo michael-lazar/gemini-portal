@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import ssl
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class GopherRequest(BaseRequest):
@@ -42,6 +46,11 @@ class GopherResponse(BaseResponse):
 
         self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
         self.charset = "UTF-8"
+        self.proxy_response_builder = GopherProxyResponseBuilder(self)
 
-    def is_success(self):
-        return True
+
+class GopherProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: GopherResponse
+
+    async def build_proxy_response(self):
+        return await self.render_from_handler()

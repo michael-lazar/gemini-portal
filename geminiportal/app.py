@@ -7,7 +7,6 @@ from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from geminiportal.favicons import favicon_cache
-from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
 from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
@@ -122,7 +121,8 @@ async def proxy(
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    proxy_request = build_proxy_request(g.url)
+    raw_mode = bool(request.args.get("raw"))
+    proxy_request = build_proxy_request(g.url, raw_mode)
     response = await proxy_request.get_response()
     g.response = response
 
@@ -159,29 +159,8 @@ async def proxy(
         )
         return Response(content)
 
-    if response.is_input():
-        is_secret = response.status == "11"
-        content = await render_template("proxy/query.html", is_secret=is_secret)
-        return Response(content)
-
-    if response.is_redirect():
-        location = g.url.join(response.meta).get_proxy_url()
-        return app.redirect(location, 307)
-
-    if response.is_success():
-        raw_data = bool(request.args.get("raw"))
-        return await handle_proxy_response(response=response, raw_data=raw_data)
-
-    if response.is_error():
-        content = await render_template("proxy/proxy-error.html")
-        return Response(content)
-
-    if response.is_cert_required():
-        content = await render_template("proxy/cert-required.html")
-        return Response(content)
-
-    content = await render_template("proxy/base.html")
-    return Response(content)
+    proxy_response = await response.build_proxy_response()
+    return proxy_response
 
 
 if __name__ == "__main__":

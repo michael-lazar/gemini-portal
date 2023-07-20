@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class TxtRequest(BaseRequest):
@@ -15,7 +19,10 @@ class TxtRequest(BaseRequest):
         writer.write(f"{gemini_url}\r\n".encode())
         await writer.drain()
 
-        return TxtResponse(self, reader, writer)
+        raw_header = await reader.readline()
+        status, meta = self.parse_response_header(raw_header)
+
+        return TxtResponse(self, reader, writer, status, meta)
 
 
 class TxtResponse(BaseResponse):
@@ -25,23 +32,29 @@ class TxtResponse(BaseResponse):
         "40": "NOK",
     }
 
-    def __init__(self, request, reader, writer):
+    def __init__(self, request, reader, writer, status, meta):
         self.request = request
         self.reader = reader
         self.writer = writer
-
-        raw_header = await reader.readline()
-        self.status, self.meta = self.parse_header(raw_header)
+        self.status = status
+        self.meta = meta
 
         self.mimetype, params = self.parse_meta(self.meta)
         self.charset = params.get("charset", "UTF-8")
         self.lang = None
 
-    def is_success(self):
-        return self.status.startswith("2")
+        self.proxy_response_builder = TxtProxyResponseBuilder(self)
 
-    def is_redirect(self):
-        return self.status.startswith("3")
 
-    def is_error(self):
-        return self.status.startswith(("4", "5"))
+class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: TxtResponse
+
+    async def build_proxy_response(self):
+        if self.response.status == "2":
+            return await self.render_from_handler()
+        elif self.response.status == "3":
+            return self.render_redirect(self.response.meta)
+        elif self.response.status in ("4", "5"):
+            return await self.render_error(self.response.meta)
+        else:
+            return await self.render_unhandled()
