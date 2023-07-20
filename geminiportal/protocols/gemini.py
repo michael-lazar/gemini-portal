@@ -145,8 +145,11 @@ class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
 
     async def build_proxy_response(self):
         if self.response.status.startswith("1"):
-            is_secret = self.response.status == "11"
-            content = await render_template("proxy/query.html", is_secret=is_secret)
+            content = await render_template(
+                "proxy/gemini-query.html",
+                secret=self.response.status == "11",
+                prompt=self.response.meta,
+            )
             return QuartResponse(content)
         if self.response.status.startswith("2"):
             return await self.render_from_handler()
@@ -155,7 +158,7 @@ class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
         elif self.response.status.startswith(("4", "5")):
             return await self.render_error(self.response.meta)
         elif self.response.status.startswith("6"):
-            content = await render_template("proxy/cert-required.html")
+            content = await render_template("proxy/gemini-cert-required.html")
             return QuartResponse(content)
         else:
             return await self.render_unhandled()
