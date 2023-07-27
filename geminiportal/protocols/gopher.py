@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import ssl
 
-from quart import Response as QuartResponse
-from quart import render_template
-
 from geminiportal.protocols.base import (
     BaseProxyResponseBuilder,
     BaseRequest,
@@ -29,32 +26,32 @@ class GopherRequest(BaseRequest):
         writer.write(request)
         await writer.drain()
 
-        if not self.url.gopher_plus_string:
-            return GopherResponse(self, reader, writer)
+        if self.url.gopher_plus_string:
+            # Parse the response header for gopher+
+            raw_header = await reader.readline()
+            header = raw_header.decode()
 
-        # Parse the response header for gopher+
-        raw_header = await reader.readline()
-        header = raw_header.decode()
+            if header[0] == "+":
+                status, meta = "", ""
+            elif header[1] == "-":
+                raw_status_line = await reader.readline()
+                status_line = raw_status_line.decode()
+                status, meta = status_line[0], status_line[1:]
+            else:
+                raise ValueError(f"Invalid Gopher+ response header: `{header}`")
 
-        if header[0] == "+":
-            status, meta = "", ""
-        elif header[1] == "-":
-            raw_status_line = await reader.readline()
-            status_line = raw_status_line.decode()
-            status, meta = status_line[0], status_line[1:]
+            data_length = int(header[1:])
+
+            return GopherPlusResponse(
+                self,
+                reader=reader,
+                writer=writer,
+                status=status,
+                meta=meta,
+                data_length=data_length,
+            )
         else:
-            raise ValueError(f"Invalid Gopher+ response header: `{header}`")
-
-        data_length = int(header[1:])
-
-        return GopherPlusResponse(
-            self,
-            reader=reader,
-            writer=writer,
-            status=status,
-            meta=meta,
-            data_length=data_length,
-        )
+            return GopherResponse(self, reader, writer)
 
     def make_ssl_context(self) -> ssl.SSLContext:
         context = ssl.create_default_context()
@@ -93,9 +90,17 @@ class GopherPlusResponse(BaseResponse):
         self.meta = meta
         self.lang = None
 
+        # The data length flags make chunking the response stream very annoying,
+        # so I'm going to ignore this feature and always wait for the server to
+        # close the connection.
         self.data_length: int = data_length
 
-        self.mimetype = "text/plain"
+        if self.status:
+            # Render gopher+ error descriptions as plaintext documents.
+            self.mimetype = "text/plain"
+        else:
+            self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
+
         self.charset = "UTF-8"
         self.proxy_response_builder = GopherPlusProxyResponseBuilder(self)
 
@@ -111,10 +116,14 @@ class GopherPlusProxyResponseBuilder(BaseProxyResponseBuilder):
     response: GopherPlusResponse
 
     async def build_proxy_response(self):
-        if self.response.status == "":
-            return await self.render_from_handler()
-        else:
-            raw_data = await self.response.get_body()
-            data = raw_data.decode(encoding=self.response.charset)
-            content = await render_template("proxy/gopherp-error.html", data=data)
-            return QuartResponse(content)
+        # selectorF+<CRLF>
+        #   returns document
+        # selectorF!<CRLF>
+        #   returns info block for the selector
+        # selectorF+application/Postscript<CRLF>
+        #   returns the document with the given mime type
+        # selectorF$<CRLF>
+        #   returns the info for every file in the directory
+        # selectorF$+VIEWS+ABSTRACT<CRLF>
+        #   returns just the given attributes
+        return await self.render_from_handler()

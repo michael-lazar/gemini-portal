@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 from geminiportal.handlers.audio import AudioHandler
 from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.handlers.gemini import GeminiHandler
-from geminiportal.handlers.gopher import GopherHandler
+from geminiportal.handlers.gopher import GopherHandler, GopherPlusHandler
 from geminiportal.handlers.image import ImageHandler
 from geminiportal.handlers.nex import NexHandler
 from geminiportal.handlers.text import TextHandler
@@ -34,6 +34,8 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
         handler_class = NexHandler
     elif response.mimetype.startswith("application/gopher-menu"):
         handler_class = GopherHandler
+    elif response.mimetype.startswith("application/gopher+-menu"):
+        handler_class = GopherPlusHandler
     else:
         handler_class = StreamHandler
 

@@ -1,0 +1,28 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+<table class="gopher">
+<tbody>
+{% for attribute_map in content %}
+    {% for attribute, data in attribute_map.items() %}
+      {% if data.item.url %}
+        <tr class="selectable">
+      {% else %}
+        <tr>
+      {% endif %}
+      <td class="type-description">+{{ attribute }}</td>
+      {% if data.item.url %}
+        <td><a href="{{ data.item.url.get_proxy_url() }}">{{ data.item.item_text }}</a>{% if data.item.url.get_external_indicator() %} <span>({{ data.item.url.get_external_indicator() }})</span>{% endif %}</td>
+      {% elif data.item %}
+        <td>{{ data.item.item_text }}</td>
+      {% else %}
+        <td></td>
+      {% endif %}
+      <td class="mimetype">{{ data.item.mimetype or "" }}</td>
+      </tr>
+      {% if data.content %}<tr><td></td><td><i>{{ data.content }}</i></td><td></td></tr>{% endif %}
+    {% endfor %}
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

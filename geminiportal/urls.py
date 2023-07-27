@@ -142,7 +142,7 @@ class URLReference:
             # here, because even though the path has no meaning in gopher, I'm
             # assuming most modern gopher servers are going to use HTTP-style
             # paths for file names.
-            return self.guess_gopher_mimetype(self.gopher_item_type, self.path)
+            return self.guess_gopher_mimetype()
 
         return mimetypes.guess_type(self.path, strict=False)[0]
 
@@ -434,43 +434,44 @@ class URLReference:
         else:
             return None
 
-    @classmethod
-    def guess_gopher_mimetype(cls, item_type: str, selector: str) -> str | None:
+    def guess_gopher_mimetype(self) -> str | None:
         """
         Attempt to guess a specific mimetype for a gopher selector based on the
         selector's item type and the extension on the selector.
         """
-        mimetype, encoding = mimetypes.guess_type(selector)
+        mimetype, encoding = mimetypes.guess_type(self.path)
 
-        if item_type in ("1", "7"):
+        if self.gopher_plus_string.startswith(("!", "$")):
+            mimetype = "application/gopher+-menu"
+        elif self.gopher_item_type in ("1", "7"):
             mimetype = "application/gopher-menu"
-        elif item_type in ("h", "H"):
+        elif self.gopher_item_type in ("h", "H"):
             mimetype = "text/html"
-        elif item_type == "g":
+        elif self.gopher_item_type == "g":
             mimetype = "image/gif"
-        elif item_type == "4":
+        elif self.gopher_item_type == "4":
             mimetype = "application/binhex"
-        elif item_type == "6":
+        elif self.gopher_item_type == "6":
             mimetype = "text/x-uuencode"
-        elif item_type == "d":
+        elif self.gopher_item_type == "d":
             mimetype = mimetype or "application/pdf"
-        elif item_type in ("5", "9"):
+        elif self.gopher_item_type in ("5", "9"):
             if encoding:
                 # For example, gzipped text files
                 mimetype = "application/octet-stream"
             else:
                 mimetype = mimetype or "application/octet-stream"
-        elif item_type == "s":
+        elif self.gopher_item_type == "s":
             if mimetype and mimetype.startswith("audio/"):
                 mimetype = mimetype
             else:
                 mimetype = "audio/wave"
-        elif item_type == "0":
+        elif self.gopher_item_type == "0":
             if mimetype and mimetype.startswith("text/"):
                 mimetype = mimetype
             else:
                 mimetype = "text/plain"
-        elif item_type in ("2", "8", "3", "i", "+"):
+        elif self.gopher_item_type in ("2", "8", "3", "i", "+"):
             mimetype = None
         else:
             mimetype = mimetype

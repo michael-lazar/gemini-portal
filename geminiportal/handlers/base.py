@@ -64,7 +64,12 @@ class StreamHandler(BaseHandler):
         Adjust the content type for text/gemini responses to allow streaming in
         the browser.
         """
-        if self.mimetype in ("text/gemini", "application/gopher-menu", "application/nex"):
+        if self.mimetype in (
+            "text/gemini",
+            "application/gopher-menu",
+            "application/gopher+-menu",
+            "application/nex",
+        ):
             mimetype = "text/plain"
         else:
             mimetype = self.mimetype
