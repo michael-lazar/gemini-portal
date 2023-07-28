@@ -4,24 +4,46 @@
 <table class="gopher">
 <tbody>
 {% for attribute_map in content %}
-    {% for attribute, data in attribute_map.items() %}
-      {% if data.item.url %}
-        <tr class="selectable">
-      {% else %}
-        <tr>
+  {% for attribute, data in attribute_map.items() %}
+    {% if data.item.url %}
+      <tr class="selectable">
+    {% else %}
+      <tr>
+    {% endif %}
+    <td class="type-description">+{{ attribute }}</td>
+    {% if data.item.url %}
+      <td><a href="{{ data.item.url.get_proxy_url() }}">{{ data.item.item_text or data.item.url}}</a>{% if data.item.url.get_external_indicator() %} <span>({{ data.item.url.get_external_indicator() }})</span>{% endif %}</td>
+    {% elif data.item %}
+      <td>{{ data.item.item_text }}</td>
+    {% else %}
+      <td></td>
+    {% endif %}
+    <td class="mimetype">{{ data.item.mimetype or "" }}</td>
+    </tr>
+    {% if attribute == "VIEWS" %}
+      {% for line in data.lines %}
+        {% if line.url %}
+          <tr class="selectable"><td></td><td><i><a href="{{ line.url.get_proxy_url() }}">{{ line.text }}</a></i></td><td></td></tr>
+        {% else %}
+          <tr><td></td><td><i>{{ line.text }}</i></td><td></td></tr>
+        {% endif %}
+      {% endfor %}
+    {% elif attribute == "ADMIN" %}
+      {% for line in data.lines %}
+        {% if line.url %}
+          <tr><td></td><td>{{ line.comments }} &lt;<i><a href="{{ line.url }}">{{ line.meta_tag }}</a></i>&gt;</td><td></td></tr>
+        {% elif line.meta_tag is not none %}
+          <tr><td></td><td>{{ line.comments }} &lt;<i>{{ line.meta_tag }}</i>&gt;</td><td></td></tr>
+        {% else %}
+          <tr><td></td><td>{{ line.comments }}</td><td></td></tr>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      {% if data.content %}
+        <tr><td></td><td><i>{{ data.content }}</i></td><td></td></tr>
       {% endif %}
-      <td class="type-description">+{{ attribute }}</td>
-      {% if data.item.url %}
-        <td><a href="{{ data.item.url.get_proxy_url() }}">{{ data.item.item_text }}</a>{% if data.item.url.get_external_indicator() %} <span>({{ data.item.url.get_external_indicator() }})</span>{% endif %}</td>
-      {% elif data.item %}
-        <td>{{ data.item.item_text }}</td>
-      {% else %}
-        <td></td>
-      {% endif %}
-      <td class="mimetype">{{ data.item.mimetype or "" }}</td>
-      </tr>
-      {% if data.content %}<tr><td></td><td><i>{{ data.content }}</i></td><td></td></tr>{% endif %}
-    {% endfor %}
+    {% endif %}
+  {% endfor %}
 {% endfor %}
 </tbody>
 </table>

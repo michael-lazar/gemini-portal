@@ -142,9 +142,6 @@ class GopherHandler(TemplateHandler):
 GopherPlusAttributeData: TypeAlias = dict[str, Any]
 GopherPlusAttributeMap: TypeAlias = dict[str, GopherPlusAttributeData]
 
-# TODO: Make the links in the +Views clickable
-# TODO: Make the admin email a hyperlink
-
 
 class GopherPlusHandler(TemplateHandler):
     template = "proxy/handlers/gopherplus.html"
@@ -189,7 +186,7 @@ class GopherPlusHandler(TemplateHandler):
                 else:
                     item_description = parts[1]
                     if item_description.startswith(" "):
-                        # Strip out the space after the colon.
+                        # Strip out the space after the colon, "+INFO: <item-description>".
                         item_description = item_description[1:]
 
                     item = GopherItem.from_item_description(item_description, self.url)
@@ -209,6 +206,11 @@ class GopherPlusHandler(TemplateHandler):
         # Flush the previous attribute
         if self.active_attribute:
             self.active_attribute_data["content"] = "\n".join(self.line_buffer)
+            # Custom handling for some of the standard views
+            if self.active_attribute == "VIEWS":
+                self.parse_views_block()
+            elif self.active_attribute == "ADMIN":
+                self.parse_admin_block()
             self.attribute_map[self.active_attribute] = self.active_attribute_data
 
         # If we're starting a new info block, yield any existing attributes
@@ -220,3 +222,56 @@ class GopherPlusHandler(TemplateHandler):
         self.active_attribute = attribute
         self.active_attribute_data = attribute_data or {}
         self.line_buffer = []
+
+    def parse_views_block(self) -> None:
+        # The +VIEWS content-types are relative the the gopher selector
+        # in the +ITEM block. The +ITEM block should always be included
+        # in the response before the +VIEWS block, unless the server is
+        # out-of-spec.
+        item = self.attribute_map.get("INFO", {}).get("item")
+        item_url = item.url if item else None
+
+        lines = []
+        for line in self.line_buffer:
+            line = line.strip()
+            if item_url:
+                content_type = line.split(":", maxsplit=1)[0]
+                url = item_url.copy()
+                url.gopher_plus_string = f"+{content_type}"
+            else:
+                url = None
+
+            lines.append({"text": line, "url": url})
+
+        self.active_attribute_data["lines"] = lines
+
+    def parse_admin_block(self) -> None:
+        lines = []
+        for line in self.line_buffer:
+            line = line.strip()
+            key, val = line.split(": ", maxsplit=1)
+            comments, meta_tag = self.split_attribute_meta_tag(val)
+            line_data = {"comments": comments, "meta_tag": meta_tag}
+
+            if "@" in meta_tag:
+                line_data["url"] = f"mailto:{meta_tag}"
+
+            lines.append(line_data)
+
+        self.active_attribute_data["lines"] = lines
+
+    def split_attribute_meta_tag(self, text: str) -> tuple[str, str | None]:
+        """
+        Split the <...> data off of an attribute description.
+
+        E.g.
+            Mod-Date: Sat Nov 26 15:56:40 2022 <20221126155640>
+        """
+        parts = text.rsplit("<", maxsplit=1)
+        if len(parts) == 0:
+            return text, None
+
+        if parts[1][-1] != ">":
+            return text, None
+
+        return parts[0].rstrip(), parts[1][:-1]

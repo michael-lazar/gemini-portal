@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import mimetypes
 import os
 import os.path
@@ -119,7 +120,9 @@ class URLReference:
             self.path = self.gopher_selector
 
         if "%09" in self.gopher_search:
-            self.gopher_plus_string = self.gopher_search.split("%09", maxsplit=1)[1]
+            self.gopher_search, self.gopher_plus_string = self.gopher_search.split(
+                "%09", maxsplit=1
+            )
 
     def __str__(self):
         return self.get_url()
@@ -205,7 +208,9 @@ class URLReference:
 
     def get_gopher_path(self) -> str:
         selector = self.gopher_selector
-        if self.gopher_search:
+        if self.gopher_plus_string:
+            selector = f"{selector}%09{self.gopher_search}%09{self.gopher_plus_string}"
+        elif self.gopher_search:
             selector = f"{selector}%09{self.gopher_search}"
 
         if selector and selector != "/":
@@ -263,7 +268,11 @@ class URLReference:
         """
         Get the URL formatted to be sent to a gopher server.
         """
-        if self.gopher_search:
+        if self.gopher_plus_string:
+            request_string = (
+                f"{self.gopher_selector}%09{self.gopher_search}%09{self.gopher_plus_string}\r\n"
+            )
+        elif self.gopher_search:
             request_string = f"{self.gopher_selector}%09{self.gopher_search}\r\n"
         else:
             request_string = f"{self.gopher_selector}\r\n"
@@ -354,6 +363,12 @@ class URLReference:
         Create a new URL reference using the current object as the base.
         """
         return self.__class__(url, self.get_url())
+
+    def copy(self) -> URLReference:
+        """
+        Return a copy of the current object.
+        """
+        return copy.deepcopy(self)
 
     @classmethod
     def from_filename(cls, filename: str):
