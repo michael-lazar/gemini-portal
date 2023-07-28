@@ -124,6 +124,8 @@ class URLReference:
                 "%09", maxsplit=1
             )
 
+        # TODO: Validate gopher+ string here, if not +, !, $, ?, ...
+
     def __str__(self):
         return self.get_url()
 
@@ -268,7 +270,12 @@ class URLReference:
         """
         Get the URL formatted to be sent to a gopher server.
         """
-        if self.gopher_plus_string:
+        if self.gopher_plus_string == "?":
+            # Selectors that support ASK queries are denoted in the URL by a
+            # "?" in the gopher plus string, but the client is supposed to make
+            # a standard "!" info request to retrieve the +ASK block.
+            request_string = f"{self.gopher_selector}%09{self.gopher_search}%09!\r\n"
+        elif self.gopher_plus_string:
             request_string = (
                 f"{self.gopher_selector}%09{self.gopher_search}%09{self.gopher_plus_string}\r\n"
             )
@@ -456,8 +463,8 @@ class URLReference:
         """
         mimetype, encoding = mimetypes.guess_type(self.path)
 
-        if self.gopher_plus_string.startswith(("!", "$")):
-            mimetype = "application/gopher+-menu"
+        if self.gopher_plus_string.startswith(("!", "$", "?")):
+            mimetype = "application/gopher+-attributes"
         elif self.gopher_item_type in ("1", "7"):
             mimetype = "application/gopher-menu"
         elif self.gopher_item_type in ("h", "H"):

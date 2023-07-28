@@ -68,6 +68,7 @@ class StreamHandler(BaseHandler):
             "text/gemini",
             "application/gopher-menu",
             "application/gopher+-menu",
+            "application/gopher+-attributes",
             "application/nex",
         ):
             mimetype = "text/plain"

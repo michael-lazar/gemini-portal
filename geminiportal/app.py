@@ -114,7 +114,11 @@ async def proxy(
     if query:
         # Query was provided via the input box, redirect to the canonical endpoint
         if g.url.scheme in ("gopher", "gophers"):
-            g.url.gopher_search = query
+            if "\t" in query:
+                # Can't allow any <tab> characters in the gopher query because it
+                # would be confused as a gopher+ string.
+                raise ValueError("The <tab> character is not allowed in gopher searches")
+            g.url.gopher_search = quote(query)
         else:
             g.url.query = quote(query)
 

@@ -38,7 +38,7 @@ class GopherRequest(BaseRequest):
                 status_line = raw_status_line.decode()
                 status, meta = status_line[0], status_line[1:]
             else:
-                raise ValueError(f"Invalid Gopher+ response header: `{header}`")
+                raise ValueError("Invalid Gopher+ response header.")
 
             data_length = int(header[1:])
 
