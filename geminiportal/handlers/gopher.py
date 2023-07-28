@@ -249,9 +249,9 @@ class GopherPlusHandler(TemplateHandler):
         lines = []
         for line in self.line_buffer:
             line = line.strip()
-            key, val = line.split(": ", maxsplit=1)
+            name, val = line.split(": ", maxsplit=1)
             comments, meta_tag = self.split_attribute_meta_tag(val)
-            line_data = {"comments": comments, "meta_tag": meta_tag}
+            line_data = {"comments": comments, "meta_tag": meta_tag, "name": name}
 
             if "@" in meta_tag:
                 line_data["url"] = f"mailto:{meta_tag}"

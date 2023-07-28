@@ -31,11 +31,11 @@
     {% elif attribute == "ADMIN" %}
       {% for line in data.lines %}
         {% if line.url %}
-          <tr><td></td><td>{{ line.comments }} &lt;<i><a href="{{ line.url }}">{{ line.meta_tag }}</a></i>&gt;</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;<a href="{{ line.url }}">{{ line.meta_tag }}</a></i>&gt;</td><td></td></tr>
         {% elif line.meta_tag is not none %}
-          <tr><td></td><td>{{ line.comments }} &lt;<i>{{ line.meta_tag }}</i>&gt;</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;{{ line.meta_tag }}</i>&gt;</td><td></td></tr>
         {% else %}
-          <tr><td></td><td>{{ line.comments }}</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: {{ line.comments }}</td><td></td></tr>
         {% endif %}
       {% endfor %}
     {% else %}
