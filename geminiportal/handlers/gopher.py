@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import Any
-from urllib.parse import quote
 
 from geminiportal.handlers.base import TemplateHandler
-from geminiportal.urls import URLReference
+from geminiportal.urls import URLReference, quote_gopher
 
 
 class GopherItem:
@@ -65,9 +64,11 @@ class GopherItem:
             self.url = self.base.join(f"telnet://{netloc}")
         elif item_type not in ("i", "+", "3"):
             netloc = self.get_netloc(70)
-            url = f"gopher://{netloc}/{self.item_type}{self.selector}"
+            url = f"gopher://{netloc}/{self.item_type}{quote_gopher(self.selector)}"
             if self.gopher_plus_string:
-                url += f"%09%09{quote(self.gopher_plus_string)}"
+                # The first character of the request is not supposed to be
+                # quoted, but the rest of the string is.
+                url += f"%09%09{quote_gopher(self.gopher_plus_string)}"
             self.url = self.base.join(url)
         else:
             self.url = None

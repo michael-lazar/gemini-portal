@@ -10,7 +10,7 @@ from geminiportal.favicons import favicon_cache
 from geminiportal.protocols import build_proxy_request
 from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
-from geminiportal.urls import URLReference
+from geminiportal.urls import URLReference, quote_gopher
 from geminiportal.utils import describe_tls_cert
 
 logger = logging.getLogger("geminiportal")
@@ -118,7 +118,7 @@ async def proxy(
                 # Can't allow any <tab> characters in the gopher query because it
                 # would be confused as a gopher+ string.
                 raise ValueError("The <tab> character is not allowed in gopher searches")
-            g.url.gopher_search = quote(query)
+            g.url.gopher_search = quote_gopher(query)
         else:
             g.url.query = quote(query)
 

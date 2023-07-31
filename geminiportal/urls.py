@@ -499,3 +499,25 @@ class URLReference:
             mimetype = mimetype
 
         return mimetype
+
+
+def quote_gopher(selector: str) -> str:
+    """
+    Apply percent-style escaping to the selector so it can be used in a URL.
+
+    This also works for gopher search strings and gopher+ strings.
+
+    From RFC 4266:
+        <selector> is the gopher selector string. In the Gopher protocol,
+        Gopher selector strings are a sequence of octets that may contain
+        any octets except <tab>, <lf>, and <cr>.
+
+    However, if you take this at ace value if means that a gopher URL can
+    can contain spaces. Most URL parsing libraries are going to be confused
+    by this and screw up. For example, curl won't load a gopher URL with a
+    space in it.
+
+    Because gopher URLs do not have any query params or fragments in them, we
+    can allow some extra characters that are normally escaped.
+    """
+    return quote(selector, safe="/?#$+-!=&@.,|")
