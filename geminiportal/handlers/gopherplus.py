@@ -141,7 +141,7 @@ class GopherPlusHandler(TemplateHandler):
             Mod-Date: Sat Nov 26 15:56:40 2022 <20221126155640>
         """
         parts = text.rsplit("<", maxsplit=1)
-        if len(parts) == 0:
+        if len(parts) == 1:
             return text, None
 
         if parts[1][-1] != ">":

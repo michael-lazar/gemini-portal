@@ -101,9 +101,7 @@ class BaseRequest:
     def parse_response_header(raw_header: bytes) -> tuple[str, str]:
         header = raw_header.decode()
         parts = header.strip().split(maxsplit=1)
-        if len(parts) == 0:
-            status, meta = "", ""
-        elif len(parts) == 1:
+        if len(parts) == 1:
             status, meta = parts[0], ""
         else:
             status, meta = parts
