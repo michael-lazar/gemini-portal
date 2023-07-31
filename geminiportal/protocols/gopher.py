@@ -31,9 +31,9 @@ class GopherRequest(BaseRequest):
             raw_header = await reader.readline()
             header = raw_header.decode()
 
-            if header[0] == "+":
+            if header[:1] == "+":
                 status, meta = "", ""
-            elif header[1] == "-":
+            elif header[:1] == "-":
                 raw_status_line = await reader.readline()
                 status_line = raw_status_line.decode()
                 status, meta = status_line[0], status_line[1:]
