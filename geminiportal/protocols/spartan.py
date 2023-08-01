@@ -54,6 +54,9 @@ class SpartanResponse(BaseResponse):
 
         self.proxy_response_builder = SpartanProxyResponseBuilder(self)
 
+    def get_response_table(self):
+        return {"Status": self.status_display, "Meta": self.meta}
+
 
 class SpartanProxyResponseBuilder(BaseProxyResponseBuilder):
     response: SpartanResponse

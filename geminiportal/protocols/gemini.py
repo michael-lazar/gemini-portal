@@ -139,6 +139,9 @@ class GeminiResponse(BaseResponse):
     def tls_close_notify_received(self):
         return bool(self.tls_close_notify)
 
+    def get_response_table(self):
+        return {"Status": self.status_display, "Meta": self.meta}
+
 
 class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
     response: GeminiResponse

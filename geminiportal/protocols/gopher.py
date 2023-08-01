@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import ssl
 
+from jinja2.utils import markupsafe
+
+from geminiportal.handlers.gopher import GopherItem
 from geminiportal.protocols.base import (
     BaseProxyResponseBuilder,
     BaseRequest,
@@ -39,10 +42,12 @@ class GopherRequest(BaseRequest):
             status_line = raw_status_line.decode()
             status, meta = status_line[0], status_line[1:]
         else:
-            raise ValueError("Received an invalid Gopher+ response header.")
+            # TODO: Better error page here
+            raise ValueError("The server did not respond with a valid Gopher+ header.")
 
         header = raw_header.decode()
         data_length = int(header[1:])
+        meta = meta.strip()
 
         return GopherPlusResponse(
             self,
@@ -77,10 +82,10 @@ class GopherResponse(BaseResponse):
 
 class GopherPlusResponse(BaseResponse):
     STATUS_CODES = {
-        "": "SUCCESS",
-        "1": "ITEM IS NOT AVAILABLE",
-        "2": "TRY AGAIN LATER",
-        "3": "ITEM HAS MOVED",
+        "": "Success",
+        "1": "Item is not available",
+        "2": "Try again later",
+        "3": "Item has moved",
     }
 
     def __init__(self, request, reader, writer, status, meta, data_length):
@@ -104,6 +109,25 @@ class GopherPlusResponse(BaseResponse):
 
         self.charset = "UTF-8"
         self.proxy_response_builder = GopherPlusProxyResponseBuilder(self)
+
+    def get_response_table(self):
+        data = {}
+        if self.status:
+            data["Error"] = self.status_display
+            if self.status == "3":
+                # Transform the meta for a redirect status into a hyperlink
+                item = GopherItem.from_item_description(self.meta, self.url)
+                if item.url:
+                    meta = f"<a href='{item.url.get_proxy_url()}'>{item.url}</a>"
+                    data["Meta"] = markupsafe.Markup(meta)
+                else:
+                    data["Meta"] = self.meta
+            else:
+                data["Meta"] = self.meta
+        else:
+            data["Content-Type"] = self.mimetype
+
+        return data
 
 
 class GopherProxyResponseBuilder(BaseProxyResponseBuilder):

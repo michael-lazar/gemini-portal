@@ -41,16 +41,15 @@ def inject_context():
     kwargs = {}
     if "response" in g:
         kwargs["response"] = g.response
-        kwargs["status"] = g.response.status_display
-        kwargs["meta"] = g.response.meta
-        kwargs["mimetype"] = g.response.mimetype
         if hasattr(g.response, "tls_cert"):
             kwargs["cert_url"] = g.response.url.get_proxy_url(crt=1)
+
     if "url" in g:
         kwargs["url"] = g.url.get_url()
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
         kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
+        kwargs["info_url"] = g.url.get_info_proxy_url()
     elif "address" in g:
         kwargs["url"] = g.address
 

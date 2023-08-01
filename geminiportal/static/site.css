@@ -154,6 +154,12 @@ img {
     font-size: smaller;
     vertical-align: middle;
 }
+.gopher td.info-link.empty {
+   padding-right: 0;
+}
+.gopher td.info-link a {
+    text-decoration: none;
+}
 .gopher span {
     font-size: smaller;
 }

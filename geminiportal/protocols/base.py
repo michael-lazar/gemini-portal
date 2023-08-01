@@ -6,6 +6,7 @@ import re
 import socket
 from asyncio.exceptions import IncompleteReadError
 from collections.abc import AsyncIterator
+from typing import Any
 
 from quart import Response as QuartResponse
 from quart import render_template
@@ -150,7 +151,7 @@ class BaseResponse:
         """
         if self.status in self.STATUS_CODES:
             if self.status:
-                return f"{self.status} {self.STATUS_CODES[self.status].title()}"
+                return f"{self.status} ({self.STATUS_CODES[self.status].title()})"
             else:
                 return f"{self.STATUS_CODES[self.status].title()}"
         else:
@@ -226,6 +227,17 @@ class BaseResponse:
         Return the proxy server represented as an HTTP proxy response.
         """
         return await self.proxy_response_builder.build_proxy_response()
+
+    def get_response_table(self) -> dict[str, Any]:
+        """
+        Return a table of values that will be rendered in HTML above the
+        main page.
+        """
+        # TODO: Would like to make this collapsible
+        # TODO: Would rather print out the raw header and include more info in
+        # the error body.
+        # TODO: I would like a dedicated error template for response errors.
+        return {"Content-Type": self.mimetype}
 
 
 class BaseProxyResponseBuilder:

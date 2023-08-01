@@ -45,6 +45,9 @@ class TxtResponse(BaseResponse):
 
         self.proxy_response_builder = TxtProxyResponseBuilder(self)
 
+    def get_response_table(self):
+        return {"Status": self.status_display, "Meta": self.meta}
+
 
 class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
     response: TxtResponse

@@ -347,6 +347,17 @@ class URLReference:
         else:
             return None
 
+    def get_info(self) -> URLReference | None:
+        """
+        Return a gopher+ info URL for the given resource.
+        """
+        if self.scheme not in ("gopher", "gophers"):
+            return None
+
+        url = self.copy()
+        url.gopher_plus_string = "!"
+        return url
+
     def get_view_source(self) -> URLReference:
         """
         Get the URL to view the raw source for the resource.
@@ -453,6 +464,16 @@ class URLReference:
         parent = self.get_parent()
         if parent:
             return parent.get_proxy_url()
+        else:
+            return None
+
+    def get_info_proxy_url(self) -> str | None:
+        """
+        Get the gopher+ info URL as a string.
+        """
+        info = self.get_info()
+        if info:
+            return info.get_proxy_url()
         else:
             return None
 
