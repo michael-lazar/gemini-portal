@@ -233,10 +233,7 @@ class BaseResponse:
         Return a table of values that will be rendered in HTML above the
         main page.
         """
-        # TODO: Would like to make this collapsible
-        # TODO: Would rather print out the raw header and include more info in
-        # the error body.
-        # TODO: I would like a dedicated error template for response errors.
+        # TODO: Would like to make this collapsible and include more info
         return {"Content-Type": self.mimetype}
 
 

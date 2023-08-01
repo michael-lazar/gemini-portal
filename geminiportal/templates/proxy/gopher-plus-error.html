@@ -1,0 +1,7 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+  <h2>Error: {{ response.status_display }}</h2>
+  <p><i>{{ response.meta }}</i></p>
+  <pre>{{ body }}</pre>
+{% endblock %}

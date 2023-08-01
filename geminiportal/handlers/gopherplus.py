@@ -69,7 +69,7 @@ class GopherPlusHandler(TemplateHandler):
 
         yield from self.flush()
 
-    # TODO: Can I open a separate frame with the attribute data??? Yes!!!
+    # TODO: What if when I clicked on the exclamation mark, I popped the response below
     # TODO: Need to render ASK blocks
     def flush(
         self,

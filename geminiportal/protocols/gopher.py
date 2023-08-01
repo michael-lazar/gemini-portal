@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import ssl
 
-from jinja2.utils import markupsafe
+from quart import Response as QuartResponse
+from quart import render_template
 
 from geminiportal.handlers.gopher import GopherItem
 from geminiportal.protocols.base import (
@@ -42,8 +43,9 @@ class GopherRequest(BaseRequest):
             status_line = raw_status_line.decode()
             status, meta = status_line[0], status_line[1:]
         else:
-            # TODO: Better error page here
-            raise ValueError("The server did not respond with a valid Gopher+ header.")
+            raise ValueError(
+                "This server does not appear to support Gopher+, or returned an invalid response."
+            )
 
         header = raw_header.decode()
         data_length = int(header[1:])
@@ -102,7 +104,6 @@ class GopherPlusResponse(BaseResponse):
         self.data_length: int = data_length
 
         if self.status:
-            # Render gopher+ error descriptions as plaintext documents.
             self.mimetype = "text/plain"
         else:
             self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
@@ -114,16 +115,7 @@ class GopherPlusResponse(BaseResponse):
         data = {}
         if self.status:
             data["Error"] = self.status_display
-            if self.status == "3":
-                # Transform the meta for a redirect status into a hyperlink
-                item = GopherItem.from_item_description(self.meta, self.url)
-                if item.url:
-                    meta = f"<a href='{item.url.get_proxy_url()}'>{item.url}</a>"
-                    data["Meta"] = markupsafe.Markup(meta)
-                else:
-                    data["Meta"] = self.meta
-            else:
-                data["Meta"] = self.meta
+            data["Meta"] = self.meta
         else:
             data["Content-Type"] = self.mimetype
 
@@ -141,14 +133,22 @@ class GopherPlusProxyResponseBuilder(BaseProxyResponseBuilder):
     response: GopherPlusResponse
 
     async def build_proxy_response(self):
-        # selectorF+<CRLF>
-        #   returns document
-        # selectorF!<CRLF>
-        #   returns info block for the selector
-        # selectorF+application/Postscript<CRLF>
-        #   returns the document with the given mime type
-        # selectorF$<CRLF>
-        #   returns the info for every file in the directory
-        # selectorF$+VIEWS+ABSTRACT<CRLF>
-        #   returns just the given attributes
-        return await self.render_from_handler()
+        if self.response.status == "3":
+            item = GopherItem.from_item_description(self.response.meta, self.response.url)
+            content = await render_template(
+                "proxy/gopher-plus-redirect.html",
+                response=self.response,
+                url=item.url,
+            )
+            return QuartResponse(content)
+        elif self.response.status:
+            raw_body = await self.response.get_body()
+            body = raw_body.decode(self.response.charset, errors="replace").strip()
+            content = await render_template(
+                "proxy/gopher-plus-error.html",
+                response=self.response,
+                body=body,
+            )
+            return QuartResponse(content)
+        else:
+            return await self.render_from_handler()
