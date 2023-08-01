@@ -486,10 +486,11 @@ class URLReference:
 
         if self.gopher_plus_string.startswith(("!", "$", "?")):
             mimetype = "application/gopher+-attributes"
-        elif self.gopher_plus_string:
-            mimetype = "application/gopher+-menu"
         elif self.gopher_item_type in ("1", "7"):
-            mimetype = "application/gopher-menu"
+            if self.gopher_plus_string:
+                mimetype = "application/gopher+-menu"
+            else:
+                mimetype = "application/gopher-menu"
         elif self.gopher_item_type in ("h", "H"):
             mimetype = "text/html"
         elif self.gopher_item_type == "g":
