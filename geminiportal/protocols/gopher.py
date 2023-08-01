@@ -26,32 +26,32 @@ class GopherRequest(BaseRequest):
         writer.write(request)
         await writer.drain()
 
-        if self.url.gopher_plus_string:
-            # Parse the response header for gopher+
-            raw_header = await reader.readline()
-            header = raw_header.decode()
-
-            if header[:1] == "+":
-                status, meta = "", ""
-            elif header[:1] == "-":
-                raw_status_line = await reader.readline()
-                status_line = raw_status_line.decode()
-                status, meta = status_line[0], status_line[1:]
-            else:
-                raise ValueError("Invalid Gopher+ response header.")
-
-            data_length = int(header[1:])
-
-            return GopherPlusResponse(
-                self,
-                reader=reader,
-                writer=writer,
-                status=status,
-                meta=meta,
-                data_length=data_length,
-            )
-        else:
+        if not self.url.gopher_plus_string:
             return GopherResponse(self, reader, writer)
+
+        # Parse the response header for gopher+
+        raw_header = await reader.readline()
+
+        if raw_header[:1] == b"+":
+            status, meta = "", ""
+        elif raw_header[:1] == b"-":
+            raw_status_line = await reader.readline()
+            status_line = raw_status_line.decode()
+            status, meta = status_line[0], status_line[1:]
+        else:
+            raise ValueError("Received an invalid Gopher+ response header.")
+
+        header = raw_header.decode()
+        data_length = int(header[1:])
+
+        return GopherPlusResponse(
+            self,
+            reader=reader,
+            writer=writer,
+            status=status,
+            meta=meta,
+            data_length=data_length,
+        )
 
     def make_ssl_context(self) -> ssl.SSLContext:
         context = ssl.create_default_context()
@@ -70,6 +70,7 @@ class GopherResponse(BaseResponse):
         self.lang = None
 
         self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
+
         self.charset = "UTF-8"
         self.proxy_response_builder = GopherProxyResponseBuilder(self)
 
