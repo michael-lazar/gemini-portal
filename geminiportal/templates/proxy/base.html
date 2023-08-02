@@ -28,12 +28,11 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     {% if response.mimetype %}{{ response.mimetype }}{% endif %}
   </summary>
   <table class="response-table">
-    <tr><th colspan="2">Response&nbsp;Details</th></tr>
-    <tr><td>Original&nbsp;URL</td><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
-    <tr><td>Peer&nbsp;Address</td><td>{{ response.request.peer_address }}</td></tr>
+    <tr><td>Resource&nbsp;URL</td><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
+    <tr><td>IP&nbsp;Address</td><td>{{ response.request.peer_address }}</td></tr>
     <tr><td>Handler</td><td>{{ response.__class__.__name__ }}</td></tr>
     {% if response.meta %}<tr><td>Meta</td><td>{{ response.meta }}</td></tr>{% endif %}
-    {% if response.status %}<tr><td>Status</td><td>{{ response.status_display }}</td></tr>{% endif %}
+    {% if response.status %}<tr><td>Status Code</td><td>{{ response.status_display }}</td></tr>{% endif %}
     {% if response.mimetype %}<tr><td>Content-Type</td><td>{{ response.mimetype }}</td></tr>{% endif %}
   </table>
 </details>
