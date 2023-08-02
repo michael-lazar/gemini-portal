@@ -69,9 +69,6 @@ class GopherPlusHandler(TemplateHandler):
 
         yield from self.flush()
 
-    # TODO: gemini:// add => prepended to links?
-    # TODO: Set browser title for gemini pages
-
     # TODO: What if when I clicked on the exclamation mark, I popped the response below
     # TODO: Need to render ASK blocks
     def flush(

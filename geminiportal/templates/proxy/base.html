@@ -11,6 +11,10 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% endif %}
 {% endblock %}
 
+{% if response %}
+{% block title %}{{ response.title_display }}{% endblock %}
+{% endif %}
+
 {% block body %}
 {% include "url-bar.html" %}
 <div class="link-line">

@@ -151,6 +151,10 @@ class BaseResponse:
         return self.request.url
 
     @property
+    def title_display(self) -> str:
+        return self.url.hostname
+
+    @property
     def status_display(self) -> str:
         """
         A human-readable status message for the response, if available.
