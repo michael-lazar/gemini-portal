@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from geminiportal.handlers.base import TemplateHandler
-from geminiportal.utils import parse_link_line
+from geminiportal.utils import parse_link_line, split_emoji
 
 RABBIT_INLINE = ":rаbbiΤ:"
 RABBIT_STANDALONE = ";rаbbiΤ;"
@@ -50,7 +50,17 @@ class GeminiHandler(TemplateHandler):
 
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()
-        context["content"] = self.iter_content()
+
+        content = list(self.iter_content())
+        if content and content[0]["item_type"] in ("h1", "h2", "h3"):
+            # Set a custom page title based on the first header in the
+            # document. This idea was copied from Lagrange.
+            favicon, title = split_emoji(content[0]["text"])
+            if favicon:
+                context["favicon"] = favicon
+            context["title"] = f"{title} — {self.url.hostname}"
+
+        context["content"] = content
         return context
 
     def iter_content(self) -> Iterable[dict]:

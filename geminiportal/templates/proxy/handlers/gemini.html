@@ -1,5 +1,9 @@
 {% extends "proxy/base.html" %}
 
+{% if title %}
+{% block title %}{{ title }}{% endblock %}
+{% endif %}
+
 {% block content %}
 <div class="gemini">
 {% for item in content -%}

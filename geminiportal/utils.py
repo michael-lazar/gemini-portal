@@ -40,14 +40,27 @@ def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, s
         link, link_text = parts[0], parts[0]
     else:
         link, link_text = parts
-        for i in range(4, 0, -1):
-            # Start with 4 characters and work backwards to 1 to check for
-            # emojis that span multiple code points.
-            if is_emoji(link_text[:i]):
-                prefix = link_text[:i] + " "
-                link_text = link_text[i + 1 :]
-                break
+        prefix, link_text = split_emoji(link_text)
+        if prefix:
+            # Add a space after the emoji, this just makes it easier to insert
+            # into a template string without using a conditional statement
+            prefix = prefix + " "
 
     link_text = link_text.strip()
     url = base.join(link)
     return url, link_text, prefix
+
+
+def split_emoji(line: str) -> tuple[str, str]:
+    """
+    Strips out a potential emoji at the beginning on a line of text.
+    """
+    for i in range(4, 0, -1):
+        # Start with 4 characters and work backwards to 1 to check for
+        # emojis that span multiple code points.
+        if is_emoji(line[:i]):
+            emoji = line[:i]
+            link_text = line[i + 1 :].strip()
+            return emoji, link_text
+
+    return "", line
