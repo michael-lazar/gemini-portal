@@ -54,9 +54,6 @@ class SpartanResponse(BaseResponse):
 
         self.proxy_response_builder = SpartanProxyResponseBuilder(self)
 
-    def get_response_table(self):
-        return {"Status": self.status_display, "Meta": self.meta}
-
 
 class SpartanProxyResponseBuilder(BaseProxyResponseBuilder):
     response: SpartanResponse
@@ -65,7 +62,7 @@ class SpartanProxyResponseBuilder(BaseProxyResponseBuilder):
         if self.response.status.startswith("2"):
             return await self.render_from_handler()
         elif self.response.status.startswith("3"):
-            return self.render_redirect(self.response.meta)
+            return await self.render_redirect(self.response.meta)
         elif self.response.status.startswith(("4", "5")):
             return await self.render_error(self.response.meta)
         else:

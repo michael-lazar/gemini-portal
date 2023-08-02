@@ -6,7 +6,6 @@ import re
 import socket
 from asyncio.exceptions import IncompleteReadError
 from collections.abc import AsyncIterator
-from typing import Any
 
 from quart import Response as QuartResponse
 from quart import render_template
@@ -73,6 +72,7 @@ class BaseRequest:
         self.url = url
         self.host, self.port = url.conn_info
         self.raw_mode = raw_mode
+        self.peer_address = ""
 
         self.clean()
 
@@ -112,9 +112,15 @@ class BaseRequest:
     async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
         future = asyncio.open_connection(self.host, self.port, **kwargs)
         try:
-            return await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
+            reader, writer = await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
         except asyncio.TimeoutError:
             raise ProxyError("Timeout establishing connection with server")
+
+        peername = writer.get_extra_info("peername")
+        if peername:
+            self.peer_address = peername[0]
+
+        return reader, writer
 
     async def fetch(self) -> BaseResponse:
         raise NotImplementedError
@@ -224,17 +230,9 @@ class BaseResponse:
 
     async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
         """
-        Return the proxy server represented as an HTTP proxy response.
+        Render the native response from the remote server as an HTTP response.
         """
         return await self.proxy_response_builder.build_proxy_response()
-
-    def get_response_table(self) -> dict[str, Any]:
-        """
-        Return a table of values that will be rendered in HTML above the
-        main page.
-        """
-        # TODO: Would like to make this collapsible and include more info
-        return {"Content-Type": self.mimetype}
 
 
 class BaseProxyResponseBuilder:

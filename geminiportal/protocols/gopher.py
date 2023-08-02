@@ -111,16 +111,6 @@ class GopherPlusResponse(BaseResponse):
         self.charset = "UTF-8"
         self.proxy_response_builder = GopherPlusProxyResponseBuilder(self)
 
-    def get_response_table(self):
-        data = {}
-        if self.status:
-            data["Error"] = self.status_display
-            data["Meta"] = self.meta
-        else:
-            data["Content-Type"] = self.mimetype
-
-        return data
-
 
 class GopherProxyResponseBuilder(BaseProxyResponseBuilder):
     response: GopherResponse

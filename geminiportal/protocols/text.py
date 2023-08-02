@@ -45,9 +45,6 @@ class TxtResponse(BaseResponse):
 
         self.proxy_response_builder = TxtProxyResponseBuilder(self)
 
-    def get_response_table(self):
-        return {"Status": self.status_display, "Meta": self.meta}
-
 
 class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
     response: TxtResponse
@@ -56,7 +53,7 @@ class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
         if self.response.status == "2":
             return await self.render_from_handler()
         elif self.response.status == "3":
-            return self.render_redirect(self.response.meta)
+            return await self.render_redirect(self.response.meta)
         elif self.response.status in ("4", "5"):
             return await self.render_error(self.response.meta)
         else:

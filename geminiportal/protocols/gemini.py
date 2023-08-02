@@ -129,18 +129,20 @@ class GeminiResponse(BaseResponse):
         self.tls_cipher = tls_cipher
         self.tls_close_notify = tls_close_notify
 
-        self.mimetype, params = self.parse_meta(self.meta)
-        self.charset = params.get("charset", "UTF-8")
-        self.lang = params.get("lang", None)
+        if self.status.startswith("2"):
+            self.mimetype, params = self.parse_meta(self.meta)
+            self.charset = params.get("charset", "UTF-8")
+            self.lang = params.get("lang", None)
+        else:
+            self.charset = "UTF-8"
+            self.mimetype = ""
+            self.lang = None
 
         self.proxy_response_builder = GeminiProxyResponseBuilder(self)
 
     @property
     def tls_close_notify_received(self):
         return bool(self.tls_close_notify)
-
-    def get_response_table(self):
-        return {"Status": self.status_display, "Meta": self.meta}
 
 
 class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
@@ -157,7 +159,7 @@ class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
         if self.response.status.startswith("2"):
             return await self.render_from_handler()
         elif self.response.status.startswith("3"):
-            return self.render_redirect(self.response.meta)
+            return await self.render_redirect(self.response.meta)
         elif self.response.status.startswith(("4", "5")):
             return await self.render_error(self.response.meta)
         elif self.response.status.startswith("6"):
