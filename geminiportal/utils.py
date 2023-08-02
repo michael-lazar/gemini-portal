@@ -40,9 +40,14 @@ def parse_link_line(line: str, base: URLReference) -> tuple[URLReference, str, s
         link, link_text = parts[0], parts[0]
     else:
         link, link_text = parts
-        if is_emoji(link_text[0]):
-            prefix = link_text[0] + " "
-            link_text = link_text[1:].lstrip()
+        for i in range(4, 0, -1):
+            # Start with 4 characters and work backwards to 1 to check for
+            # emojis that span multiple code points.
+            if is_emoji(link_text[:i]):
+                prefix = link_text[:i] + " "
+                link_text = link_text[i + 1 :]
+                break
 
+    link_text = link_text.strip()
     url = base.join(link)
     return url, link_text, prefix
