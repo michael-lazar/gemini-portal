@@ -8,8 +8,6 @@ from asyncio.exceptions import IncompleteReadError
 from collections.abc import AsyncIterator
 
 from quart import Response as QuartResponse
-from quart import render_template
-from werkzeug.utils import redirect
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from geminiportal.handlers import get_handler_class
@@ -265,21 +263,6 @@ class BaseProxyResponseBuilder:
             response = await handler.render()
 
         return response
-
-    async def render_redirect(self, redirect_url: str, code: int = 307) -> WerkzeugResponse:
-        location = self.response.url.join(redirect_url).get_proxy_url()
-        return redirect(location, code=code)
-
-    async def render_error(self, error: str) -> QuartResponse:
-        content = await render_template("proxy/proxy-error.html", error=error)
-        return QuartResponse(content)
-
-    async def render_unhandled(self):
-        content = await render_template(
-            "proxy/gateway-error.html",
-            error="The response from the proxied server is unrecognized or invalid.",
-        )
-        return QuartResponse(content)
 
     async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
         raise NotImplementedError

@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from quart import Response as QuartResponse
+from quart import render_template
+from werkzeug.utils import redirect
+
 from geminiportal.protocols.base import (
     BaseProxyResponseBuilder,
     BaseRequest,
@@ -52,9 +56,22 @@ class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
     async def build_proxy_response(self):
         if self.response.status == "2":
             return await self.render_from_handler()
+
         elif self.response.status == "3":
-            return await self.render_redirect(self.response.meta)
+            location = self.response.url.join(self.response.meta).get_proxy_url()
+            return redirect(location, code=307)
+
         elif self.response.status in ("4", "5"):
-            return await self.render_error(self.response.meta)
+            content = await render_template(
+                "proxy/proxy-error.html",
+                error=self.response.status_display,
+                message=self.response.meta,
+            )
+            return QuartResponse(content)
+
         else:
-            return await self.render_unhandled()
+            content = await render_template(
+                "proxy/gateway-error.html",
+                error="The response from the proxied server is unrecognized or invalid.",
+            )
+            return QuartResponse(content)
