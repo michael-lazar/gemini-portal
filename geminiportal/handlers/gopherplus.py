@@ -69,8 +69,6 @@ class GopherPlusHandler(TemplateHandler):
 
         yield from self.flush()
 
-    # TODO: What if when I clicked on the exclamation mark, I popped the response below
-    # TODO: Need to render ASK blocks
     def flush(
         self,
         attribute: str | None = None,
@@ -84,6 +82,7 @@ class GopherPlusHandler(TemplateHandler):
                 self.parse_views_block()
             elif self.active_attribute == "ADMIN":
                 self.parse_admin_block()
+            # TODO: Need to render ASK blocks
             self.attribute_map[self.active_attribute] = self.active_attribute_data
 
         # If we're starting a new info block, yield any existing attributes

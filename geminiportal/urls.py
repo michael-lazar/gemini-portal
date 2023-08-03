@@ -124,7 +124,7 @@ class URLReference:
                 "%09", maxsplit=1
             )
 
-        # TODO: Validate gopher+ string here, if not +, !, $, ?, ...
+        # TODO: Validate gopher+ string here, if not startswith +, !, $, ?, ...
 
     def __str__(self):
         return self.get_url()
