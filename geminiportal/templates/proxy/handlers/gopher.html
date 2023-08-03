@@ -22,7 +22,7 @@
     {% elif item.url %}
         <td><a href="{{ item.url.get_proxy_url() }}">{{ item.item_text }}</a>{% if item.url.get_external_indicator() %} <span>({{ item.url.get_external_indicator() }})</span>{% endif %}</td>
     {% else %}
-        <td>{{ item.item_text }}</td>
+        <td>{{ item.item_text or " "}}</td>
     {% endif %}
     <td class="mimetype">{{ item.mimetype or "" }}</td>
     </tr>
