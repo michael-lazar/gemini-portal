@@ -23,7 +23,7 @@ class GopherPlusHandler(TemplateHandler):
     attribute_map: GopherPlusAttributeMap
     active_attribute: str | None
     active_attribute_data: GopherPlusAttributeData
-    line_buffer = list[str]
+    line_buffer: list[str]
 
     def __init__(
         self,
@@ -125,7 +125,7 @@ class GopherPlusHandler(TemplateHandler):
             comments, meta_tag = self.split_attribute_meta_tag(val)
             line_data = {"comments": comments, "meta_tag": meta_tag, "name": name}
 
-            if "@" in meta_tag:
+            if meta_tag and "@" in meta_tag:
                 line_data["url"] = f"mailto:{meta_tag}"
 
             lines.append(line_data)

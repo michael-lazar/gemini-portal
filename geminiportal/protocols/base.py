@@ -150,7 +150,7 @@ class BaseResponse:
 
     @property
     def title_display(self) -> str:
-        return self.url.hostname
+        return self.url.hostname or "<unknown>"
 
     @property
     def status_display(self) -> str:
