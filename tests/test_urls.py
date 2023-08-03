@@ -197,7 +197,8 @@ def test_get_root_url_gopher_dir_type_alt():
 def test_gopher_parse_search_data():
     url = URLReference("gopher://mozz.us/7hello%09search%09/data")
     assert url.gopher_selector == "hello"
-    assert url.gopher_search == "search%09/data"
+    assert url.gopher_search == "search"
+    assert url.gopher_plus_string == "/data"
 
     assert url.get_url() == "gopher://mozz.us/7hello%09search%09/data"
     assert url.get_parent().get_url() == "gopher://mozz.us"
