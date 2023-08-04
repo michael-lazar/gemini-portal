@@ -3,7 +3,15 @@ from __future__ import annotations
 import logging
 import ssl
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from quart import Response as QuartResponse
+from quart import render_template
+from werkzeug.utils import redirect
+
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -52,12 +60,12 @@ class GeminiRequest(BaseRequest):
         tls_version = ssock.version()
         tls_cipher, _, _ = ssock.cipher()
 
-        gemini_url = self.url.get_gemini_request_url()
-        writer.write(f"{gemini_url}\r\n".encode())
+        data = self.url.get_gemini_request()
+        writer.write(data)
         await writer.drain()
 
         raw_header = await reader.readline()
-        status, meta = self.parse_header(raw_header)
+        status, meta = self.parse_response_header(raw_header)
 
         return GeminiResponse(
             request=self,
@@ -122,25 +130,56 @@ class GeminiResponse(BaseResponse):
         self.tls_cipher = tls_cipher
         self.tls_close_notify = tls_close_notify
 
-        self.mimetype, params = self.parse_meta(meta)
-        self.charset = params.get("charset", "UTF-8")
-        self.lang = params.get("lang", None)
+        if self.status.startswith("2"):
+            self.mimetype, params = self.parse_meta(meta)
+            self.charset = params.get("charset", "UTF-8")
+            self.lang = params.get("lang", None)
+        else:
+            self.charset = "UTF-8"
+            self.mimetype = ""
+            self.lang = None
+
+        self.proxy_response_builder = GeminiProxyResponseBuilder(self)
 
     @property
     def tls_close_notify_received(self):
         return bool(self.tls_close_notify)
 
-    def is_input(self):
-        return self.status.startswith("1")
 
-    def is_success(self):
-        return self.status.startswith("2")
+class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: GeminiResponse
 
-    def is_redirect(self):
-        return self.status.startswith("3")
+    async def build_proxy_response(self):
+        if self.response.status.startswith("1"):
+            content = await render_template(
+                "proxy/gemini-query.html",
+                secret=self.response.status == "11",
+                prompt=self.response.meta,
+            )
+            return QuartResponse(content)
 
-    def is_error(self):
-        return self.status.startswith(("4", "5"))
+        elif self.response.status.startswith("2"):
+            return await self.render_from_handler()
 
-    def is_cert_required(self):
-        return self.status.startswith("6")
+        elif self.response.status.startswith("3"):
+            location = self.response.url.join(self.response.meta).get_proxy_url()
+            return redirect(location, 307)
+
+        elif self.response.status.startswith(("4", "5")):
+            content = await render_template(
+                "proxy/proxy-error.html",
+                error=self.response.status_display,
+                message=self.response.meta,
+            )
+            return QuartResponse(content)
+
+        elif self.response.status.startswith("6"):
+            content = await render_template("proxy/gemini-cert-required.html")
+            return QuartResponse(content)
+
+        else:
+            content = await render_template(
+                "proxy/gateway-error.html",
+                error="The response from the proxied server is unrecognized or invalid.",
+            )
+            return QuartResponse(content)

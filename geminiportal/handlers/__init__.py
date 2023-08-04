@@ -1,13 +1,18 @@
-from quart import Response
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from geminiportal.protocols.base import BaseResponse
 
 from geminiportal.handlers.audio import AudioHandler
 from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.handlers.gemini import GeminiHandler
 from geminiportal.handlers.gopher import GopherHandler
+from geminiportal.handlers.gopherplus import GopherPlusHandler
 from geminiportal.handlers.image import ImageHandler
 from geminiportal.handlers.nex import NexHandler
 from geminiportal.handlers.text import TextHandler
-from geminiportal.protocols.base import BaseResponse, ProxyResponseSizeError
 
 
 def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
@@ -28,34 +33,11 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
         handler_class = GeminiHandler
     elif response.mimetype.startswith("application/nex"):
         handler_class = NexHandler
-    elif response.mimetype.startswith("application/gopher-menu"):
+    elif response.mimetype.startswith(("application/gopher-menu", "application/gopher+-menu")):
         handler_class = GopherHandler
+    elif response.mimetype.startswith("application/gopher+-attributes"):
+        handler_class = GopherPlusHandler
     else:
         handler_class = StreamHandler
 
     return handler_class
-
-
-async def handle_proxy_response(
-    response: BaseResponse,
-    raw_data: bool,
-) -> Response:
-    """
-    Convert a response from the proxy server into an HTTP response object.
-    """
-    handler_class: type[BaseHandler]
-
-    if raw_data:
-        handler_class = StreamHandler
-    else:
-        handler_class = get_handler_class(response)
-
-    try:
-        handler = await handler_class.from_response(response)
-        return await handler.render()
-    except ProxyResponseSizeError as e:
-        # The file is too large to render inline, capture the data that has
-        # already been read from the buffer and render the entire response as
-        # a streaming response.
-        handler = await StreamHandler.from_partial_response(response, e.partial)
-        return await handler.render()

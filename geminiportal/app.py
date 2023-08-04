@@ -7,11 +7,10 @@ from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
 from geminiportal.favicons import favicon_cache
-from geminiportal.handlers import handle_proxy_response
 from geminiportal.protocols import build_proxy_request
 from geminiportal.protocols.base import ProxyError
 from geminiportal.protocols.gemini import GeminiResponse
-from geminiportal.urls import URLReference
+from geminiportal.urls import URLReference, quote_gopher
 from geminiportal.utils import describe_tls_cert
 
 logger = logging.getLogger("geminiportal")
@@ -42,16 +41,15 @@ def inject_context():
     kwargs = {}
     if "response" in g:
         kwargs["response"] = g.response
-        kwargs["status"] = g.response.status_display
-        kwargs["meta"] = g.response.meta
-        kwargs["mimetype"] = g.response.mimetype
         if hasattr(g.response, "tls_cert"):
             kwargs["cert_url"] = g.response.url.get_proxy_url(crt=1)
+
     if "url" in g:
         kwargs["url"] = g.url.get_url()
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
         kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
+        kwargs["info_url"] = g.url.get_info_proxy_url()
     elif "address" in g:
         kwargs["url"] = g.address
 
@@ -115,14 +113,19 @@ async def proxy(
     if query:
         # Query was provided via the input box, redirect to the canonical endpoint
         if g.url.scheme in ("gopher", "gophers"):
-            g.url.gopher_search = query
+            if "\t" in query:
+                # Can't allow any <tab> characters in the gopher query because it
+                # would be confused as a gopher+ string.
+                raise ValueError("The <tab> character is not allowed in gopher searches")
+            g.url.gopher_search = quote_gopher(query)
         else:
             g.url.query = quote(query)
 
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    proxy_request = build_proxy_request(g.url)
+    raw_mode = bool(request.args.get("raw"))
+    proxy_request = build_proxy_request(g.url, raw_mode)
     response = await proxy_request.get_response()
     g.response = response
 
@@ -159,29 +162,8 @@ async def proxy(
         )
         return Response(content)
 
-    if response.is_input():
-        is_secret = response.status == "11"
-        content = await render_template("proxy/query.html", is_secret=is_secret)
-        return Response(content)
-
-    if response.is_redirect():
-        location = g.url.join(response.meta).get_proxy_url()
-        return app.redirect(location, 307)
-
-    if response.is_success():
-        raw_data = bool(request.args.get("raw"))
-        return await handle_proxy_response(response=response, raw_data=raw_data)
-
-    if response.is_error():
-        content = await render_template("proxy/proxy-error.html")
-        return Response(content)
-
-    if response.is_cert_required():
-        content = await render_template("proxy/cert-required.html")
-        return Response(content)
-
-    content = await render_template("proxy/base.html")
-    return Response(content)
+    proxy_response = await response.build_proxy_response()
+    return proxy_response
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ class FaviconCache:
     async def _fetch_favicon(self, favicon_url: URLReference) -> str | None:
         request = build_proxy_request(favicon_url)
         response = await request.get_response()
-        if response.is_success() and response.meta.startswith("text/plain"):
+        if response.status.startswith("2") and response.meta.startswith("text/plain"):
             body = await response.get_body()
             charset = response.charset or "UTF-8"
             favicon = body.decode(charset, errors="replace").strip()

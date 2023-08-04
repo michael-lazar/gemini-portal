@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from geminiportal.handlers.base import TemplateHandler
-from geminiportal.urls import URLReference
+from geminiportal.urls import URLReference, quote_gopher
 
 
 class GopherItem:
@@ -41,6 +41,7 @@ class GopherItem:
         selector: str,
         host: str,
         port: int,
+        gopher_plus_string: str = "",
     ):
         self.base = base
         self.item_type = item_type
@@ -48,6 +49,7 @@ class GopherItem:
         self.selector = selector
         self.host = host
         self.port = port
+        self.gopher_plus_string = gopher_plus_string
 
         self.is_query = item_type == "7"
         self.type_description = self.descriptions.get(self.item_type, "(UNKN)")
@@ -62,19 +64,38 @@ class GopherItem:
             self.url = self.base.join(f"telnet://{netloc}")
         elif item_type not in ("i", "+", "3"):
             netloc = self.get_netloc(70)
-            self.url = self.base.join(f"gopher://{netloc}/{self.item_type}{self.selector}")
+            url = f"gopher://{netloc}/{self.item_type}{quote_gopher(self.selector)}"
+            if self.gopher_plus_string:
+                url += f"%09%09{quote_gopher(self.gopher_plus_string)}"
+            self.url = self.base.join(url)
         else:
             self.url = None
 
         if self.url:
             self.external_indicator = self.url.get_external_indicator()
             self.mimetype = self.url.guess_mimetype()
-            if self.mimetype == "application/gopher-menu":
+            if self.mimetype in ("application/gopher-menu", "application/gopher+-menu"):
                 # Don't display gopher menu mimetype because it adds clutter
                 self.mimetype = None
         else:
             self.external_indicator = None
             self.mimetype = None
+
+    @classmethod
+    def from_item_description(cls, line: str, base: URLReference) -> GopherItem:
+        parts = line.split("\t")
+        try:
+            return GopherItem(
+                base,
+                parts[0][0],
+                parts[0][1:],
+                parts[1],
+                parts[2],
+                int(parts[3]),
+                "\t".join(parts[4:]),
+            )
+        except Exception:
+            return GopherItem(base, "i", line, "", "", 0)
 
     def get_netloc(self, default_port: int):
         encoded_host = self.host.encode("idna").decode("ascii")
@@ -112,15 +133,4 @@ class GopherHandler(TemplateHandler):
             line = line.rstrip()
             if line == ".":
                 break  # Gopher directory EOF
-            parts = line.split("\t")
-            try:
-                yield GopherItem(
-                    self.url,
-                    parts[0][0],
-                    parts[0][1:],
-                    parts[1],
-                    parts[2],
-                    int(parts[3]),
-                )
-            except Exception:
-                yield GopherItem(self.url, "i", line, "", "", 0)
+            yield GopherItem.from_item_description(line, self.url)

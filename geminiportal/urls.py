@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import mimetypes
 import os
 import os.path
@@ -104,6 +105,7 @@ class URLReference:
         self.gopher_item_type = ""
         self.gopher_selector = ""
         self.gopher_search = ""
+        self.gopher_plus_string = ""
         if self.scheme in ("gopher", "gophers"):
             if len(sections) < 4 or sections[3] == "":
                 self.gopher_item_type = "1"
@@ -112,10 +114,17 @@ class URLReference:
                 self.gopher_item_type = sections[3][0]
                 self.gopher_selector = sections[3][1:]
 
+        # Strip the search string & gopher+ data out of the selector and path
         if "%09" in self.gopher_selector:
-            # Strip the search string & gopher+ data out of the selector and path
             self.gopher_selector, self.gopher_search = self.gopher_selector.split("%09", maxsplit=1)
-            self.path = self.path.split("%09", maxsplit=1)[0]
+            self.path = self.gopher_selector
+
+        if "%09" in self.gopher_search:
+            self.gopher_search, self.gopher_plus_string = self.gopher_search.split(
+                "%09", maxsplit=1
+            )
+
+        # TODO: Validate gopher+ string here, if not startswith +, !, $, ?, ...
 
     def __str__(self):
         return self.get_url()
@@ -138,7 +147,7 @@ class URLReference:
             # here, because even though the path has no meaning in gopher, I'm
             # assuming most modern gopher servers are going to use HTTP-style
             # paths for file names.
-            return self.guess_gopher_mimetype(self.gopher_item_type, self.path)
+            return self.guess_gopher_mimetype()
 
         return mimetypes.guess_type(self.path, strict=False)[0]
 
@@ -201,7 +210,9 @@ class URLReference:
 
     def get_gopher_path(self) -> str:
         selector = self.gopher_selector
-        if self.gopher_search:
+        if self.gopher_plus_string:
+            selector = f"{selector}%09{self.gopher_search}%09{self.gopher_plus_string}"
+        elif self.gopher_search:
             selector = f"{selector}%09{self.gopher_search}"
 
         if selector and selector != "/":
@@ -212,6 +223,9 @@ class URLReference:
             return ""
 
     def get_gopher_url(self) -> str:
+        if self.scheme not in ("gopher", "gophers"):
+            raise ValueError(f"Invalid scheme for gopher URL: {self.scheme}")
+
         path = self.get_gopher_path()
         return f"{self.scheme}://{self.netloc}{path}"
 
@@ -235,9 +249,9 @@ class URLReference:
         parts = (self.scheme, self.netloc, self.path, self.params, query, fragment)
         return urlunparse(parts)
 
-    def get_gemini_request_url(self) -> str:
+    def get_gemini_request(self) -> bytes:
         """
-        Get the URL formatted to be sent in a gemini request string.
+        Get the URL formatted to be sent in a gemini server.
         """
         path = self.path
         if self.scheme in ("gemini", "text") and path == "":
@@ -253,13 +267,23 @@ class URLReference:
         # contain encoded IDNs (follows RFC 3490).
         netloc = self.netloc.encode("idna").decode("ascii")
         parts = (self.scheme, netloc, path, self.params, self.query, fragment)
-        return urlunparse(parts)
+        url = urlunparse(parts)
+        return f"{url}\r\n".encode()
 
     def get_gopher_request(self) -> bytes:
         """
         Get the URL formatted to be sent to a gopher server.
         """
-        if self.gopher_search:
+        if self.gopher_plus_string == "?":
+            # Selectors that support ASK queries are denoted in the URL by a
+            # "?" in the gopher plus string, but the client is supposed to make
+            # a standard "!" info request to retrieve the +ASK block.
+            request_string = f"{self.gopher_selector}%09{self.gopher_search}%09!\r\n"
+        elif self.gopher_plus_string:
+            request_string = (
+                f"{self.gopher_selector}%09{self.gopher_search}%09{self.gopher_plus_string}\r\n"
+            )
+        elif self.gopher_search:
             request_string = f"{self.gopher_selector}%09{self.gopher_search}\r\n"
         else:
             request_string = f"{self.gopher_selector}\r\n"
@@ -327,6 +351,17 @@ class URLReference:
         else:
             return None
 
+    def get_info(self) -> URLReference | None:
+        """
+        Return a gopher+ info URL for the given resource.
+        """
+        if self.scheme not in ("gopher", "gophers"):
+            return None
+
+        url = self.copy()
+        url.gopher_plus_string = "!"
+        return url
+
     def get_view_source(self) -> URLReference:
         """
         Get the URL to view the raw source for the resource.
@@ -350,6 +385,12 @@ class URLReference:
         Create a new URL reference using the current object as the base.
         """
         return self.__class__(url, self.get_url())
+
+    def copy(self) -> URLReference:
+        """
+        Return a copy of the current object.
+        """
+        return copy.deepcopy(self)
 
     @classmethod
     def from_filename(cls, filename: str):
@@ -430,45 +471,81 @@ class URLReference:
         else:
             return None
 
-    @classmethod
-    def guess_gopher_mimetype(cls, item_type: str, selector: str) -> str | None:
+    def get_info_proxy_url(self) -> str | None:
+        """
+        Get the gopher+ info URL as a string.
+        """
+        info = self.get_info()
+        if info:
+            return info.get_proxy_url()
+        else:
+            return None
+
+    def guess_gopher_mimetype(self) -> str | None:
         """
         Attempt to guess a specific mimetype for a gopher selector based on the
         selector's item type and the extension on the selector.
         """
-        mimetype, encoding = mimetypes.guess_type(selector)
+        mimetype, encoding = mimetypes.guess_type(self.path)
 
-        if item_type in ("1", "7"):
-            mimetype = "application/gopher-menu"
-        elif item_type in ("h", "H"):
+        if self.gopher_plus_string.startswith(("!", "$", "?")):
+            mimetype = "application/gopher+-attributes"
+        elif self.gopher_item_type in ("1", "7"):
+            if self.gopher_plus_string:
+                mimetype = "application/gopher+-menu"
+            else:
+                mimetype = "application/gopher-menu"
+        elif self.gopher_item_type in ("h", "H"):
             mimetype = "text/html"
-        elif item_type == "g":
+        elif self.gopher_item_type == "g":
             mimetype = "image/gif"
-        elif item_type == "4":
+        elif self.gopher_item_type == "4":
             mimetype = "application/binhex"
-        elif item_type == "6":
+        elif self.gopher_item_type == "6":
             mimetype = "text/x-uuencode"
-        elif item_type == "d":
+        elif self.gopher_item_type == "d":
             mimetype = mimetype or "application/pdf"
-        elif item_type in ("5", "9"):
+        elif self.gopher_item_type in ("5", "9"):
             if encoding:
                 # For example, gzipped text files
                 mimetype = "application/octet-stream"
             else:
                 mimetype = mimetype or "application/octet-stream"
-        elif item_type == "s":
+        elif self.gopher_item_type == "s":
             if mimetype and mimetype.startswith("audio/"):
                 mimetype = mimetype
             else:
                 mimetype = "audio/wave"
-        elif item_type == "0":
+        elif self.gopher_item_type == "0":
             if mimetype and mimetype.startswith("text/"):
                 mimetype = mimetype
             else:
                 mimetype = "text/plain"
-        elif item_type in ("2", "8", "3", "i", "+"):
+        elif self.gopher_item_type in ("2", "8", "3", "i", "+"):
             mimetype = None
         else:
             mimetype = mimetype
 
         return mimetype
+
+
+def quote_gopher(selector: str) -> str:
+    """
+    Apply percent-style escaping to the selector so it can be used in a URL.
+
+    This also works for gopher search strings and gopher+ strings.
+
+    From RFC 4266:
+        <selector> is the gopher selector string. In the Gopher protocol,
+        Gopher selector strings are a sequence of octets that may contain
+        any octets except <tab>, <lf>, and <cr>.
+
+    However, if you take this at ace value if means that a gopher URL can
+    can contain spaces. Most URL parsing libraries are going to be confused
+    by this and screw up. For example, curl won't load a gopher URL with a
+    space in it.
+
+    Because gopher URLs do not have any query params or fragments in them, we
+    can allow some extra characters that are normally escaped.
+    """
+    return quote(selector, safe="/?#$+-!=&@.,|")

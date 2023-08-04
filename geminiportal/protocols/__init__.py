@@ -8,20 +8,20 @@ from geminiportal.protocols.text import TxtRequest
 from geminiportal.urls import URLReference
 
 
-def build_proxy_request(url: URLReference) -> BaseRequest:
+def build_proxy_request(url: URLReference, raw_mode: bool = False) -> BaseRequest:
     if url.scheme == "spartan":
-        return SpartanRequest(url)
+        return SpartanRequest(url, raw_mode)
     elif url.scheme == "text":
-        return TxtRequest(url)
+        return TxtRequest(url, raw_mode)
     elif url.scheme == "finger":
-        return FingerRequest(url)
+        return FingerRequest(url, raw_mode)
     elif url.scheme == "gemini":
-        return GeminiRequest(url)
+        return GeminiRequest(url, raw_mode)
     elif url.scheme == "nex":
-        return NexRequest(url)
+        return NexRequest(url, raw_mode)
     elif url.scheme == "gopher":
-        return GopherRequest(url)
+        return GopherRequest(url, raw_mode)
     elif url.scheme == "gophers":
-        return GopherRequest(url)
+        return GopherRequest(url, raw_mode)
     else:
         raise ValueError(f"Unsupported URL scheme: {url.scheme}")

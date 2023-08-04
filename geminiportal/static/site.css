@@ -2,11 +2,11 @@ body {
     margin: 1em;
     -webkit-text-size-adjust: 100%;
 }
-table.response-table {
+.response-table {
     border: 1px solid black;
-    min-width: 3em;
+    margin: 10px;
 }
-table.response-table th {
+.response-table th {
     border: 1px solid black;
     min-width: 3em;
 }
@@ -20,6 +20,15 @@ div {
 }
 img {
     max-width: 300px;
+}
+details {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+details:not([open]) summary {
+}
+details summary {
+    font-style: italic;
 }
 .link-line {
     font-size: smaller;
@@ -154,6 +163,12 @@ img {
     font-size: smaller;
     vertical-align: middle;
 }
+.gopher td.info-link.empty {
+   padding-right: 0;
+}
+.gopher td.info-link a {
+    text-decoration: none;
+}
 .gopher span {
     font-size: smaller;
 }
@@ -176,6 +191,13 @@ img {
 .gopher input::placeholder {
     white-space: pre;
     font-family: monospace;
+}
+.gopherp tr td:last-child {
+    border-left: 1px solid black;
+    padding-left: 10px;
+}
+.gopherp tr td.invisible {
+    border-left: 0;
 }
 .nex span {
     font-size: smaller;

@@ -1,0 +1,11 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+  <h2>Error {{ response.status_display }}</h2>
+  <p><i>This selector has moved to the following location:</i></p>
+  {% if url %}
+    <p><a href="{{ url.get_proxy_url() }}">{{ url }}</a></p>
+  {% else %}
+    <p>{{ response.meta }}</p>
+  {% endif %}
+{% endblock %}

@@ -197,7 +197,8 @@ def test_get_root_url_gopher_dir_type_alt():
 def test_gopher_parse_search_data():
     url = URLReference("gopher://mozz.us/7hello%09search%09/data")
     assert url.gopher_selector == "hello"
-    assert url.gopher_search == "search%09/data"
+    assert url.gopher_search == "search"
+    assert url.gopher_plus_string == "/data"
 
     assert url.get_url() == "gopher://mozz.us/7hello%09search%09/data"
     assert url.get_parent().get_url() == "gopher://mozz.us"
@@ -271,3 +272,23 @@ async def test_get_proxy_unknown_scheme(app):
     url = URLReference("telnet://mozz.us:23")
     async with app.app_context():
         assert url.get_proxy_url() == "telnet://mozz.us:23"
+
+
+def test_get_gopher_request():
+    url = URLReference("gopher://mozz.us/0my%20file.txt")
+    assert url.get_gopher_request() == b"my file.txt\r\n"
+
+
+def test_get_gopher_request_search():
+    url = URLReference("gopher://mozz.us/0selector%09search%20string")
+    assert url.get_gopher_request() == b"selector\tsearch string\r\n"
+
+
+def test_get_gopher_request_plus():
+    url = URLReference("gopher://mozz.us/0selector%09%09+")
+    assert url.get_gopher_request() == b"selector\t\t+\r\n"
+
+
+def test_get_gopher_request_plus_ask():
+    url = URLReference("gopher://mozz.us/0selector%09%09?")
+    assert url.get_gopher_request() == b"selector\t\t!\r\n"

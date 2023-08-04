@@ -4,12 +4,13 @@
 <table class="gopher">
 <tbody>
 {% for item in content %}
-    {% if item.url and not item.is_query %}
-    <tr class="selectable">
+    {% if item.url and not item.is_query %}<tr class="selectable">{% else %}<tr>{% endif %}
+    <td class="type-description">{{ item.type_description}}</td>
+    {% if item.url.gopher_plus_string %}
+      <td class="info-link"><a href="{{ item.url.get_info_proxy_url() }}">[!]</a></td>
     {% else %}
-    <tr>
+      <td class="info-link empty"></td>
     {% endif %}
-        <td class="type-description">{{ item.type_description}}</td>
     {% if item.is_query %}
         <td class="query-form">
           <i>{{ item.item_text }}</i><br>
@@ -21,7 +22,7 @@
     {% elif item.url %}
         <td><a href="{{ item.url.get_proxy_url() }}">{{ item.item_text }}</a>{% if item.url.get_external_indicator() %} <span>({{ item.url.get_external_indicator() }})</span>{% endif %}</td>
     {% else %}
-        <td>{{ item.item_text }}</td>
+        <td>{{ item.item_text or " "}}</td>
     {% endif %}
     <td class="mimetype">{{ item.mimetype or "" }}</td>
     </tr>

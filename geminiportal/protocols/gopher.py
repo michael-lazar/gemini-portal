@@ -2,7 +2,15 @@ from __future__ import annotations
 
 import ssl
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from quart import Response as QuartResponse
+from quart import render_template
+
+from geminiportal.handlers.gopher import GopherItem
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class GopherRequest(BaseRequest):
@@ -10,7 +18,7 @@ class GopherRequest(BaseRequest):
     Encapsulates a gopher:// request.
     """
 
-    async def fetch(self) -> GopherResponse:
+    async def fetch(self) -> GopherResponse | GopherPlusResponse:
         if self.url.scheme == "gophers":
             context = self.make_ssl_context()
         else:
@@ -22,7 +30,35 @@ class GopherRequest(BaseRequest):
         writer.write(request)
         await writer.drain()
 
-        return GopherResponse(self, reader, writer)
+        if not self.url.gopher_plus_string:
+            return GopherResponse(self, reader, writer)
+
+        # Parse the response header for gopher+
+        raw_header = await reader.readline()
+
+        if raw_header[:1] == b"+":
+            status, meta = "", ""
+        elif raw_header[:1] == b"-":
+            raw_status_line = await reader.readline()
+            status_line = raw_status_line.decode()
+            status, meta = status_line[0], status_line[1:]
+        else:
+            raise ValueError(
+                "This server does not appear to support Gopher+, or returned an invalid response."
+            )
+
+        header = raw_header.decode()
+        data_length = int(header[1:])
+        meta = meta.strip()
+
+        return GopherPlusResponse(
+            self,
+            reader=reader,
+            writer=writer,
+            status=status,
+            meta=meta,
+            data_length=data_length,
+        )
 
     def make_ssl_context(self) -> ssl.SSLContext:
         context = ssl.create_default_context()
@@ -41,7 +77,68 @@ class GopherResponse(BaseResponse):
         self.lang = None
 
         self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
-        self.charset = "UTF-8"
 
-    def is_success(self):
-        return True
+        self.charset = "UTF-8"
+        self.proxy_response_builder = GopherProxyResponseBuilder(self)
+
+
+class GopherPlusResponse(BaseResponse):
+    STATUS_CODES = {
+        "": "Success",
+        "1": "Item is not available",
+        "2": "Try again later",
+        "3": "Item has moved",
+    }
+
+    def __init__(self, request, reader, writer, status, meta, data_length):
+        self.request = request
+        self.reader = reader
+        self.writer = writer
+        self.status = status
+        self.meta = meta
+        self.lang = None
+
+        # The data length flags make chunking the response stream very annoying,
+        # so I'm going to ignore this feature and always wait for the server to
+        # close the connection.
+        self.data_length: int = data_length
+
+        if self.status:
+            self.mimetype = "text/plain"
+        else:
+            self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
+
+        self.charset = "UTF-8"
+        self.proxy_response_builder = GopherPlusProxyResponseBuilder(self)
+
+
+class GopherProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: GopherResponse
+
+    async def build_proxy_response(self):
+        return await self.render_from_handler()
+
+
+class GopherPlusProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: GopherPlusResponse
+
+    async def build_proxy_response(self):
+        if self.response.status == "3":
+            item = GopherItem.from_item_description(self.response.meta, self.response.url)
+            content = await render_template(
+                "proxy/gopher-plus-redirect.html",
+                response=self.response,
+                url=item.url,
+            )
+            return QuartResponse(content)
+        elif self.response.status:
+            raw_body = await self.response.get_body()
+            body = raw_body.decode(self.response.charset, errors="replace").strip()
+            content = await render_template(
+                "proxy/gopher-plus-error.html",
+                response=self.response,
+                body=body,
+            )
+            return QuartResponse(content)
+        else:
+            return await self.render_from_handler()

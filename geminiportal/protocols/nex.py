@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from geminiportal.protocols.base import BaseRequest, BaseResponse
+from geminiportal.protocols.base import (
+    BaseProxyResponseBuilder,
+    BaseRequest,
+    BaseResponse,
+)
 
 
 class NexRequest(BaseRequest):
@@ -33,6 +37,11 @@ class NexResponse(BaseResponse):
 
         self.charset = "UTF-8"
         self.lang = None
+        self.proxy_response_builder = NexProxyResponseBuilder(self)
 
-    def is_success(self):
-        return True
+
+class NexProxyResponseBuilder(BaseProxyResponseBuilder):
+    response: NexResponse
+
+    async def build_proxy_response(self):
+        return await self.render_from_handler()

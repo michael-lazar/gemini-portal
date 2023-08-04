@@ -7,6 +7,11 @@ import socket
 from asyncio.exceptions import IncompleteReadError
 from collections.abc import AsyncIterator
 
+from quart import Response as QuartResponse
+from werkzeug.wrappers.response import Response as WerkzeugResponse
+
+from geminiportal.handlers import get_handler_class
+from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.urls import URLReference
 
 _logger = logging.getLogger(__name__)
@@ -28,6 +33,7 @@ BLOCKED_HOSTS = [
 # Ports that the proxied servers can be hosted on
 ALLOWED_PORTS = {
     70,
+    77,
     79,
     300,
     301,
@@ -36,6 +42,7 @@ ALLOWED_PORTS = {
     1900,
     *range(1960, 2021),
     *range(7000, 7100),
+    8070,
 }
 
 # Time waiting to establish a connection before aborting
@@ -59,9 +66,11 @@ class BaseRequest:
 
     _blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
 
-    def __init__(self, url: URLReference):
+    def __init__(self, url: URLReference, raw_mode: bool = False):
         self.url = url
         self.host, self.port = url.conn_info
+        self.raw_mode = raw_mode
+        self.peer_address = ""
 
         self.clean()
 
@@ -87,28 +96,32 @@ class BaseRequest:
         _logger.info(f"{self.__class__.__name__}: Response received: {response.status}")
         return response
 
-    async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-        future = asyncio.open_connection(self.host, self.port, **kwargs)
-        try:
-            return await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
-        except asyncio.TimeoutError:
-            raise ProxyError("Timeout establishing connection with server")
-
-    async def fetch(self) -> BaseResponse:
-        raise NotImplementedError
-
     @staticmethod
-    def parse_header(raw_header: bytes) -> tuple[str, str]:
+    def parse_response_header(raw_header: bytes) -> tuple[str, str]:
         header = raw_header.decode()
         parts = header.strip().split(maxsplit=1)
-        if len(parts) == 0:
-            status, meta = "", ""
-        elif len(parts) == 1:
+        if len(parts) == 1:
             status, meta = parts[0], ""
         else:
             status, meta = parts
 
         return status, meta
+
+    async def open_connection(self, **kwargs) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
+        future = asyncio.open_connection(self.host, self.port, **kwargs)
+        try:
+            reader, writer = await asyncio.wait_for(future, timeout=CONNECT_TIMEOUT)
+        except asyncio.TimeoutError:
+            raise ProxyError("Timeout establishing connection with server")
+
+        peername = writer.get_extra_info("peername")
+        if peername:
+            self.peer_address = peername[0]
+
+        return reader, writer
+
+    async def fetch(self) -> BaseResponse:
+        raise NotImplementedError
 
 
 class BaseResponse:
@@ -126,6 +139,7 @@ class BaseResponse:
     mimetype: str
     charset: str
     lang: str | None
+    proxy_response_builder: BaseProxyResponseBuilder
 
     def __str__(self) -> str:
         return f'{self.__class__.__name__} {self.status} "{self.meta}"'
@@ -135,9 +149,19 @@ class BaseResponse:
         return self.request.url
 
     @property
+    def title_display(self) -> str:
+        return self.url.hostname or "<unknown>"
+
+    @property
     def status_display(self) -> str:
+        """
+        A human-readable status message for the response, if available.
+        """
         if self.status in self.STATUS_CODES:
-            return f"{self.status} {self.STATUS_CODES[self.status].title()}"
+            if self.status:
+                return f"{self.status} ({self.STATUS_CODES[self.status].title()})"
+            else:
+                return f"{self.STATUS_CODES[self.status].title()}"
         else:
             return self.status
 
@@ -145,6 +169,8 @@ class BaseResponse:
     def parse_meta(meta: str) -> tuple[str, dict[str, str]]:
         """
         Parse & normalize extra params from the MIME string.
+
+        Used for gemini/spartan style responses.
         """
         parts = meta.split(";", maxsplit=1)
         if len(parts) == 2:
@@ -204,17 +230,39 @@ class BaseResponse:
         finally:
             self.close()
 
-    def is_input(self) -> bool:
-        return False
+    async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
+        """
+        Render the native response from the remote server as an HTTP response.
+        """
+        return await self.proxy_response_builder.build_proxy_response()
 
-    def is_success(self) -> bool:
-        return False
 
-    def is_redirect(self) -> bool:
-        return False
+class BaseProxyResponseBuilder:
+    """
+    Convert a response from the proxy server into an HTTP response object.
+    """
 
-    def is_error(self) -> bool:
-        return False
+    def __init__(self, response: BaseResponse):
+        self.response = response
 
-    def is_cert_required(self) -> bool:
-        return False
+    async def render_from_handler(self) -> QuartResponse:
+        handler_class: type[BaseHandler]
+
+        if self.response.request.raw_mode:
+            handler_class = StreamHandler
+        else:
+            handler_class = get_handler_class(self.response)
+
+        try:
+            handler = await handler_class.from_response(self.response)
+            response = await handler.render()
+        except ProxyResponseSizeError as e:
+            # The file is too large to render in an HTML template, add the
+            # data back into the read buffer and re-render as a data stream.
+            handler = await StreamHandler.from_partial_response(self.response, e.partial)
+            response = await handler.render()
+
+        return response
+
+    async def build_proxy_response(self) -> QuartResponse | WerkzeugResponse:
+        raise NotImplementedError
