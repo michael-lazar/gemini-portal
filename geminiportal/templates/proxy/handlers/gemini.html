@@ -1,12 +1,12 @@
 {% extends "proxy/base.html" %}
 
-{% if title %}
-{% block title %}{{ title }}{% endblock %}
-{% endif %}
+{% block title %}
+  {% if title %}{{ title }}{% else %}{{ super() }}{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="gemini">
-{% for item in content -%}
+{% for item in content -%}a
     {% if item.item_type == "h1" -%}
         <h1 id="{{ item.anchor }}">{{ item.text }}</h1>
     {% elif item.item_type == "h2" -%}
