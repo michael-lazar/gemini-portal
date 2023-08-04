@@ -66,8 +66,6 @@ class GopherItem:
             netloc = self.get_netloc(70)
             url = f"gopher://{netloc}/{self.item_type}{quote_gopher(self.selector)}"
             if self.gopher_plus_string:
-                # The first character of the request is not supposed to be
-                # quoted, but the rest of the string is.
                 url += f"%09%09{quote_gopher(self.gopher_plus_string)}"
             self.url = self.base.join(url)
         else:

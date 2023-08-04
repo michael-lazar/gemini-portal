@@ -52,7 +52,7 @@ class SpartanResponse(BaseResponse):
         self.status = status
         self.meta = meta
 
-        self.mimetype, params = self.parse_meta(self.meta)
+        self.mimetype, params = self.parse_meta(meta)
         self.charset = params.get("charset", "UTF-8")
         self.lang = None
 
@@ -68,7 +68,7 @@ class SpartanProxyResponseBuilder(BaseProxyResponseBuilder):
 
         elif self.response.status.startswith("3"):
             location = self.response.url.join(self.response.meta).get_proxy_url()
-            return redirect(location, code=307)
+            return redirect(location, 307)
 
         elif self.response.status.startswith(("4", "5")):
             content = await render_template(

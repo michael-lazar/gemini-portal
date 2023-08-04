@@ -33,7 +33,6 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
   </summary>
   <table class="response-table">
     <tr><td>Resource&nbsp;URL</td><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
-    <tr><td>IP&nbsp;Address</td><td>{{ response.request.peer_address }}</td></tr>
     <tr><td>Handler</td><td>{{ response.__class__.__name__ }}</td></tr>
     {% if response.meta %}<tr><td>Meta</td><td>{{ response.meta }}</td></tr>{% endif %}
     {% if response.status %}<tr><td>Status Code</td><td>{{ response.status_display }}</td></tr>{% endif %}
