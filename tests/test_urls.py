@@ -286,9 +286,14 @@ def test_get_gopher_request_search():
 
 def test_get_gopher_request_plus():
     url = URLReference("gopher://mozz.us/0selector%09%09+")
-    assert url.get_gopher_request() == b"selector\t\t+\r\n"
+    assert url.get_gopher_request() == b"selector\t+\r\n"
+
+
+def test_get_gopher_request_plus_search():
+    url = URLReference("gopher://mozz.us/0selector%09search%09+")
+    assert url.get_gopher_request() == b"selector\tsearch\t+\r\n"
 
 
 def test_get_gopher_request_plus_ask():
     url = URLReference("gopher://mozz.us/0selector%09%09?")
-    assert url.get_gopher_request() == b"selector\t\t!\r\n"
+    assert url.get_gopher_request() == b"selector\t!\r\n"

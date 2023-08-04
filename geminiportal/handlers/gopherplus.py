@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import Any, TypeAlias
-from urllib.parse import quote
 
 from geminiportal.handlers.base import TemplateHandler
 from geminiportal.handlers.gopher import GopherItem
-from geminiportal.urls import URLReference
+from geminiportal.urls import URLReference, quote_gopher
 
 GopherPlusAttributeData: TypeAlias = dict[str, Any]
 GopherPlusAttributeMap: TypeAlias = dict[str, GopherPlusAttributeData]
@@ -109,7 +108,7 @@ class GopherPlusHandler(TemplateHandler):
             if item_url:
                 content_type = line.split(":", maxsplit=1)[0]
                 url = item_url.copy()
-                url.gopher_plus_string = f"+{quote(content_type)}"
+                url.gopher_plus_string = f"+{quote_gopher(content_type)}"
             else:
                 url = None
 
@@ -121,8 +120,14 @@ class GopherPlusHandler(TemplateHandler):
         lines = []
         for line in self.line_buffer:
             line = line.strip()
-            name, val = line.split(": ", maxsplit=1)
-            comments, meta_tag = self.split_attribute_meta_tag(val)
+
+            parts = line.split(":", maxsplit=1)
+            if len(parts) == 1:
+                name, val = parts[0], ""
+            else:
+                name, val = parts
+
+            comments, meta_tag = self.split_attribute_meta_tag(val.strip())
             line_data = {"comments": comments, "meta_tag": meta_tag, "name": name}
 
             if meta_tag and "@" in meta_tag:

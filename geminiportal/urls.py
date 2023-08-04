@@ -274,20 +274,19 @@ class URLReference:
         """
         Get the URL formatted to be sent to a gopher server.
         """
+        request = self.gopher_selector
+        if self.gopher_search:
+            request += f"%09{self.gopher_search}"
+
         if self.gopher_plus_string == "?":
             # Selectors that support ASK queries are denoted in the URL by a
             # "?" in the gopher plus string, but the client is supposed to make
             # a standard "!" info request to retrieve the +ASK block.
-            request_string = f"{self.gopher_selector}%09{self.gopher_search}%09!\r\n"
+            request += "%09!"
         elif self.gopher_plus_string:
-            request_string = (
-                f"{self.gopher_selector}%09{self.gopher_search}%09{self.gopher_plus_string}\r\n"
-            )
-        elif self.gopher_search:
-            request_string = f"{self.gopher_selector}%09{self.gopher_search}\r\n"
-        else:
-            request_string = f"{self.gopher_selector}\r\n"
-        return unquote_to_bytes(request_string)
+            request += f"%09{self.gopher_plus_string}"
+
+        return unquote_to_bytes(f"{request}\r\n")
 
     def get_root(self, include_user_dirs=False) -> URLReference | None:
         """
