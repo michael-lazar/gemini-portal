@@ -1,0 +1,6 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+<p>Unsupported file type, click the link below to open the file in your browser.</p>
+<a href="{{ data_url }}">{{ data_url|truncate(60) }}</a>
+{% endblock %}
