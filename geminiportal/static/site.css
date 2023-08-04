@@ -192,6 +192,13 @@ details summary {
     white-space: pre;
     font-family: monospace;
 }
+.gopherp tr td:last-child {
+    border-left: 1px solid black;
+    padding-left: 10px;
+}
+.gopherp tr td.invisible {
+    border-left: 0;
+}
 .nex span {
     font-size: smaller;
 }

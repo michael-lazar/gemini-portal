@@ -1,7 +1,7 @@
 {% extends "proxy/base.html" %}
 
 {% block content %}
-<table class="gopher">
+<table class="gopher gopherp">
 <tbody>
 {% for attribute_map in content %}
   {% for attribute, data in attribute_map.items() %}
@@ -14,36 +14,36 @@
     {% if data.item.url %}
       <td><a href="{{ data.item.url.get_proxy_url() }}">{{ data.item.item_text or data.item.url}}</a>{% if data.item.url.get_external_indicator() %} <span>({{ data.item.url.get_external_indicator() }})</span>{% endif %}</td>
     {% elif data.item %}
-      <td>{{ data.item.item_text }}</td>
+      <td>{{ data.item.item_text or " " }}</td>
     {% else %}
-      <td></td>
+      <td> </td>
     {% endif %}
-    <td class="mimetype">{{ data.item.mimetype or "" }}</td>
     </tr>
     {% if attribute == "VIEWS" %}
       {% for line in data.lines %}
         {% if line.url %}
-          <tr class="selectable"><td></td><td><i><a href="{{ line.url.get_proxy_url() }}">{{ line.text }}</a></i></td><td></td></tr>
+          <tr class="selectable"><td></td><td><i><a href="{{ line.url.get_proxy_url() }}">{{ line.text }}</a></i></td></tr>
         {% else %}
-          <tr><td></td><td><i>{{ line.text }}</i></td><td></td></tr>
+          <tr><td></td><td><i>{{ line.text }}</i></td></tr>
         {% endif %}
       {% endfor %}
     {% elif attribute == "ADMIN" %}
       {% for line in data.lines %}
         {% if line.url %}
-          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;<a href="{{ line.url }}">{{ line.meta_tag }}</a></i>&gt;</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;<a href="{{ line.url }}">{{ line.meta_tag }}</a></i>&gt;</td></tr>
         {% elif line.meta_tag is not none %}
-          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;{{ line.meta_tag }}</i>&gt;</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: <i>{{ line.comments }} &lt;{{ line.meta_tag }}</i>&gt;</td></tr>
         {% else %}
-          <tr><td></td><td>{{ line.name }}: {{ line.comments }}</td><td></td></tr>
+          <tr><td></td><td>{{ line.name }}: {{ line.comments }}</td></tr>
         {% endif %}
       {% endfor %}
     {% else %}
       {% if data.content %}
-        <tr><td></td><td><i>{{ data.content }}</i></td><td></td></tr>
+        <tr><td></td><td><i>{{ data.content }}</i></td></tr>
       {% endif %}
     {% endif %}
   {% endfor %}
+  <tr><td></td><td class="invisible"> </td></tr>
 {% endfor %}
 </tbody>
 </table>
