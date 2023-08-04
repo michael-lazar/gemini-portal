@@ -19,8 +19,8 @@ class TxtRequest(BaseRequest):
     async def fetch(self) -> TxtResponse:
         reader, writer = await self.open_connection()
 
-        gemini_url = self.url.get_gemini_request_url()
-        writer.write(f"{gemini_url}\r\n".encode())
+        data = self.url.get_gemini_request()
+        writer.write(data)
         await writer.drain()
 
         raw_header = await reader.readline()

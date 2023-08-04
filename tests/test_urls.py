@@ -274,21 +274,21 @@ async def test_get_proxy_unknown_scheme(app):
         assert url.get_proxy_url() == "telnet://mozz.us:23"
 
 
-async def test_get_gopher_request():
+def test_get_gopher_request():
     url = URLReference("gopher://mozz.us/0my%20file.txt")
     assert url.get_gopher_request() == b"my file.txt\r\n"
 
 
-async def test_get_gopher_request_search():
+def test_get_gopher_request_search():
     url = URLReference("gopher://mozz.us/0selector%09search%20string")
     assert url.get_gopher_request() == b"selector\tsearch string\r\n"
 
 
-async def test_get_gopher_request_plus():
+def test_get_gopher_request_plus():
     url = URLReference("gopher://mozz.us/0selector%09%09+")
     assert url.get_gopher_request() == b"selector\t\t+\r\n"
 
 
-async def test_get_gopher_request_plus_ask():
+def test_get_gopher_request_plus_ask():
     url = URLReference("gopher://mozz.us/0selector%09%09?")
     assert url.get_gopher_request() == b"selector\t\t!\r\n"

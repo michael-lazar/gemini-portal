@@ -223,6 +223,9 @@ class URLReference:
             return ""
 
     def get_gopher_url(self) -> str:
+        if self.scheme not in ("gopher", "gophers"):
+            raise ValueError(f"Invalid scheme for gopher URL: {self.scheme}")
+
         path = self.get_gopher_path()
         return f"{self.scheme}://{self.netloc}{path}"
 
@@ -246,9 +249,9 @@ class URLReference:
         parts = (self.scheme, self.netloc, self.path, self.params, query, fragment)
         return urlunparse(parts)
 
-    def get_gemini_request_url(self) -> str:
+    def get_gemini_request(self) -> bytes:
         """
-        Get the URL formatted to be sent in a gemini request string.
+        Get the URL formatted to be sent in a gemini server.
         """
         path = self.path
         if self.scheme in ("gemini", "text") and path == "":
@@ -264,7 +267,8 @@ class URLReference:
         # contain encoded IDNs (follows RFC 3490).
         netloc = self.netloc.encode("idna").decode("ascii")
         parts = (self.scheme, netloc, path, self.params, self.query, fragment)
-        return urlunparse(parts)
+        url = urlunparse(parts)
+        return f"{url}\r\n".encode()
 
     def get_gopher_request(self) -> bytes:
         """

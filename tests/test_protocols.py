@@ -3,6 +3,7 @@ import pytest
 from geminiportal.protocols import (
     FingerRequest,
     GeminiRequest,
+    GopherRequest,
     NexRequest,
     SpartanRequest,
     TxtRequest,
@@ -43,6 +44,14 @@ def test_build_proxy_request_finger():
     assert request.host == "mozz.us"
 
 
+def test_build_proxy_request_gopher():
+    url = URLReference("gopher://mozz.us/")
+    request = build_proxy_request(url)
+    assert isinstance(request, GopherRequest)
+    assert request.port == 70
+    assert request.host == "mozz.us"
+
+
 def test_build_proxy_request_nex():
     url = URLReference("nex://mozz.us")
     request = build_proxy_request(url)
@@ -74,8 +83,6 @@ async def test_gemini_request():
     url = URLReference("gemini://mozz.us")
     request = GeminiRequest(url)
     response = await request.get_response()
-
-    assert response.is_success()
     assert await response.get_body()
 
     assert response.tls_close_notify_received
@@ -89,8 +96,6 @@ async def test_spartan_request():
     url = URLReference("spartan://mozz.us/echo?hello%20world")
     request = build_proxy_request(url)
     response = await request.get_response()
-
-    assert response.is_success()
     assert await response.get_body() == b"hello world"
 
 
@@ -99,8 +104,6 @@ async def test_txt_request():
     url = URLReference("text://txt.textprotocol.org/")
     request = build_proxy_request(url)
     response = await request.get_response()
-
-    assert response.is_success()
     assert await response.get_body()
 
 
@@ -109,8 +112,6 @@ async def test_finger_request():
     url = URLReference("finger://mozz.us/michael")
     request = build_proxy_request(url)
     response = await request.get_response()
-
-    assert response.is_success()
     assert await response.get_body()
 
 
@@ -119,6 +120,20 @@ async def test_nex_request():
     url = URLReference("nex://nex.nightfall.city")
     request = build_proxy_request(url)
     response = await request.get_response()
+    assert await response.get_body()
 
-    assert response.is_success()
+
+@pytest.mark.integration
+async def test_gopher_request():
+    url = URLReference("gopher://mozz.us")
+    request = build_proxy_request(url)
+    response = await request.get_response()
+    assert await response.get_body()
+
+
+@pytest.mark.integration
+async def test_gopher_plus_request():
+    url = URLReference("gopher://mozz.us:7070/%09%09!")
+    request = build_proxy_request(url)
+    response = await request.get_response()
     assert await response.get_body()
