@@ -54,14 +54,14 @@ class TxtProxyResponseBuilder(BaseProxyResponseBuilder):
     response: TxtResponse
 
     async def build_proxy_response(self):
-        if self.response.status == "2":
+        if self.response.status == "20":
             return await self.render_from_handler()
 
-        elif self.response.status == "3":
+        elif self.response.status == "30":
             location = self.response.url.join(self.response.meta).get_proxy_url()
             return redirect(location, 307)
 
-        elif self.response.status in ("4", "5"):
+        elif self.response.status == "40":
             content = await render_template(
                 "proxy/proxy-error.html",
                 error=self.response.status_display,
