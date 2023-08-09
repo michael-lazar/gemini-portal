@@ -132,10 +132,10 @@ class GeminiResponse(BaseResponse):
 
         if self.status.startswith("2"):
             self.mimetype, params = self.parse_meta(meta)
-            self.charset = params.get("charset", "UTF-8")
+            self.charset = request.charset or params.get("charset", "UTF-8")
             self.lang = params.get("lang", None)
         else:
-            self.charset = "UTF-8"
+            self.charset = request.charset or "UTF-8"
             self.mimetype = ""
             self.lang = None
 

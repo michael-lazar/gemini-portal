@@ -74,7 +74,7 @@ class GopherResponse(BaseResponse):
         self.status = ""
         self.meta = ""
         self.lang = None
-        self.charset = None
+        self.charset = request.charset
 
         self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
         self.proxy_response_builder = GopherProxyResponseBuilder(self)
@@ -95,7 +95,7 @@ class GopherPlusResponse(BaseResponse):
         self.status = status
         self.meta = meta
         self.lang = None
-        self.charset = None
+        self.charset = request.charset
 
         # The data length flags make chunking the response stream very annoying,
         # so I'm going to ignore this feature and always wait for the server to

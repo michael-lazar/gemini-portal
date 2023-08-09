@@ -124,8 +124,11 @@ async def proxy(
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    raw_mode = bool(request.args.get("raw"))
-    proxy_request = build_proxy_request(g.url, raw_mode)
+    proxy_request = build_proxy_request(
+        g.url,
+        raw_mode=bool(request.args.get("raw")),
+        charset=request.args.get("charset") or None,
+    )
     response = await proxy_request.get_response()
     g.response = response
 

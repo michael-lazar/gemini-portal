@@ -66,10 +66,11 @@ class BaseRequest:
 
     _blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
 
-    def __init__(self, url: URLReference, raw_mode: bool = False):
+    def __init__(self, url: URLReference, raw_mode: bool = False, charset: str | None = None):
         self.url = url
         self.host, self.port = url.conn_info
         self.raw_mode = raw_mode
+        self.charset = charset
         self.peer_address = ""
 
         self.clean()

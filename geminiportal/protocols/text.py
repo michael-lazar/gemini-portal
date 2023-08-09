@@ -44,7 +44,7 @@ class TxtResponse(BaseResponse):
         self.meta = meta
 
         self.mimetype, params = self.parse_meta(meta)
-        self.charset = params.get("charset", "UTF-8")
+        self.charset = request.charset or params.get("charset", "UTF-8")
         self.lang = None
 
         self.proxy_response_builder = TxtProxyResponseBuilder(self)
