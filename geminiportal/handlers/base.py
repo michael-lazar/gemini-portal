@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, ClassVar
 from quart import Response, render_template
 
 from geminiportal.urls import URLReference
-from geminiportal.utils import prepend_bytes_to_iterator
+from geminiportal.utils import prepend_bytes_to_iterator, smart_decode
 
 if TYPE_CHECKING:
     from geminiportal.protocols.base import BaseResponse
@@ -129,11 +129,10 @@ class TemplateHandler(BaseHandler):
         """
         Decode the content from bytes to text.
         """
-        if self.charset is None:
-            raise RuntimeError("Cannot access text attribute without a defined charset")
-
         if self._text is None:
-            self._text = self.content.decode(encoding=self.charset, errors="replace")
+            self._text, self.charset = smart_decode(self.content, self.charset)
+
+            # Strip any ANSI colors or sequences that won't render in the proxy
             self._text = ANSI_ESCAPE.sub("", self._text)
 
         return self._text
@@ -153,4 +152,4 @@ class TemplateHandler(BaseHandler):
         )
 
     def get_context(self) -> dict:
-        return {}
+        return {"handler": self}

@@ -110,7 +110,7 @@ class GopherHandler(TemplateHandler):
 
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()
-        context["content"] = self.iter_content()
+        context["content"] = list(self.iter_content())
         return context
 
     def iter_content(self) -> Iterable[GopherItem]:

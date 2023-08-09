@@ -26,7 +26,9 @@ class GopherPlusHandler(TemplateHandler):
 
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()
-        context["content"] = self.iter_content()
+        # Note: We need to evaluate the iterator in order to invoke `self.text`
+        # and determine what the response charset is before rendering the page.
+        context["content"] = list(self.iter_content())
         return context
 
     def iter_content(self) -> Iterable[GopherPlusAttributeMap]:
