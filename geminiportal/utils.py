@@ -2,6 +2,7 @@ import asyncio
 import subprocess
 from collections.abc import AsyncIterator
 
+import chardet
 from emoji import is_emoji
 
 from geminiportal.urls import URLReference
@@ -64,3 +65,32 @@ def split_emoji(line: str) -> tuple[str, str]:
             return emoji, link_text
 
     return "", line
+
+
+def smart_decode(
+    data: bytes,
+    charset: str | None,
+    errors: str = "replace",
+    default_charset: str = "UTF-8",
+) -> tuple[str, str]:
+    """
+    Decode text, falling back to heuristics if the charset is not defined.
+    """
+    if charset:
+        text = data.decode(charset, errors=errors)
+        return text, charset
+
+    try:
+        text = data.decode(default_charset)
+    except UnicodeDecodeError:
+        autodetect = chardet.detect(data)
+
+        if autodetect["confidence"] > 0.5:
+            detected_charset = autodetect["encoding"]
+        else:
+            detected_charset = default_charset
+        text = data.decode(detected_charset, errors=errors)
+    else:
+        detected_charset = default_charset
+
+    return text, detected_charset
