@@ -108,21 +108,6 @@ class GopherItem:
 class GopherHandler(TemplateHandler):
     template = "proxy/handlers/gopher.html"
 
-    def __init__(
-        self,
-        url: URLReference,
-        content: bytes,
-        mimetype: str,
-        charset: str | None = None,
-    ):
-        if charset is None:
-            # More correct would probably be latin-1, but more people use
-            # unicode on modern gopher servers. It would be nice if we could
-            # change this with a dropdown in the browser.
-            charset = "utf-8"
-
-        super().__init__(url, content, mimetype, charset)
-
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()
         context["content"] = self.iter_content()

@@ -9,6 +9,7 @@ from typing import cast
 from geminiportal.protocols import build_proxy_request
 from geminiportal.protocols.base import ProxyError
 from geminiportal.urls import URLReference
+from geminiportal.utils import smart_decode
 
 _logger = logging.getLogger(__name__)
 
@@ -74,8 +75,8 @@ class FaviconCache:
         response = await request.get_response()
         if response.status.startswith("2") and response.meta.startswith("text/plain"):
             body = await response.get_body()
-            charset = response.charset or "UTF-8"
-            favicon = body.decode(charset, errors="replace").strip()
+            favicon, _ = smart_decode(body, response.charset)
+            favicon = favicon.strip()
             if len(favicon) <= 8:  # Emojis can contain up to 8 code points
                 return favicon
 

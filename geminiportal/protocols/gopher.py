@@ -11,6 +11,7 @@ from geminiportal.protocols.base import (
     BaseRequest,
     BaseResponse,
 )
+from geminiportal.utils import smart_decode
 
 
 class GopherRequest(BaseRequest):
@@ -73,10 +74,9 @@ class GopherResponse(BaseResponse):
         self.status = ""
         self.meta = ""
         self.lang = None
+        self.charset = None
 
         self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
-
-        self.charset = "UTF-8"
         self.proxy_response_builder = GopherProxyResponseBuilder(self)
 
 
@@ -95,6 +95,7 @@ class GopherPlusResponse(BaseResponse):
         self.status = status
         self.meta = meta
         self.lang = None
+        self.charset = None
 
         # The data length flags make chunking the response stream very annoying,
         # so I'm going to ignore this feature and always wait for the server to
@@ -106,7 +107,6 @@ class GopherPlusResponse(BaseResponse):
         else:
             self.mimetype = self.url.guess_mimetype() or "application/octet-stream"
 
-        self.charset = "UTF-8"
         self.proxy_response_builder = GopherPlusProxyResponseBuilder(self)
 
 
@@ -130,8 +130,9 @@ class GopherPlusProxyResponseBuilder(BaseProxyResponseBuilder):
             )
             return QuartResponse(content)
         elif self.response.status:
-            raw_body = await self.response.get_body()
-            body = raw_body.decode(self.response.charset, errors="replace").strip()
+            data = await self.response.get_body()
+            body, _ = smart_decode(data, self.response.charset)
+            body = body.strip()
             content = await render_template(
                 "proxy/gopher-plus-error.html",
                 response=self.response,

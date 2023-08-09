@@ -5,7 +5,7 @@ from typing import Any, TypeAlias
 
 from geminiportal.handlers.base import TemplateHandler
 from geminiportal.handlers.gopher import GopherItem
-from geminiportal.urls import URLReference, quote_gopher
+from geminiportal.urls import quote_gopher
 
 GopherPlusAttributeData: TypeAlias = dict[str, Any]
 GopherPlusAttributeMap: TypeAlias = dict[str, GopherPlusAttributeData]
@@ -23,18 +23,6 @@ class GopherPlusHandler(TemplateHandler):
     active_attribute: str | None
     active_attribute_data: GopherPlusAttributeData
     line_buffer: list[str]
-
-    def __init__(
-        self,
-        url: URLReference,
-        content: bytes,
-        mimetype: str,
-        charset: str | None = None,
-    ):
-        if charset is None:
-            charset = "utf-8"
-
-        super().__init__(url, content, mimetype, charset)
 
     def get_context(self) -> dict[str, Any]:
         context = super().get_context()

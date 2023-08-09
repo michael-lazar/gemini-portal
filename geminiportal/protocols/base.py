@@ -137,7 +137,7 @@ class BaseResponse:
     status: str
     meta: str
     mimetype: str
-    charset: str
+    charset: str | None
     lang: str | None
     proxy_response_builder: BaseProxyResponseBuilder
 
