@@ -75,6 +75,9 @@ details summary {
 .content {
     max-width: 100ch;
 }
+.pillars {
+    margin: 0;
+}
 .inline-image {
     cursor: zoom-in;
 }
