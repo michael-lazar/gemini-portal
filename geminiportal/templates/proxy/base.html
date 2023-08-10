@@ -36,7 +36,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     <tr><td>Original&nbsp;URL</td><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
     {% if response.meta %}<tr><td>Meta</td><td>{{ response.meta }}</td></tr>{% endif %}
     {% if response.status %}<tr><td>Status Code</td><td>{{ response.status_display }}</td></tr>{% endif %}
-    {% if response.mimetype %}<tr><td>Content-Type</td><td>{{ response.mimetype }}{% if charset %}; charset={{ charset }}{% endif %}</td></tr>{% endif %}
+    {% if response.mimetype %}<tr><td>Content-Type</td><td>{{ response.mimetype }}{% if charset %}; charset={{ charset.lower() }}{% endif %}</td></tr>{% endif %}
   </table>
 </details>
 {% endif %}
