@@ -69,6 +69,9 @@ details summary {
     text-decoration: none;
     padding-right: 0.4em;
 }
+.body {
+    max-width: 100ch;
+}
 .content {
     max-width: 100ch;
 }
