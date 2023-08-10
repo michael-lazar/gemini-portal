@@ -25,6 +25,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     {% if cert_url %}<a href="{{ cert_url }}">[view&nbsp;cert]</a>{% endif %}
 </div>
 
+<div class="content">
 {% if response %}
 {% set charset = (handler.charset if handler else "") or response.charset or "" %}
 <details>
@@ -40,8 +41,6 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
   </table>
 </details>
 {% endif %}
-
-{% block content %}
-{{ content | safe}}
-{%- endblock %}
+{% block content %}{%- endblock %}
+</div>
 {% endblock %}

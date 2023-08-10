@@ -2,6 +2,7 @@ body {
     margin: 1em;
     -webkit-text-size-adjust: 100%;
 }
+
 .response-table {
     border: 1px solid black;
     margin: 10px;
@@ -68,8 +69,8 @@ details summary {
     text-decoration: none;
     padding-right: 0.4em;
 }
-.body {
-    max-width: 80ch;
+.content {
+    max-width: 100ch;
 }
 .inline-image {
     cursor: zoom-in;
