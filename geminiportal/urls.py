@@ -527,6 +527,9 @@ class URLReference:
 
         return mimetype
 
+    def get_filename(self) -> str:
+        return os.path.basename(self.path.strip("/"))
+
 
 def quote_gopher(selector: str) -> str:
     """

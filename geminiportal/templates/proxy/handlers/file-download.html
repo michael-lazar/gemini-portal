@@ -1,0 +1,6 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+  <p>The response has an unhandled type <em>{{ mimetype }}</em>, click the link below to download the file.</p>
+  <p><a href="{{ data_url }}" download="{{ filename or "download" }}">{{ data_url|truncate(60) }}</a></p>
+{% endblock %}

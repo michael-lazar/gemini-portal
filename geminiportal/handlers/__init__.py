@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from geminiportal.handlers.audio import AudioHandler
 from geminiportal.handlers.base import BaseHandler
-from geminiportal.handlers.file import FileHandler
+from geminiportal.handlers.file import FileDownloadHandler, FileInlineHandler
 from geminiportal.handlers.gemini import GeminiHandler
 from geminiportal.handlers.gopher import GopherHandler
 from geminiportal.handlers.gopherplus import GopherPlusHandler
@@ -20,7 +20,16 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
     handler_class: type[BaseHandler]
 
     if response.mimetype is None:
-        handler_class = FileHandler
+        handler_class = FileDownloadHandler
+    elif response.mimetype.startswith(
+        (
+            "text/html",
+            "text/xml",
+            "application/pdf",
+            "application/json",
+        )
+    ):
+        handler_class = FileInlineHandler
     elif response.mimetype.startswith("image/"):
         handler_class = ImageHandler
     elif response.mimetype.startswith("audio/"):
@@ -41,6 +50,6 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
     elif response.mimetype.startswith("application/gopher+-attributes"):
         handler_class = GopherPlusHandler
     else:
-        handler_class = FileHandler
+        handler_class = FileDownloadHandler
 
     return handler_class

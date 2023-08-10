@@ -6,7 +6,15 @@
   <ul>
     <li>Text responses that are not valid UTF-8 will now use the <a href="https://github.com/chardet/chardet">chardet</a>
       library to attempt to guess the correct character encoding. The desired file encoding can also be indicated by
-      appending <i>?charset=...</i> to the end of the proxy URL.</li>
+      appending <i>?charset=...</i> to the end of the URL.</li>
+    <li>The following response types will now be displayed inside of an iframe preview window:
+      <ul>
+        <li><i>text/html</i></li>
+        <li><i>text/xml</i></li>
+        <li><i>application/pdf</i></li>
+        <li><i>application/json</i></li>
+      </ul>
+    </li>
   </ul>
   <h3>2023-08-04</h3>
   <ul>
