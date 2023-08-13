@@ -1,8 +1,11 @@
+html {
+    margin: 20px;
+}
 body {
-    margin: 1em;
+    margin: auto;
+    max-width: 800px;
     -webkit-text-size-adjust: 100%;
 }
-
 .response-table {
     border: 1px solid black;
     margin: 10px;
@@ -70,10 +73,8 @@ details summary {
     padding-right: 0.4em;
 }
 .body {
-    max-width: 100ch;
 }
 .content {
-    max-width: 100ch;
 }
 .pillars {
     margin: 0;
