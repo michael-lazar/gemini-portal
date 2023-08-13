@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os.path
 from collections.abc import Iterable
 from typing import Any
 
@@ -7,30 +8,54 @@ from geminiportal.handlers.base import TemplateHandler
 from geminiportal.urls import URLReference, quote_gopher
 
 
-class GopherItem:
-    descriptions = {
-        "0": "(FILE)",
-        "1": "(DIR)",
-        "2": "(CSO)",
-        "3": "",
-        "4": "(HQX)",
-        "5": "(BIN)",
-        "6": "(UUE)",
-        "7": " (?) ",
-        "8": "(TEL)",
-        "9": "(BIN)",
-        "i": "",
-        "+": "",
-        "h": "(HTML)",
-        "H": "(HTML)",
-        "g": "(IMG)",
-        "I": "(IMG)",
-        "s": "(SND)",
-        "m": "(MIME)",
-        "T": "(TEL)",
-        "p": "(PNG)",
-    }
+class GopherIcon:
+    BASE_DIR = "/static/icons/httpd/"
 
+    def __init__(self, short_name: str, path: str):
+        self.short_name = short_name
+        self.path = path
+
+    @property
+    def display(self) -> str:
+        return f"({self.short_name})".center(6)
+
+    @property
+    def url(self) -> str:
+        return os.path.join(self.BASE_DIR, self.path)
+
+
+ICON_UNKNOWN = GopherIcon("UNKN", "generic.gif")
+ICON_URL = GopherIcon("URL", "link.gif")
+ICON_TYPES = {
+    "0": GopherIcon("FILE", "text.gif"),
+    "1": GopherIcon("DIR", "dir.gif"),
+    "2": GopherIcon("CSO", "comp.gray.gif"),
+    "3": GopherIcon("ERR", "broken.gif"),
+    "4": GopherIcon("HQX", "binhex.gif"),
+    "5": GopherIcon("DOS", "diskimg.gif"),
+    "6": GopherIcon("UUE", "uuencoded.gif"),
+    "7": GopherIcon("?", "index.gif"),
+    "8": GopherIcon("TEL", "comp.blue.gif"),
+    "9": GopherIcon("BIN", "binary.gif"),
+    "h": GopherIcon("HTML", "layout.gif"),
+    "H": GopherIcon("HTML", "layout.gif"),
+    "g": GopherIcon("GIF", "image2.gif"),
+    "I": GopherIcon("IMG", "image2.gif"),
+    "s": GopherIcon("SND", "sound2.gif"),
+    "M": GopherIcon("MBOX", "blank.gif"),
+    "T": GopherIcon("3270", "comp.blue.gif"),
+    "p": GopherIcon("PNG", "image2.gif"),
+    ":": GopherIcon("BMP", "image2.gif"),
+    ";": GopherIcon("MOV", "movie.gif"),
+    "<": GopherIcon("SND", "sound2.gif"),
+    "d": GopherIcon("DOC", "layout.gif"),
+    "r": GopherIcon("RTF", "a.gif"),
+    "P": GopherIcon("PDF", "pdf.gif"),
+    "X": GopherIcon("XML", "pdf.gif"),
+}
+
+
+class GopherItem:
     url: URLReference | None
 
     def __init__(
@@ -52,9 +77,9 @@ class GopherItem:
         self.gopher_plus_string = gopher_plus_string
 
         self.is_query = item_type == "7"
-        self.type_description = self.descriptions.get(self.item_type, "(UNKN)")
+        self.is_url = self.item_type == "h" and self.selector.startswith("URL:")
 
-        if selector.startswith("URL:"):
+        if self.is_url:
             self.url = self.base.join(selector[4:])
         elif item_type == "2":
             netloc = self.get_netloc(105)
@@ -80,6 +105,14 @@ class GopherItem:
         else:
             self.external_indicator = None
             self.mimetype = None
+
+        self.icon: dict | None
+        if self.item_type in ("+", "i"):
+            self.icon = None
+        elif self.is_url:
+            self.icon = ICON_URL
+        else:
+            self.icon = ICON_TYPES.get(self.item_type, ICON_UNKNOWN)
 
     @classmethod
     def from_item_description(cls, line: str, base: URLReference) -> GopherItem:

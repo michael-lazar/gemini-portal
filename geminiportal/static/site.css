@@ -187,6 +187,9 @@ details summary {
     white-space: normal;
     padding-top: 5px;
 }
+.gopher td.display a {
+    white-space: normal;
+}
 .gopher td.query-form > form {
     display: inline-flex;
     margin-top: 5px;
