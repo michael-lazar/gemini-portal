@@ -18,14 +18,13 @@
     {% elif item.item_type == "pre" -%}
         <pre>{{ "\n".join(item.lines) }}</pre>
     {% elif item.item_type == "blockquote" -%}
-        <blockquote>{{ "\n".join(item.lines) }}</blockquote>
+        <blockquote>{% for line in item.lines %}{{ line }}<br>{% endfor %}</blockquote>
     {% elif item.item_type == "ul" -%}
         <ul>
         {% for line in item.lines %}<li>{{ line }}</li>
         {% endfor %}</ul>
     {% elif item.item_type == "p" -%}
-        <p>{% for line in item.lines %}{{ line }}
-        {% endfor %}</p>
+        <p>{% for line in item.lines %}{{ line }}<br>{% endfor %}</p>
     {% elif item.item_type == "hr" -%}
         <hr>
     {% elif item.item_type == "prompt" -%}
