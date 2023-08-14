@@ -19,7 +19,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 {% include "url-bar.html" %}
 <div class="link-line">
     {% if root_url %}<a href="{{ root_url }}">[root]</a>{% endif %}
-    {% if parent_url %}<a href="{{ parent_url }}">[up]</a>{% endif %}
+    {% if parent_url %}<a href="{{ parent_url }}">[parent]</a>{% endif %}
     {% if info_url %}<a href="{{ info_url }}">[gopher+]</a>{% endif %}
     {% if cert_url %}<a href="{{ cert_url }}">[cert]</a>{% endif %}
     {% if raw_url %}<a href="{{ raw_url }}">[raw&nbsp;file]</a>{% endif %}
