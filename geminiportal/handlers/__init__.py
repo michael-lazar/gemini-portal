@@ -11,6 +11,7 @@ from geminiportal.handlers.file import FileDownloadHandler, FileInlineHandler
 from geminiportal.handlers.gemini import GeminiHandler
 from geminiportal.handlers.gopher import GopherHandler
 from geminiportal.handlers.gopherplus import GopherPlusHandler
+from geminiportal.handlers.gophervr import GopherVRHandler
 from geminiportal.handlers.image import ImageHandler
 from geminiportal.handlers.nex import NexHandler
 from geminiportal.handlers.text import TextHandler
@@ -46,7 +47,10 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
     elif response.mimetype.startswith("application/nex"):
         handler_class = NexHandler
     elif response.mimetype.startswith(("application/gopher-menu", "application/gopher+-menu")):
-        handler_class = GopherHandler
+        if response.request.vr_mode:
+            handler_class = GopherVRHandler
+        else:
+            handler_class = GopherHandler
     elif response.mimetype.startswith("application/gopher+-attributes"):
         handler_class = GopherPlusHandler
     else:

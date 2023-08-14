@@ -12,6 +12,7 @@ def build_proxy_request(
     url: URLReference,
     raw_mode: bool = False,
     charset: str | None = None,
+    vr_mode: bool = False,
 ) -> BaseRequest:
     request_class: type[BaseRequest]
 
@@ -32,4 +33,4 @@ def build_proxy_request(
     else:
         raise ValueError(f"Unsupported URL scheme: {url.scheme}")
 
-    return request_class(url, raw_mode, charset)
+    return request_class(url, raw_mode, charset, vr_mode)

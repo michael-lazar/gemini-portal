@@ -128,6 +128,7 @@ async def proxy(
         g.url,
         raw_mode=bool(request.args.get("raw")),
         charset=request.args.get("charset") or None,
+        vr_mode=bool(request.args.get("vr")),
     )
     response = await proxy_request.get_response()
     g.response = response
