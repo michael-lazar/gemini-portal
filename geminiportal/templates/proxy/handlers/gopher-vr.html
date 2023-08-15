@@ -16,7 +16,6 @@
 
     init: function () {
       const data = this.data;
-
       this.el.addEventListener('click', function () {
         window.location.href = data.url;
       });
@@ -26,14 +25,15 @@
 {% endblock %}
 
 {% block content %}
+<noscript><i>The GopherVR experience requires javascript!</i></noscript>
 <div class="scene">
   <a-scene embedded vr-mode-ui="enabled: true">
     <a-camera></a-camera>
     <a-entity camera look-controls wasd-controls jump position="0 1.6 0"></a-entity>
     <a-entity oculus-touch-controls="hand: left"></a-entity>
     <a-entity oculus-touch-controls="hand: right"></a-entity>
-    <a-plane position="0 0 0" rotation="-90 0 0" width="800" height="800" color="#7BC8A4"></a-plane>
-    <a-sky color="#ECECEC"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="800" height="800" color="#07290A"></a-plane>
+    <a-sky color="#070B34"></a-sky>
     {% for icon in scene %}
        {{ icon.get_html() | safe }}
     {% endfor %}

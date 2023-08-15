@@ -49,7 +49,17 @@ def inject_context():
         kwargs["root_url"] = g.url.get_root_proxy_url()
         kwargs["parent_url"] = g.url.get_parent_proxy_url() or kwargs["root_url"]
         kwargs["raw_url"] = g.url.get_proxy_url(raw=1)
-        kwargs["info_url"] = g.url.get_info_proxy_url()
+
+        if "response" in g and g.response.mimetype in (
+            "application/gopher-menu",
+            "application/gopher+-menu",
+            "application/gopher-attributes",
+        ):
+            if getattr(g, "vr_mode", None):
+                kwargs["menu_url"] = g.url.get_proxy_url(vr=None)
+            else:
+                kwargs["vr_url"] = g.url.get_proxy_url(vr=1)
+
     elif "address" in g:
         kwargs["url"] = g.address
 
@@ -124,11 +134,15 @@ async def proxy(
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
+    g.charset = request.args.get("charset") or None
+    g.raw_mode = bool(request.args.get("raw"))
+    g.vr_mode = bool(request.args.get("vr"))
+
     proxy_request = build_proxy_request(
         g.url,
-        raw_mode=bool(request.args.get("raw")),
-        charset=request.args.get("charset") or None,
-        vr_mode=bool(request.args.get("vr")),
+        charset=g.charset,
+        raw_mode=g.raw_mode,
+        vr_mode=g.vr_mode,
     )
     response = await proxy_request.get_response()
     g.response = response

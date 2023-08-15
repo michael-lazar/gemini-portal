@@ -52,7 +52,6 @@ class Gopher3DIcon(NamedTuple):
     Representation of a gopher item as a series of A-Frame components.
     """
 
-    item: GopherItem
     components: list[AFrameComponent]
 
     def get_html(self):
@@ -73,13 +72,13 @@ def build_3d_icon(
             "position": position,
             "rotation": rotation,
             "depth": 0.1,
-            "height": 1,
-            "width": 1,
+            "height": 2,
+            "width": 2,
+            "color": "orange",
         },
     )
 
-    # Just slightly more than half of the box's depth to avoid z-fighting
-    text_offset = 0.11
+    text_offset = 0.05
 
     text_z = position.z + text_offset * math.cos(math.radians(rotation.y_deg))
     text_x = position.x + text_offset * math.sin(math.radians(rotation.y_deg))
@@ -92,11 +91,38 @@ def build_3d_icon(
             "value": item.item_text,
             "align": "center",
             "color": "black",
-            "width": 3,
+            "width": 2,
+            "wrap-count": 15,
         },
     )
 
-    return Gopher3DIcon(item, [box, text])
+    return Gopher3DIcon([box, text])
+
+
+def build_kiosk(position: Position) -> Gopher3DIcon:
+    cone = AFrameComponent(
+        "a-cone",
+        {
+            "position": position,
+            "radius-bottom": 1,
+            "radius-top": 0,
+            "segmentsRadial": 4,
+            "height": 6,
+            "color": "red",
+        },
+    )
+    box = AFrameComponent(
+        "a-box",
+        {
+            "position": Position(position.x, position.y + 1.5, position.z),
+            "height": 0.75,
+            "width": 1,
+            "depth": 1,
+            "color": "red",
+        },
+    )
+
+    return Gopher3DIcon([cone, box])
 
 
 class CircularLayout:
@@ -125,6 +151,42 @@ class CircularLayout:
             yield build_3d_icon(item, position, rotation)
 
 
+class SpiralLayout:
+    """
+    Arranges all of the items in a spiral pattern around the center.
+    """
+
+    def __init__(
+        self,
+        initial_radius: float = 5,
+        spacing: float = 0.4,
+        increment: float = 10.0,
+    ):
+        self.initial_radius = initial_radius
+        self.spacing = spacing
+        self.increment = increment
+
+    def render(self, items: list[GopherItem]) -> Iterable[Gopher3DIcon]:
+        angle_increment = 2 * math.pi / self.increment
+
+        # Generate A-Frame entities for each item.
+        radius = self.initial_radius
+        for i, item in enumerate(items):
+            # Calculate the x, y position for each box in the spiral.
+            x = radius * math.cos(i * angle_increment)
+            z = radius * math.sin(i * angle_increment)
+
+            # Calculate rotation so that the box faces the center.
+            y_deg = 270 - math.degrees(i * angle_increment)
+
+            position = Position(x, 1, z)
+            rotation = Rotation(0, y_deg, 0)
+            yield build_3d_icon(item, position, rotation)
+
+            # Increase the radius for the next item to achieve the spiral effect.
+            radius += self.spacing
+
+
 class GopherVRHandler(TemplateHandler):
     template = "proxy/handlers/gopher-vr.html"
 
@@ -133,13 +195,15 @@ class GopherVRHandler(TemplateHandler):
         context["scene"] = self.layout_scene()
         return context
 
-    def layout_scene(self) -> list[Gopher3DIcon]:
-        items = list(self.iter_content())
-        layout = CircularLayout(radius=10)
-        scene = list(layout.render(items))
-        return scene
+    def layout_scene(self) -> Iterable[Gopher3DIcon]:
+        yield build_kiosk(Position(0, 0, 0))
 
-    def iter_content(self) -> Iterable[GopherItem]:
+        # layout = CircularLayout(radius=10)
+        layout = SpiralLayout(initial_radius=5, spacing=0.4)
+        yield from layout.render(self.get_items())
+
+    def get_items(self) -> list[GopherItem]:
+        items = []
         for line in self.text.splitlines():
             line = line.rstrip()
             if line == ".":
@@ -147,4 +211,6 @@ class GopherVRHandler(TemplateHandler):
 
             item = GopherItem.from_item_description(line, self.url)
             if item.url:
-                yield item
+                items.append(item)
+
+        return items

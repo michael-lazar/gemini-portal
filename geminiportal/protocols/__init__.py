@@ -10,8 +10,8 @@ from geminiportal.urls import URLReference
 
 def build_proxy_request(
     url: URLReference,
-    raw_mode: bool = False,
     charset: str | None = None,
+    raw_mode: bool = False,
     vr_mode: bool = False,
 ) -> BaseRequest:
     request_class: type[BaseRequest]
