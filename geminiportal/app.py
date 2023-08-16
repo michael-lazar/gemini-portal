@@ -91,7 +91,8 @@ async def home() -> Response | WerkzeugResponse:
     g.address = request.args.get("url")
     if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(g.address).get_proxy_url(external=False)
+        url = g.address.strip()
+        proxy_url = URLReference(url).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     content = await render_template("home.html")
@@ -114,7 +115,8 @@ async def proxy(
     g.address = request.args.get("url")
     if g.address:
         # URL was provided via the address bar, redirect to the canonical endpoint
-        proxy_url = URLReference(g.address).get_proxy_url(external=False)
+        url = g.address.strip()
+        proxy_url = URLReference(url).get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
     g.url = URLReference(f"{scheme}://{netloc}{'' if path is None else '/' + path}")
