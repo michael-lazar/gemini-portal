@@ -33,7 +33,7 @@ class FingerResponse(BaseResponse):
         self.status = ""
         self.meta = ""
         self.mimetype = "text/plain"
-        self.charset = request.charset
+        self.charset = request.options.charset
         self.lang = None
         self.proxy_response_builder = FingerProxyResponseBuilder(self)
 

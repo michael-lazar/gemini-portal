@@ -12,6 +12,7 @@ from geminiportal.protocols.base import (
     BaseRequest,
     BaseResponse,
 )
+from geminiportal.utils import describe_tls_cert
 
 _logger = logging.getLogger(__name__)
 
@@ -132,10 +133,10 @@ class GeminiResponse(BaseResponse):
 
         if self.status.startswith("2"):
             self.mimetype, params = self.parse_meta(meta)
-            self.charset = request.charset or params.get("charset", "UTF-8")
+            self.charset = request.options.charset or params.get("charset", "UTF-8")
             self.lang = params.get("lang", None)
         else:
-            self.charset = request.charset or "UTF-8"
+            self.charset = request.options.charset or "UTF-8"
             self.mimetype = ""
             self.lang = None
 
@@ -150,7 +151,28 @@ class GeminiProxyResponseBuilder(BaseProxyResponseBuilder):
     response: GeminiResponse
 
     async def build_proxy_response(self):
-        if self.response.status.startswith("1"):
+        if self.response.options.raw_crt:
+            return QuartResponse(
+                self.response.tls_cert,
+                content_type="application/x-x509-ca-cert",
+                headers={
+                    "Content-Disposition": f"attachment; filename={self.response.request.host}.cer",
+                },
+            )
+
+        elif self.response.options.crt:
+            # Consume the request, so we can check for the close_notify signal
+            await self.response.get_body()
+
+            cert_description = await describe_tls_cert(self.response.tls_cert)
+            content = await render_template(
+                "proxy/tls-context.html",
+                cert_description=cert_description,
+                response=self.response,
+            )
+            return QuartResponse(content)
+
+        elif self.response.status.startswith("1"):
             content = await render_template(
                 "proxy/gemini-query.html",
                 secret=self.response.status == "11",

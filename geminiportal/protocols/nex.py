@@ -35,7 +35,7 @@ class NexResponse(BaseResponse):
         else:
             self.mimetype = self.url.guess_mimetype() or "text/plain"
 
-        self.charset = request.charset or "UTF-8"
+        self.charset = request.options.charset or "UTF-8"
         self.lang = None
         self.proxy_response_builder = NexProxyResponseBuilder(self)
 

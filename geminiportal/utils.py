@@ -1,11 +1,21 @@
 import asyncio
 import subprocess
 from collections.abc import AsyncIterator
+from typing import NamedTuple
 
 import chardet
 from emoji import is_emoji
 
 from geminiportal.urls import URLReference
+
+
+class ProxyOptions(NamedTuple):
+    charset: str | None = None
+    format: str | None = None
+    raw: bool = False
+    vr: bool = False
+    crt: bool = False
+    raw_crt: bool = False
 
 
 async def describe_tls_cert(tls_cert: bytes) -> str:

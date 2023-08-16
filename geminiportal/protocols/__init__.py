@@ -6,15 +6,14 @@ from geminiportal.protocols.nex import NexRequest
 from geminiportal.protocols.spartan import SpartanRequest
 from geminiportal.protocols.text import TxtRequest
 from geminiportal.urls import URLReference
+from geminiportal.utils import ProxyOptions
 
 
-def build_proxy_request(
-    url: URLReference,
-    charset: str | None = None,
-    raw_mode: bool = False,
-    vr_mode: bool = False,
-) -> BaseRequest:
+def build_proxy_request(url: URLReference, options: ProxyOptions | None = None) -> BaseRequest:
     request_class: type[BaseRequest]
+
+    if options is None:
+        options = ProxyOptions()
 
     if url.scheme == "spartan":
         request_class = SpartanRequest
@@ -33,4 +32,4 @@ def build_proxy_request(
     else:
         raise ValueError(f"Unsupported URL scheme: {url.scheme}")
 
-    return request_class(url, raw_mode, charset, vr_mode)
+    return request_class(url, options)

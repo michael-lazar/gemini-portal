@@ -47,7 +47,7 @@ def get_handler_class(response: BaseResponse) -> type[BaseHandler]:
     elif response.mimetype.startswith("application/nex"):
         handler_class = NexHandler
     elif response.mimetype.startswith(("application/gopher-menu", "application/gopher+-menu")):
-        if response.request.vr_mode:
+        if response.options.vr:
             handler_class = GopherVRHandler
         else:
             handler_class = GopherHandler

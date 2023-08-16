@@ -13,6 +13,7 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.handlers import get_handler_class
 from geminiportal.handlers.base import BaseHandler, StreamHandler
 from geminiportal.urls import URLReference
+from geminiportal.utils import ProxyOptions
 
 _logger = logging.getLogger(__name__)
 
@@ -66,19 +67,10 @@ class BaseRequest:
 
     _blocked_hosts = [re.compile(rf"(?:.+\.)?{host}\.?$", flags=re.I) for host in BLOCKED_HOSTS]
 
-    def __init__(
-        self,
-        url: URLReference,
-        raw_mode: bool = False,
-        charset: str | None = None,
-        vr_mode: bool = False,
-    ):
+    def __init__(self, url: URLReference, options: ProxyOptions):
         self.url = url
         self.host, self.port = url.conn_info
-        self.raw_mode = raw_mode
-        self.charset = charset
-        self.vr_mode = vr_mode
-
+        self.options = options
         self.peer_address = ""
         self.clean()
 
@@ -155,6 +147,10 @@ class BaseResponse:
     @property
     def url(self) -> URLReference:
         return self.request.url
+
+    @property
+    def options(self) -> ProxyOptions:
+        return self.request.options
 
     @property
     def title_display(self) -> str:
@@ -256,7 +252,7 @@ class BaseProxyResponseBuilder:
     async def render_from_handler(self) -> QuartResponse:
         handler_class: type[BaseHandler]
 
-        if self.response.request.raw_mode:
+        if self.response.options.raw:
             handler_class = StreamHandler
         else:
             handler_class = get_handler_class(self.response)

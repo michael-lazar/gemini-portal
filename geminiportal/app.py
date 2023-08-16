@@ -9,9 +9,8 @@ from werkzeug.wrappers.response import Response as WerkzeugResponse
 from geminiportal.favicons import favicon_cache
 from geminiportal.protocols import build_proxy_request
 from geminiportal.protocols.base import ProxyError
-from geminiportal.protocols.gemini import GeminiResponse
 from geminiportal.urls import URLReference, quote_gopher
-from geminiportal.utils import describe_tls_cert
+from geminiportal.utils import ProxyOptions
 
 logger = logging.getLogger("geminiportal")
 logger.setLevel(logging.INFO)
@@ -55,10 +54,7 @@ def inject_context():
             "application/gopher+-menu",
             "application/gopher-attributes",
         ):
-            if getattr(g, "vr_mode", None):
-                kwargs["menu_url"] = g.url.get_proxy_url(vr=None)
-            else:
-                kwargs["vr_url"] = g.url.get_proxy_url(vr=1)
+            kwargs["vr_url"] = g.url.get_proxy_url(vr=1)
 
     elif "address" in g:
         kwargs["url"] = g.address
@@ -136,51 +132,19 @@ async def proxy(
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    g.charset = request.args.get("charset") or None
-    g.raw_mode = bool(request.args.get("raw"))
-    g.vr_mode = bool(request.args.get("vr"))
-
-    proxy_request = build_proxy_request(
-        g.url,
-        charset=g.charset,
-        raw_mode=g.raw_mode,
-        vr_mode=g.vr_mode,
+    options = ProxyOptions(
+        charset=request.args.get("charset") or None,
+        format=request.args.get("format") or None,
+        raw=bool(request.args.get("raw")),
+        vr=bool(request.args.get("vr")),
+        crt=bool(request.args.get("crt")),
+        raw_crt=bool(request.args.get("raw_crt")),
     )
+    proxy_request = build_proxy_request(g.url, options)
     response = await proxy_request.get_response()
+
     g.response = response
-
     g.favicon = favicon_cache.check(g.url)
-
-    if request.args.get("raw_crt"):
-        if not isinstance(response, GeminiResponse):
-            raise ValueError("Cannot download certificate for non-TLS schemes")
-
-        return Response(
-            response.tls_cert,
-            content_type="application/x-x509-ca-cert",
-            headers={
-                "Content-Disposition": f"attachment; filename={request.host}.cer",
-            },
-        )
-
-    if request.args.get("crt"):
-        if not hasattr(response, "tls_cert"):
-            raise ValueError("Cannot download certificate for non-TLS schemes")
-
-        # Consume the request, so we can check for the close_notify signal
-        await response.get_body()
-
-        cert_description = await describe_tls_cert(response.tls_cert)
-
-        content = await render_template(
-            "proxy/tls-context.html",
-            cert_description=cert_description,
-            raw_cert_url=g.url.get_proxy_url(raw_crt=1),
-            tls_close_notify_received=response.tls_close_notify_received,
-            tls_version=response.tls_version,
-            tls_cipher=response.tls_cipher,
-        )
-        return Response(content)
 
     proxy_response = await response.build_proxy_response()
     return proxy_response
