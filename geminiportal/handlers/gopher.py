@@ -26,7 +26,7 @@ class GopherIcon:
 
 ICON_UNKNOWN = GopherIcon("UNKN", "generic.gif")
 ICON_URL = GopherIcon("URL", "link.gif")
-ICON_TYPES = {
+ICON_TYPES: dict[str, GopherIcon] = {
     "0": GopherIcon("FILE", "text.gif"),
     "1": GopherIcon("DIR", "dir.gif"),
     "2": GopherIcon("CSO", "comp.gray.gif"),
@@ -106,7 +106,6 @@ class GopherItem:
             self.external_indicator = None
             self.mimetype = None
 
-        self.icon: dict | None
         if self.item_type in ("+", "i"):
             self.icon = None
         elif self.is_url:

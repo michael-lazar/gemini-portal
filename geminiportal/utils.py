@@ -13,9 +13,9 @@ class ProxyOptions(NamedTuple):
     charset: str | None = None
     format: str | None = None
     raw: bool = False
+    raw_crt: bool = False
     vr: bool = False
     crt: bool = False
-    raw_crt: bool = False
 
 
 async def describe_tls_cert(tls_cert: bytes) -> str:
@@ -96,7 +96,7 @@ def smart_decode(
         autodetect = chardet.detect(data)
 
         if autodetect["confidence"] > 0.5:
-            detected_charset = autodetect["encoding"]
+            detected_charset = autodetect["encoding"] or default_charset
         else:
             detected_charset = default_charset
         text = data.decode(detected_charset, errors=errors)

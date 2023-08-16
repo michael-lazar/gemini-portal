@@ -103,7 +103,7 @@ class GeminiResponse(BaseResponse):
         "62": "CERTIFICATE NOT VALID",
     }
 
-    tls_cert: bytes | None
+    tls_cert: bytes
     tls_version: str
     tls_cipher: str
     tls_close_notify: CloseNotifyState

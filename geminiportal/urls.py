@@ -7,7 +7,6 @@ import os.path
 import urllib.parse
 from urllib.parse import quote, unquote_to_bytes, urljoin, urlparse, urlunparse
 
-from quart import request as quart_request
 from quart import url_for
 
 # Add custom mimetypes for extensions not defined by the filesystem
@@ -432,10 +431,6 @@ class URLReference:
             path = self.get_gopher_path()
         else:
             path = urlunparse(("", "", self.path, self.params, self.query, ""))
-
-        # Preserve this value when navigating across pages
-        if param := quart_request.args.get("vr"):
-            query_params.setdefault("vr", param)
 
         if path:
             return url_for(

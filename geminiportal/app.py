@@ -136,9 +136,9 @@ async def proxy(
         charset=request.args.get("charset") or None,
         format=request.args.get("format") or None,
         raw=bool(request.args.get("raw")),
+        raw_crt=bool(request.args.get("raw_crt")),
         vr=bool(request.args.get("vr")),
         crt=bool(request.args.get("crt")),
-        raw_crt=bool(request.args.get("raw_crt")),
     )
     proxy_request = build_proxy_request(g.url, options)
     response = await proxy_request.get_response()
