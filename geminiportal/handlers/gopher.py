@@ -42,7 +42,7 @@ ICON_TYPES = {
     "g": GopherIcon("GIF", "image2.gif"),
     "I": GopherIcon("IMG", "image2.gif"),
     "s": GopherIcon("SND", "sound2.gif"),
-    "M": GopherIcon("MBOX", "blank.gif"),
+    "M": GopherIcon("MBOX", "generic.gif"),
     "T": GopherIcon("3270", "comp.blue.gif"),
     "p": GopherIcon("PNG", "image2.gif"),
     ":": GopherIcon("BMP", "image2.gif"),
