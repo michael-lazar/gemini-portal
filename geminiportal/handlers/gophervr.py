@@ -13,9 +13,9 @@ class Position(NamedTuple):
     Container for an A-Frame position attribute.
     """
 
-    x: float
-    y: float
-    z: float
+    x: float = 0
+    y: float = 0
+    z: float = 0
 
     def __str__(self):
         return f"{self.x} {self.y} {self.z}"
@@ -26,12 +26,29 @@ class Rotation(NamedTuple):
     Container for an A-Frame rotation attribute.
     """
 
-    x_deg: float  # Pitch
-    y_deg: float  # Yaw
-    z_deg: float  # Roll
+    x_deg: float = 0  # Pitch
+    y_deg: float = 0  # Yaw
+    z_deg: float = 0  # Roll
 
     def __str__(self):
         return f"{self.x_deg} {self.y_deg} {self.z_deg}"
+
+
+class Scale(NamedTuple):
+    """
+    Container for an A-Frame scale attribute.
+    """
+
+    x: float = 0
+    y: float = 0
+    z: float = 0
+
+    def __str__(self):
+        return f"{self.x} {self.y} {self.z}"
+
+    @classmethod
+    def from_scalar(cls, value: float) -> Scale:
+        return cls(value, value, value)
 
 
 class AFrameComponent(NamedTuple):
@@ -79,14 +96,16 @@ def build_3d_icon(
     )
 
     text_offset = 0.05
-
-    text_z = position.z + text_offset * math.cos(math.radians(rotation.y_deg))
-    text_x = position.x + text_offset * math.sin(math.radians(rotation.y_deg))
+    text_position = Position(
+        position.x + text_offset * math.sin(math.radians(rotation.y_deg)),
+        position.y,
+        position.z + text_offset * math.cos(math.radians(rotation.y_deg)),
+    )
 
     text = AFrameComponent(
         "a-text",
         {
-            "position": Position(text_x, 1, text_z),
+            "position": text_position,
             "rotation": rotation,
             "value": item.item_text,
             "align": "center",
@@ -95,7 +114,6 @@ def build_3d_icon(
             "wrap-count": 15,
         },
     )
-
     return Gopher3DIcon([box, text])
 
 
@@ -121,34 +139,7 @@ def build_kiosk(position: Position) -> Gopher3DIcon:
             "color": "red",
         },
     )
-
     return Gopher3DIcon([cone, box])
-
-
-class CircularLayout:
-    """
-    Arranges all of the items around the middle of a geometric circle.
-    """
-
-    def __init__(self, radius: float):
-        self.radius = radius
-
-    def render(self, items: list[GopherItem]) -> Iterable[Gopher3DIcon]:
-        # Calculate angle increment for each box
-        angle_increment = 2 * math.pi / len(items)
-
-        # Generate A-Frame entities for each item
-        for i, item in enumerate(items):
-            # Calculate the x, y position for each box on the circle
-            x = self.radius * math.cos(i * angle_increment)
-            z = self.radius * math.sin(i * angle_increment)
-
-            # Calculate rotation so that the box faces the center
-            y_deg = 270 - math.degrees(i * angle_increment)
-
-            position = Position(x, 1, z)
-            rotation = Rotation(0, y_deg, 0)
-            yield build_3d_icon(item, position, rotation)
 
 
 class SpiralLayout:
@@ -158,19 +149,23 @@ class SpiralLayout:
 
     def __init__(
         self,
-        initial_radius: float = 5,
-        spacing: float = 0.4,
-        increment: float = 10.0,
+        initial_radius: float = 10,
+        initial_density: int = 10,
+        radius_increment: float = 0.4,
+        height_increment: float = 0.1,
     ):
         self.initial_radius = initial_radius
-        self.spacing = spacing
-        self.increment = increment
+        self.initial_density = initial_density
+
+        self.radius_increment = radius_increment
+        self.height_increment = height_increment
 
     def render(self, items: list[GopherItem]) -> Iterable[Gopher3DIcon]:
-        angle_increment = 2 * math.pi / self.increment
+        angle_increment = 2 * math.pi / self.initial_density
 
         # Generate A-Frame entities for each item.
         radius = self.initial_radius
+        height = 0
         for i, item in enumerate(items):
             # Calculate the x, y position for each box in the spiral.
             x = radius * math.cos(i * angle_increment)
@@ -179,12 +174,13 @@ class SpiralLayout:
             # Calculate rotation so that the box faces the center.
             y_deg = 270 - math.degrees(i * angle_increment)
 
-            position = Position(x, 1, z)
+            position = Position(x, 1 + height, z)
             rotation = Rotation(0, y_deg, 0)
             yield build_3d_icon(item, position, rotation)
 
             # Increase the radius for the next item to achieve the spiral effect.
-            radius += self.spacing
+            radius += self.radius_increment
+            height += self.height_increment
 
 
 class GopherVRHandler(TemplateHandler):
@@ -199,7 +195,7 @@ class GopherVRHandler(TemplateHandler):
         yield build_kiosk(Position(0, 0, 0))
 
         # layout = CircularLayout(radius=10)
-        layout = SpiralLayout(initial_radius=5, spacing=0.4)
+        layout = SpiralLayout()
         yield from layout.render(self.get_items())
 
     def get_items(self) -> list[GopherItem]:
