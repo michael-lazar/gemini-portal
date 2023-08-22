@@ -89,6 +89,9 @@ def build_3d_icon(
     if item.item_type == "1":
         depth = 0.5
         color = "#0068a8"
+    elif item.item_type == "h":
+        depth = 0.1
+        color = "#368011"
     else:
         depth = 0.1
         color = "#df7400"
@@ -99,7 +102,7 @@ def build_3d_icon(
             "position": position,
             "rotation": rotation,
             "depth": depth,
-            "height": 2,
+            "height": 1.5,
             "width": 2,
             "color": color,
         },
@@ -158,16 +161,21 @@ def build_kiosk(
             "color": "#960000",
         },
     )
+
+    text_attr = {
+        "value": text,
+        "align": "center",
+        "color": "white",
+        "width": box_width,
+        "wrap-count": 15,
+    }
+
     text1 = AFrameComponent(
         "a-text",
         {
             "position": Position(box_pos.x, box_pos.y, box_pos.z + box_depth / 2),
             "rotation": Rotation(0, 0, 0),
-            "value": text,
-            "align": "center",
-            "color": "white",
-            "width": box_width,
-            "wrap-count": 15,
+            **text_attr,
         },
     )
     text2 = AFrameComponent(
@@ -175,11 +183,7 @@ def build_kiosk(
         {
             "position": Position(box_pos.x, box_pos.y, box_pos.z - box_depth / 2),
             "rotation": Rotation(0, 180, 0),
-            "value": text,
-            "align": "center",
-            "color": "white",
-            "width": box_width,
-            "wrap-count": 15,
+            **text_attr,
         },
     )
     text3 = AFrameComponent(
@@ -187,11 +191,7 @@ def build_kiosk(
         {
             "position": Position(box_pos.x - box_width / 2, box_pos.y, box_pos.z),
             "rotation": Rotation(0, -90, 0),
-            "value": text,
-            "align": "center",
-            "color": "white",
-            "width": box_width,
-            "wrap-count": 15,
+            **text_attr,
         },
     )
     text4 = AFrameComponent(
@@ -199,11 +199,7 @@ def build_kiosk(
         {
             "position": Position(box_pos.x + box_width / 2, box_pos.y, box_pos.z),
             "rotation": Rotation(0, 90, 0),
-            "value": text,
-            "align": "center",
-            "color": "white",
-            "width": box_width,
-            "wrap-count": 15,
+            **text_attr,
         },
     )
     return Gopher3DIcon([cone, box, text1, text2, text3, text4])
@@ -216,10 +212,10 @@ class SpiralLayout:
 
     def __init__(
         self,
-        initial_radius: float = 10,
-        initial_density: int = 10,
-        radius_increment: float = 0.4,
-        height_increment: float = 0.1,
+        initial_radius: float = 5,
+        initial_density: int = 12,
+        radius_increment: float = 0.2,
+        height_increment: float = 0.02,
     ):
         self.initial_radius = initial_radius
         self.initial_density = initial_density
