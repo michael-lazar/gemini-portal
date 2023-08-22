@@ -74,6 +74,9 @@ class Gopher3DIcon(NamedTuple):
     def get_html(self):
         return "\n".join(c.get_html() for c in self.components)
 
+    def __add__(self, other):
+        return Gopher3DIcon(*self.components, *other.components)
+
 
 def build_3d_icon(
     item: GopherItem,
@@ -83,19 +86,26 @@ def build_3d_icon(
     """
     Construct a 3D icon for the gopher item at the given position.
     """
+    if item.item_type == "1":
+        depth = 0.5
+        color = "#0068a8"
+    else:
+        depth = 0.1
+        color = "#df7400"
+
     box = AFrameComponent(
         "a-box",
         {
             "position": position,
             "rotation": rotation,
-            "depth": 0.1,
+            "depth": depth,
             "height": 2,
             "width": 2,
-            "color": "orange",
+            "color": color,
         },
     )
 
-    text_offset = 0.05
+    text_offset = depth / 2
     text_position = Position(
         position.x + text_offset * math.sin(math.radians(rotation.y_deg)),
         position.y,
@@ -109,7 +119,7 @@ def build_3d_icon(
             "rotation": rotation,
             "value": item.item_text,
             "align": "center",
-            "color": "black",
+            "color": "white",
             "width": 2,
             "wrap-count": 15,
         },
@@ -117,29 +127,86 @@ def build_3d_icon(
     return Gopher3DIcon([box, text])
 
 
-def build_kiosk(position: Position) -> Gopher3DIcon:
+def build_kiosk(
+    position: Position,
+    text: str = "Home Gopher Server",
+) -> Gopher3DIcon:
     cone = AFrameComponent(
         "a-cone",
         {
             "position": position,
-            "radius-bottom": 1,
+            "radius-bottom": 1.2,
             "radius-top": 0,
             "segmentsRadial": 4,
-            "height": 6,
-            "color": "red",
+            "height": 5.5,
+            "color": "#960000",
         },
     )
+
+    box_pos = Position(position.x, position.y + 1.2, position.z)
+    box_width = 1.3
+    box_depth = 1.3
+    box_height = 1.0
+
     box = AFrameComponent(
         "a-box",
         {
-            "position": Position(position.x, position.y + 1.5, position.z),
-            "height": 0.75,
-            "width": 1,
-            "depth": 1,
-            "color": "red",
+            "position": box_pos,
+            "height": box_height,
+            "width": box_width,
+            "depth": box_depth,
+            "color": "#960000",
         },
     )
-    return Gopher3DIcon([cone, box])
+    text1 = AFrameComponent(
+        "a-text",
+        {
+            "position": Position(box_pos.x, box_pos.y, box_pos.z + box_depth / 2),
+            "rotation": Rotation(0, 0, 0),
+            "value": text,
+            "align": "center",
+            "color": "white",
+            "width": box_width,
+            "wrap-count": 15,
+        },
+    )
+    text2 = AFrameComponent(
+        "a-text",
+        {
+            "position": Position(box_pos.x, box_pos.y, box_pos.z - box_depth / 2),
+            "rotation": Rotation(0, 180, 0),
+            "value": text,
+            "align": "center",
+            "color": "white",
+            "width": box_width,
+            "wrap-count": 15,
+        },
+    )
+    text3 = AFrameComponent(
+        "a-text",
+        {
+            "position": Position(box_pos.x - box_width / 2, box_pos.y, box_pos.z),
+            "rotation": Rotation(0, -90, 0),
+            "value": text,
+            "align": "center",
+            "color": "white",
+            "width": box_width,
+            "wrap-count": 15,
+        },
+    )
+    text4 = AFrameComponent(
+        "a-text",
+        {
+            "position": Position(box_pos.x + box_width / 2, box_pos.y, box_pos.z),
+            "rotation": Rotation(0, 90, 0),
+            "value": text,
+            "align": "center",
+            "color": "white",
+            "width": box_width,
+            "wrap-count": 15,
+        },
+    )
+    return Gopher3DIcon([cone, box, text1, text2, text3, text4])
 
 
 class SpiralLayout:
