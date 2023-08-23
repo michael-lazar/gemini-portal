@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from geminiportal.handlers.gopher import GopherItem
+
 OBJ_SCALE = 0.003
 
 COLOR_TEXT = "#FFFFFF"
@@ -149,27 +151,31 @@ class GopherIcon:
     Builds the A-Frame representation for a given gopher menu item.
     """
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def __init__(self, item: GopherItem, position: Position, rotation: Rotation):
+        self.item = item
+        self.position = position
+        self.rotation = rotation
+
+    def build(self) -> AFrameEntity:
         raise NotImplementedError()
 
 
 class GopherDir(GopherIcon):
     color = COLOR_GOPHER_DIR
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
+            position=self.position,
+            rotation=self.rotation,
             obj="#dir-obj",
-            color=cls.color,
+            color=self.color,
         )
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -201, -85),
                 rotation=Rotation(),
-                text=text,
+                text=self.item.item_text,
                 width=500,
             )
         )
@@ -179,19 +185,19 @@ class GopherDir(GopherIcon):
 class GopherDocument(GopherIcon):
     color = COLOR_GOPHER_DOCUMENT
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
+            position=self.position,
+            rotation=self.rotation,
             obj="#document-obj",
-            color=cls.color,
+            color=self.color,
         )
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -213, -57),
                 rotation=Rotation(),
-                text=text,
+                text=self.item.item_text,
                 width=500,
             )
         )
@@ -205,19 +211,19 @@ class GopherURL(GopherDocument):
 class GopherSearch(GopherIcon):
     color = COLOR_GOPHER_SEARCH
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
+            position=self.position,
+            rotation=self.rotation,
             obj="#search-obj",
-            color=cls.color,
+            color=self.color,
         )
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -273, -80),
                 rotation=Rotation(),
-                text=text,
+                text=self.item.item_text,
                 width=500,
             )
         )
@@ -227,19 +233,19 @@ class GopherSearch(GopherIcon):
 class GopherSound(GopherIcon):
     color = COLOR_GOPHER_SOUND
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
+            position=self.position,
+            rotation=self.rotation,
             obj="#sound-obj",
-            color=cls.color,
+            color=self.color,
         )
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -192, -157),
                 rotation=Rotation(),
-                text=text,
+                text=self.item.item_text,
                 width=500,
             )
         )
@@ -249,62 +255,84 @@ class GopherSound(GopherIcon):
 class GopherTelnet(GopherIcon):
     color = COLOR_GOPHER_TELNET
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+    def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
+            position=self.position,
+            rotation=self.rotation,
             obj="#telnet-obj",
-            color=cls.color,
+            color=self.color,
         )
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -236, -87),
                 rotation=Rotation(),
-                text=text,
+                text=self.item.item_text,
                 width=500,
             )
         )
         return obj
 
 
-class GopherKiosk(GopherIcon):
-    color = COLOR_GOPHER_KIOSK
+def build_3d_icon(
+    item: GopherItem,
+    position: Position,
+    rotation: Rotation,
+) -> AFrameEntity:
+    """
+    Construct a 3D icon for the gopher item at the given position.
+    """
+    icon_class: type[GopherIcon]
 
-    @classmethod
-    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
-        obj = AFrameEntity.build_obj(
-            position=position,
-            rotation=rotation,
-            obj="#kiosk-obj",
-            color=cls.color,
-        )
-        obj.children.extend(
-            [
-                AFrameEntity.build_text(
-                    position=Position(0, -385, -245),
-                    rotation=Rotation(0, 0, 0),
-                    text=text,
-                    width=420,
-                ),
-                AFrameEntity.build_text(
-                    position=Position(-218, -385, -22),
-                    rotation=Rotation(0, 90, 0),
-                    text=text,
-                    width=420,
-                ),
-                AFrameEntity.build_text(
-                    position=Position(0, -385, 189),
-                    rotation=Rotation(0, 180, 0),
-                    text=text,
-                    width=420,
-                ),
-                AFrameEntity.build_text(
-                    position=Position(218, -385, -35),
-                    rotation=Rotation(0, 270, 0),
-                    text=text,
-                    width=420,
-                ),
-            ]
-        )
-        return obj
+    if item.item_type == "1":
+        icon_class = GopherDir
+    elif item.is_url:
+        icon_class = GopherURL
+    elif item.item_type == "7":
+        icon_class = GopherSearch
+    elif item.item_type == "8":
+        icon_class = GopherTelnet
+    elif item.item_type == "s":
+        icon_class = GopherSound
+    else:
+        icon_class = GopherDocument
+
+    return icon_class(item, position, rotation).build()
+
+
+def build_kiosk(text: str) -> AFrameEntity:
+    obj = AFrameEntity.build_obj(
+        position=Position(),
+        rotation=Rotation(),
+        obj="#kiosk-obj",
+        color=COLOR_GOPHER_KIOSK,
+    )
+    obj.children.extend(
+        [
+            AFrameEntity.build_text(
+                position=Position(0, -385, -245),
+                rotation=Rotation(0, 0, 0),
+                text=text,
+                width=420,
+            ),
+            AFrameEntity.build_text(
+                position=Position(-218, -385, -22),
+                rotation=Rotation(0, 90, 0),
+                text=text,
+                width=420,
+            ),
+            AFrameEntity.build_text(
+                position=Position(0, -385, 189),
+                rotation=Rotation(0, 180, 0),
+                text=text,
+                width=420,
+            ),
+            AFrameEntity.build_text(
+                position=Position(218, -385, -35),
+                rotation=Rotation(0, 270, 0),
+                text=text,
+                width=420,
+            ),
+        ]
+    )
+    return obj

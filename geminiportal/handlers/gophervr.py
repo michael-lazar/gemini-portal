@@ -6,45 +6,13 @@ from typing import Any
 
 from geminiportal.aframe import (
     AFrameEntity,
-    GopherDir,
-    GopherDocument,
-    GopherIcon,
-    GopherKiosk,
-    GopherSearch,
-    GopherSound,
-    GopherTelnet,
-    GopherURL,
     Position,
     Rotation,
+    build_3d_icon,
+    build_kiosk,
 )
 from geminiportal.handlers.base import TemplateHandler
 from geminiportal.handlers.gopher import GopherItem
-
-
-def build_3d_icon(
-    item: GopherItem,
-    position: Position,
-    rotation: Rotation,
-) -> AFrameEntity:
-    """
-    Construct a 3D icon for the gopher item at the given position.
-    """
-    icon: type[GopherIcon]
-
-    if item.item_type == "1":
-        icon = GopherDir
-    elif item.is_url:
-        icon = GopherURL
-    elif item.item_type == "7":
-        icon = GopherSearch
-    elif item.item_type == "8":
-        icon = GopherTelnet
-    elif item.item_type == "s":
-        icon = GopherSound
-    else:
-        icon = GopherDocument
-
-    return icon.build(position, rotation, item.item_text)
 
 
 class SpiralLayout:
@@ -75,11 +43,11 @@ class SpiralLayout:
         height = self.initial_height
         for i, item in enumerate(items):
             # Calculate the x, y position for each box in the spiral.
-            x = radius * math.cos(i * angle_increment)
-            z = radius * math.sin(i * angle_increment)
+            x = radius * math.cos(i * angle_increment - math.pi / 2)
+            z = radius * math.sin(i * angle_increment - math.pi / 2)
 
             # Calculate rotation so that the box faces the center.
-            y_deg = 270 - math.degrees(i * angle_increment)
+            y_deg = -math.degrees(i * angle_increment)
 
             position = Position(x, height, z)
             rotation = Rotation(0, y_deg, 0)
@@ -100,7 +68,7 @@ class GopherVRHandler(TemplateHandler):
         return context
 
     def layout_scene(self) -> Iterable[AFrameEntity]:
-        yield GopherKiosk().build(Position(), Rotation(), "Main Gopher Menu")
+        yield build_kiosk("Main Gopher Menu")
         layout = SpiralLayout()
         yield from layout.render(self.get_items())
 

@@ -28,7 +28,9 @@
 <noscript><i>The GopherVR experience requires javascript!</i></noscript>
 <div class="scene">
   <a-scene embedded vr-mode-ui="enabled: true">
-    <a-camera position="1 1.6 1"></a-camera>
+    <a-camera look-controls wasd-controls jump position="0 1.6 -1"></a-camera>
+    <a-entity oculus-touch-controls="hand: left"></a-entity>
+    <a-entity oculus-touch-controls="hand: right"></a-entity>
     <a-assets>
       <a-asset-item id="dir-obj" src="/static/vr/dir.obj"></a-asset-item>
       <a-asset-item id="document-obj" src="/static/vr/document.obj"></a-asset-item>
@@ -37,9 +39,6 @@
       <a-asset-item id="sound-obj" src="/static/vr/sound.obj"></a-asset-item>
       <a-asset-item id="telnet-obj" src="/static/vr/telnet.obj"></a-asset-item>
     </a-assets>
-    <a-entity camera look-controls wasd-controls jump position="0 1.6 0"></a-entity>
-    <a-entity oculus-touch-controls="hand: left"></a-entity>
-    <a-entity oculus-touch-controls="hand: right"></a-entity>
     <a-plane position="-200 0 -200" rotation="-90 0 0" width="400" height="400" color="#292929"></a-plane>
     <a-plane position="200 0 -200" rotation="-90 0 0" width="400" height="400" color="#07290A"></a-plane>
     <a-plane position="-200 0 200" rotation="-90 0 0" width="400" height="400" color="#07290A"></a-plane>
