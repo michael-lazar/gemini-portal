@@ -28,7 +28,15 @@
 <noscript><i>The GopherVR experience requires javascript!</i></noscript>
 <div class="scene">
   <a-scene embedded vr-mode-ui="enabled: true">
-    <a-camera></a-camera>
+    <a-camera position="1 1.6 1"></a-camera>
+    <a-assets>
+      <a-asset-item id="dir-obj" src="/static/vr/dir.obj"></a-asset-item>
+      <a-asset-item id="document-obj" src="/static/vr/document.obj"></a-asset-item>
+      <a-asset-item id="kiosk-obj" src="/static/vr/kiosk.obj"></a-asset-item>
+      <a-asset-item id="search-obj" src="/static/vr/search.obj"></a-asset-item>
+      <a-asset-item id="sound-obj" src="/static/vr/sound.obj"></a-asset-item>
+      <a-asset-item id="telnet-obj" src="/static/vr/telnet.obj"></a-asset-item>
+    </a-assets>
     <a-entity camera look-controls wasd-controls jump position="0 1.6 0"></a-entity>
     <a-entity oculus-touch-controls="hand: left"></a-entity>
     <a-entity oculus-touch-controls="hand: right"></a-entity>
@@ -38,7 +46,7 @@
     <a-plane position="200 0 200" rotation="-90 0 0" width="400" height="400" color="#292929"></a-plane>
     <a-sky color="#070B34"></a-sky>
     {% for icon in scene %}
-       {{ icon.get_html() | safe }}
+       {{ icon | safe }}
     {% endfor %}
   </a-scene>
 </div>

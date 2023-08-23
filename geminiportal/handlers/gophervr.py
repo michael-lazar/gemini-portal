@@ -5,11 +5,14 @@ from collections.abc import Iterable
 from typing import Any
 
 from geminiportal.aframe import (
-    AFrameIcon,
+    AFrameEntity,
     GopherDir,
     GopherDocument,
+    GopherIcon,
     GopherKiosk,
     GopherSearch,
+    GopherSound,
+    GopherTelnet,
     GopherURL,
     Position,
     Rotation,
@@ -22,18 +25,26 @@ def build_3d_icon(
     item: GopherItem,
     position: Position,
     rotation: Rotation,
-) -> AFrameIcon:
+) -> AFrameEntity:
     """
     Construct a 3D icon for the gopher item at the given position.
     """
+    icon: type[GopherIcon]
+
     if item.item_type == "1":
-        return GopherDir.build(position, rotation, item.item_text)
-    elif item.item_type == "7":
-        return GopherSearch.build(position, rotation, item.item_text)
+        icon = GopherDir
     elif item.is_url:
-        return GopherURL.build(position, rotation, item.item_text)
+        icon = GopherURL
+    elif item.item_type == "7":
+        icon = GopherSearch
+    elif item.item_type == "8":
+        icon = GopherTelnet
+    elif item.item_type == "s":
+        icon = GopherSound
     else:
-        return GopherDocument.build(position, rotation, item.item_text)
+        icon = GopherDocument
+
+    return icon.build(position, rotation, item.item_text)
 
 
 class SpiralLayout:
@@ -44,22 +55,24 @@ class SpiralLayout:
     def __init__(
         self,
         initial_radius: float = 5,
+        initial_height: float = 0,
         initial_density: int = 12,
         radius_increment: float = 0.2,
         height_increment: float = 0.02,
     ):
         self.initial_radius = initial_radius
+        self.initial_height = initial_height
         self.initial_density = initial_density
 
         self.radius_increment = radius_increment
         self.height_increment = height_increment
 
-    def render(self, items: list[GopherItem]) -> Iterable[AFrameIcon]:
+    def render(self, items: list[GopherItem]) -> Iterable[AFrameEntity]:
         angle_increment = 2 * math.pi / self.initial_density
 
         # Generate A-Frame entities for each item.
         radius = self.initial_radius
-        height = 0
+        height = self.initial_height
         for i, item in enumerate(items):
             # Calculate the x, y position for each box in the spiral.
             x = radius * math.cos(i * angle_increment)
@@ -68,7 +81,7 @@ class SpiralLayout:
             # Calculate rotation so that the box faces the center.
             y_deg = 270 - math.degrees(i * angle_increment)
 
-            position = Position(x, 1 + height, z)
+            position = Position(x, height, z)
             rotation = Rotation(0, y_deg, 0)
 
             yield build_3d_icon(item, position, rotation)
@@ -86,11 +99,8 @@ class GopherVRHandler(TemplateHandler):
         context["scene"] = self.layout_scene()
         return context
 
-    def layout_scene(self) -> Iterable[AFrameIcon]:
-        yield GopherKiosk.build(
-            position=Position(0, 0, 0),
-            text="Home Gopher Server",
-        )
+    def layout_scene(self) -> Iterable[AFrameEntity]:
+        yield GopherKiosk().build(Position(), Rotation(), "Main Gopher Menu")
         layout = SpiralLayout()
         yield from layout.render(self.get_items())
 

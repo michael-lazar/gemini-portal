@@ -1,20 +1,23 @@
 from __future__ import annotations
 
-import math
-from typing import NamedTuple
+from dataclasses import dataclass, field
+
+OBJ_SCALE = 0.003
 
 COLOR_TEXT = "#FFFFFF"
 COLOR_GOPHER_KIOSK = "#960000"
 COLOR_GOPHER_DOCUMENT = "#df7400"
+COLOR_GOPHER_SOUND = "#df7400"
 COLOR_GOPHER_DIR = "#0068a8"
 COLOR_GOPHER_URL = "#368011"
 COLOR_GOPHER_SEARCH = "#871969"
 COLOR_GOPHER_TELNET = "#E1B000"
 
 
-class Position(NamedTuple):
+@dataclass
+class Position:
     """
-    Container for an A-Frame position attribute.
+    Container for an A-Frame position component.
     """
 
     x: float = 0
@@ -22,12 +25,20 @@ class Position(NamedTuple):
     z: float = 0
 
     def __str__(self):
-        return f"{self.x} {self.y} {self.z}"
+        return f"{self.x:.4f} {self.y:.4f} {self.z:.4f}"
+
+    def __add__(self, other: Position) -> Position:
+        return Position(
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z,
+        )
 
 
-class Rotation(NamedTuple):
+@dataclass
+class Rotation:
     """
-    Container for an A-Frame rotation attribute.
+    Container for an A-Frame rotation component.
     """
 
     x_deg: float = 0  # Pitch
@@ -35,12 +46,20 @@ class Rotation(NamedTuple):
     z_deg: float = 0  # Roll
 
     def __str__(self):
-        return f"{self.x_deg} {self.y_deg} {self.z_deg}"
+        return f"{self.x_deg:.4f} {self.y_deg:.4f} {self.z_deg:.4f}"
+
+    def __add__(self, other: Rotation) -> Rotation:
+        return Rotation(
+            self.x_deg + other.x_deg,
+            self.y_deg + other.y_deg,
+            self.z_deg + other.z_deg,
+        )
 
 
-class Scale(NamedTuple):
+@dataclass
+class Scale:
     """
-    Container for an A-Frame scale attribute.
+    Container for an A-Frame scale component.
     """
 
     x: float = 0
@@ -48,297 +67,244 @@ class Scale(NamedTuple):
     z: float = 0
 
     def __str__(self):
-        return f"{self.x} {self.y} {self.z}"
+        return f"{self.x:.4f} {self.y:.4f} {self.z:.4f}"
+
+    def __add__(self, other: Scale) -> Scale:
+        return Scale(
+            self.x + other.x,
+            self.y + other.y,
+            self.z + other.z,
+        )
 
     @classmethod
-    def from_scalar(cls, value: float) -> Scale:
+    def const(cls, value: float) -> Scale:
         return cls(value, value, value)
 
 
-class AFrameComponent(NamedTuple):
+@dataclass
+class AFrameEntity:
     """
     Container for an A-Frame component.
     """
 
     tag: str
-    attributes: dict
+    attributes: dict = field(default_factory=dict)
+    children: list[AFrameEntity] = field(default_factory=list)
 
-    def get_html(self):
+    def __str__(self):
         attr_str = " ".join((f'{k}="{v}"' for k, v in self.attributes.items()))
-        return f"<{self.tag} {attr_str}></{self.tag}>"
-
-
-class AFrameIcon:
-    """
-    Representation of a 3D icon as a series of A-Frame components.
-    """
-
-    components: list[AFrameComponent]
-
-    def __init__(self, components):
-        self.components = components
-
-    def get_html(self):
-        return "\n".join(c.get_html() for c in self.components)
-
-
-class InfoCube(AFrameIcon):
-    """
-    A 3D box with words on all sides, excluding the top and bottom.
-    """
+        children_str = "".join(str(c) for c in self.children)
+        return f"<{self.tag} {attr_str}>{children_str}</{self.tag}>"
 
     @classmethod
-    def build(
+    def build_obj(
+        cls,
+        position: Position,
+        rotation: Rotation,
+        obj: str,
+        color: str,
+    ) -> AFrameEntity:
+        """
+        Construct an obj model entity.
+        """
+        return cls(
+            "a-entity",
+            attributes={
+                "position": position,
+                # TODO: Need to mirror the objects so I can avoid this hack
+                "rotation": rotation + Rotation(x_deg=180),
+                "obj-model": f"obj: {obj}",
+                "material": f"color: {color}",
+                "scale": Scale.const(OBJ_SCALE),
+            },
+        )
+
+    @classmethod
+    def build_text(
         cls,
         position: Position,
         rotation: Rotation,
         text: str,
         width: float,
-        height: float,
-        color: str,
-    ):
-        cube = AFrameComponent(
-            "a-box",
+    ) -> AFrameEntity:
+        """
+        Construct a text entity.
+        """
+        return cls(
+            "a-text",
             {
                 "position": position,
-                "rotation": rotation,
-                "height": height,
+                "rotation": rotation + Rotation(x_deg=180),
                 "width": width,
-                "depth": width,
-                "color": color,
-            },
-        )
-        text1 = AFrameComponent(
-            "a-text",
-            {
-                "position": Position(position.x, position.y, position.z + width / 2),
-                "rotation": Rotation(0, 0, 0),
                 "value": text,
-                "align": "center",
                 "color": COLOR_TEXT,
-                "width": width,
-                "wrap-count": 15,
+                "align": "center",
+                "wrap-count": 12,
             },
         )
-        text2 = AFrameComponent(
-            "a-text",
-            {
-                "position": Position(position.x, position.y, position.z - width / 2),
-                "rotation": Rotation(0, 180, 0),
-                "value": text,
-                "align": "center",
-                "color": COLOR_TEXT,
-                "width": width,
-                "wrap-count": 15,
-            },
-        )
-        text3 = AFrameComponent(
-            "a-text",
-            {
-                "position": Position(position.x - width / 2, position.y, position.z),
-                "rotation": Rotation(0, -90, 0),
-                "value": text,
-                "align": "center",
-                "color": COLOR_TEXT,
-                "width": width,
-                "wrap-count": 15,
-            },
-        )
-        text4 = AFrameComponent(
-            "a-text",
-            {
-                "position": Position(position.x + width / 2, position.y, position.z),
-                "rotation": Rotation(0, 90, 0),
-                "value": text,
-                "align": "center",
-                "color": COLOR_TEXT,
-                "width": width,
-                "wrap-count": 15,
-            },
-        )
-        return cls([cube, text1, text2, text3, text4])
 
 
-class Plaque(AFrameIcon):
+class GopherIcon:
     """
-    A generic 3D rectangle with words on the front face.
+    Builds the A-Frame representation for a given gopher menu item.
     """
 
     @classmethod
-    def build(
-        cls,
-        position: Position,
-        rotation: Rotation,
-        text: str,
-        width: float,
-        height: float,
-        depth: float,
-        color: str,
-    ):
-        box = AFrameComponent(
-            "a-box",
-            {
-                "position": position,
-                "rotation": rotation,
-                "depth": depth,
-                "height": height,
-                "width": width,
-                "color": color,
-            },
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        raise NotImplementedError()
+
+
+class GopherDir(GopherIcon):
+    color = COLOR_GOPHER_DIR
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#dir-obj",
+            color=cls.color,
         )
-        text1 = AFrameComponent(
-            "a-text",
-            {
-                "position": Position(
-                    position.x + depth / 2 * math.sin(math.radians(rotation.y_deg)),
-                    position.y,
-                    position.z + depth / 2 * math.cos(math.radians(rotation.y_deg)),
+        obj.children.append(
+            AFrameEntity.build_text(
+                position=Position(0, -201, -85),
+                rotation=Rotation(),
+                text=text,
+                width=500,
+            )
+        )
+        return obj
+
+
+class GopherDocument(GopherIcon):
+    color = COLOR_GOPHER_DOCUMENT
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#document-obj",
+            color=cls.color,
+        )
+        obj.children.append(
+            AFrameEntity.build_text(
+                position=Position(0, -213, -57),
+                rotation=Rotation(),
+                text=text,
+                width=500,
+            )
+        )
+        return obj
+
+
+class GopherURL(GopherDocument):
+    color = COLOR_GOPHER_URL
+
+
+class GopherSearch(GopherIcon):
+    color = COLOR_GOPHER_SEARCH
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#search-obj",
+            color=cls.color,
+        )
+        obj.children.append(
+            AFrameEntity.build_text(
+                position=Position(0, -273, -80),
+                rotation=Rotation(),
+                text=text,
+                width=500,
+            )
+        )
+        return obj
+
+
+class GopherSound(GopherIcon):
+    color = COLOR_GOPHER_SOUND
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#sound-obj",
+            color=cls.color,
+        )
+        obj.children.append(
+            AFrameEntity.build_text(
+                position=Position(0, -192, -157),
+                rotation=Rotation(),
+                text=text,
+                width=500,
+            )
+        )
+        return obj
+
+
+class GopherTelnet(GopherIcon):
+    color = COLOR_GOPHER_TELNET
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#telnet-obj",
+            color=cls.color,
+        )
+        obj.children.append(
+            AFrameEntity.build_text(
+                position=Position(0, -236, -87),
+                rotation=Rotation(),
+                text=text,
+                width=500,
+            )
+        )
+        return obj
+
+
+class GopherKiosk(GopherIcon):
+    color = COLOR_GOPHER_KIOSK
+
+    @classmethod
+    def build(cls, position: Position, rotation: Rotation, text: str) -> AFrameEntity:
+        obj = AFrameEntity.build_obj(
+            position=position,
+            rotation=rotation,
+            obj="#kiosk-obj",
+            color=cls.color,
+        )
+        obj.children.extend(
+            [
+                AFrameEntity.build_text(
+                    position=Position(0, -385, -245),
+                    rotation=Rotation(0, 0, 0),
+                    text=text,
+                    width=420,
                 ),
-                "rotation": rotation,
-                "value": text,
-                "align": "center",
-                "color": COLOR_TEXT,
-                "width": width,
-                "wrap-count": 15,
-            },
+                AFrameEntity.build_text(
+                    position=Position(-218, -385, -22),
+                    rotation=Rotation(0, 90, 0),
+                    text=text,
+                    width=420,
+                ),
+                AFrameEntity.build_text(
+                    position=Position(0, -385, 189),
+                    rotation=Rotation(0, 180, 0),
+                    text=text,
+                    width=420,
+                ),
+                AFrameEntity.build_text(
+                    position=Position(218, -385, -35),
+                    rotation=Rotation(0, 270, 0),
+                    text=text,
+                    width=420,
+                ),
+            ]
         )
-        return cls([box, text1])
-
-
-class GopherKiosk(AFrameIcon):
-    @classmethod
-    def build(cls, position: Position, text: str):
-        cone = AFrameComponent(
-            "a-cone",
-            {
-                "position": position,
-                "radius-bottom": 1.2,
-                "radius-top": 0,
-                "segmentsRadial": 4,
-                "height": 5.5,
-                "color": COLOR_GOPHER_KIOSK,
-            },
-        )
-        cube = InfoCube.build(
-            position=Position(position.x, position.y + 1.2, position.z),
-            rotation=Rotation(0, 0, 0),
-            text=text,
-            width=1.3,
-            height=1.0,
-            color=COLOR_GOPHER_KIOSK,
-        )
-        return cls([cone, *cube.components])
-
-
-class GopherDocument(AFrameIcon):
-    @classmethod
-    def build(
-        cls,
-        position: Position,
-        rotation: Rotation,
-        text: str,
-    ):
-        plaque = Plaque.build(
-            position=position,
-            rotation=rotation,
-            text=text,
-            width=2,
-            height=1.5,
-            depth=0.1,
-            color=COLOR_GOPHER_DOCUMENT,
-        )
-        return cls(plaque.components)
-
-
-class GopherDir(AFrameIcon):
-    @classmethod
-    def build(
-        cls,
-        position: Position,
-        rotation: Rotation,
-        text: str,
-    ):
-        plaque = Plaque.build(
-            position=position,
-            rotation=rotation,
-            text=text,
-            width=2,
-            height=1.5,
-            depth=0.5,
-            color=COLOR_GOPHER_DIR,
-        )
-        return cls(plaque.components)
-
-
-class GopherURL(AFrameIcon):
-    @classmethod
-    def build(
-        cls,
-        position: Position,
-        rotation: Rotation,
-        text: str,
-    ):
-        plaque = Plaque.build(
-            position=position,
-            rotation=rotation,
-            text=text,
-            width=2,
-            height=1.5,
-            depth=0.1,
-            color=COLOR_GOPHER_URL,
-        )
-        return cls(plaque.components)
-
-
-class GopherSearch(AFrameIcon):
-    @classmethod
-    def build(
-        cls,
-        position: Position,
-        rotation: Rotation,
-        text: str,
-        width: float = 2.0,
-        height: float = 1.5,
-        depth: float = 0.5,
-    ):
-        plaque = Plaque.build(
-            position=position,
-            rotation=rotation,
-            text=text,
-            width=width,
-            height=height,
-            depth=depth,
-            color=COLOR_GOPHER_SEARCH,
-        )
-
-        x = position.x
-        y = position.y
-        z = position.z
-
-        x_offset = width / 2
-        y_offset = height / 2
-        z_offset = depth / 2
-
-        triangle1 = AFrameComponent(
-            "a-triangle",
-            {
-                "position": Position(x + z_offset, y + y_offset, z),
-                "rotation": rotation,
-                "vertex-a": Position(-x_offset, 0, 0),
-                "vertex-b": Position(x_offset, 0, 0),
-                "vertex-c": Position(x_offset, height / 4, 0),
-                "color": COLOR_GOPHER_SEARCH,
-            },
-        )
-        triangle2 = AFrameComponent(
-            "a-triangle",
-            {
-                "position": Position(x - z_offset, y + y_offset, z),
-                "rotation": rotation,
-                "vertex-a": Position(-x_offset, 0, 0),
-                "vertex-b": Position(x_offset, height / 4, 0),
-                "vertex-c": Position(x_offset, 0, 0),
-                "color": COLOR_GOPHER_SEARCH,
-            },
-        )
-        return cls([*plaque.components, triangle1, triangle2])
+        return obj
