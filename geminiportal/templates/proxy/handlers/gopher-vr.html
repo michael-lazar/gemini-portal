@@ -3,34 +3,50 @@
 {% block extrahead %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
 <style>
+  body {
+      max-width: none;
+  }
   .scene {
       height: 600px;
       width: 100%;
   }
 </style>
 <script>
-  AFRAME.registerComponent('navigate-on-click', {
-    schema: {
-      url: {default: ''}
-    },
+    AFRAME.registerComponent('link-obj', {
+        schema: {
+            url: {default: '#'},
+            selectedColor: {default: '#777777'}
+        },
 
-    init: function () {
-      const data = this.data;
-      this.el.addEventListener('click', function () {
-        window.location.href = data.url;
-      });
-    }
-  });
+        init: function () {
+            var data = this.data;
+            var el = this.el;
+
+            var color = el.getAttribute('material').color ;
+
+            el.addEventListener('mouseenter', function () {
+                el.setAttribute('material', 'color', data.selectedColor);
+            });
+
+            el.addEventListener('mouseleave', function () {
+                el.setAttribute('material', 'color', color);
+            });
+
+            el.addEventListener('click', function () {
+                window.location.href = data.url;
+            });
+        }
+    });
 </script>
 {% endblock %}
 
 {% block content %}
 <noscript><i>The GopherVR experience requires javascript!</i></noscript>
-<div class="scene">
-  <a-scene embedded vr-mode-ui="enabled: true">
-    <a-camera look-controls wasd-controls jump position="0 1.6 -1"></a-camera>
-    <a-entity oculus-touch-controls="hand: left"></a-entity>
-    <a-entity oculus-touch-controls="hand: right"></a-entity>
+<div class="scene" >
+  <a-scene embedded cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+    <a-camera look-controls wasd-controls position="0 1.6 -1"></a-camera>
+    <a-entity laser-controls="left"></a-entity>
+    <a-entity laser-controls="right"></a-entity>
     <a-assets>
       <a-asset-item id="dir-obj" src="/static/vr/dir.obj"></a-asset-item>
       <a-asset-item id="document-obj" src="/static/vr/document.obj"></a-asset-item>

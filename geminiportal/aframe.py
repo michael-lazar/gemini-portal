@@ -3,17 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from geminiportal.handlers.gopher import GopherItem
-
-OBJ_SCALE = 0.003
-
-COLOR_TEXT = "#FFFFFF"
-COLOR_GOPHER_KIOSK = "#960000"
-COLOR_GOPHER_DOCUMENT = "#df7400"
-COLOR_GOPHER_SOUND = "#df7400"
-COLOR_GOPHER_DIR = "#0068a8"
-COLOR_GOPHER_URL = "#368011"
-COLOR_GOPHER_SEARCH = "#871969"
-COLOR_GOPHER_TELNET = "#E1B000"
+from geminiportal.urls import URLReference
 
 
 @dataclass
@@ -84,6 +74,26 @@ class Scale:
 
 
 @dataclass
+class Color:
+    """
+    Container for an A-Frame HTML color.
+    """
+
+    r: int
+    g: int
+    b: int
+
+    def __str__(self):
+        return f"#{self.r:02x}{self.g:02x}{self.b:02x}"
+
+    def adjust(self, value: int = -10) -> Color:
+        r = min(max(0, self.r + value), 255)
+        g = min(max(0, self.g + value), 255)
+        b = min(max(0, self.b + value), 255)
+        return Color(r, g, b)
+
+
+@dataclass
 class AFrameEntity:
     """
     Container for an A-Frame component.
@@ -103,23 +113,31 @@ class AFrameEntity:
         cls,
         position: Position,
         rotation: Rotation,
+        color: Color,
         obj: str,
-        color: str,
+        url: URLReference | None = None,
     ) -> AFrameEntity:
         """
         Construct an obj model entity.
         """
-        return cls(
-            "a-entity",
-            attributes={
-                "position": position,
-                # TODO: Need to mirror the objects so I can avoid this hack
-                "rotation": rotation + Rotation(x_deg=180),
-                "obj-model": f"obj: {obj}",
-                "material": f"color: {color}",
-                "scale": Scale.const(OBJ_SCALE),
-            },
-        )
+        attributes = {
+            "position": position,
+            # TODO: Need to mirror the objects so I can avoid this hack
+            "rotation": rotation + Rotation(x_deg=180),
+            "obj-model": f"obj: {obj}",
+            "material": f"color: {color}",
+            "scale": Scale.const(0.003),
+        }
+        if url:
+            proxy_url = url.get_proxy_url(vr=1)
+            selected_color = color.adjust(30)
+            attributes |= {
+                "class": "clickable",
+                "link-obj": f"url: {proxy_url}; selectedColor: {selected_color}",
+            }
+
+        entity = cls("a-entity", attributes)
+        return entity
 
     @classmethod
     def build_text(
@@ -139,7 +157,7 @@ class AFrameEntity:
                 "rotation": rotation + Rotation(x_deg=180),
                 "width": width,
                 "value": text,
-                "color": COLOR_TEXT,
+                "color": Color(255, 255, 255),
                 "align": "center",
                 "wrap-count": 12,
             },
@@ -161,16 +179,16 @@ class GopherIcon:
 
 
 class GopherDir(GopherIcon):
-    color = COLOR_GOPHER_DIR
+    color = Color(0, 104, 168)
 
     def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
             position=self.position,
             rotation=self.rotation,
-            obj="#dir-obj",
             color=self.color,
+            obj="#dir-obj",
+            url=self.item.url,
         )
-        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -201, -85),
@@ -183,14 +201,15 @@ class GopherDir(GopherIcon):
 
 
 class GopherDocument(GopherIcon):
-    color = COLOR_GOPHER_DOCUMENT
+    color = Color(223, 116, 0)
 
     def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
             position=self.position,
             rotation=self.rotation,
-            obj="#document-obj",
             color=self.color,
+            obj="#document-obj",
+            url=self.item.url,
         )
         obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
@@ -205,20 +224,20 @@ class GopherDocument(GopherIcon):
 
 
 class GopherURL(GopherDocument):
-    color = COLOR_GOPHER_URL
+    color = Color(54, 128, 17)
 
 
 class GopherSearch(GopherIcon):
-    color = COLOR_GOPHER_SEARCH
+    color = Color(135, 25, 105)
 
     def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
             position=self.position,
             rotation=self.rotation,
-            obj="#search-obj",
             color=self.color,
+            obj="#search-obj",
+            url=self.item.url,
         )
-        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -273, -80),
@@ -231,16 +250,16 @@ class GopherSearch(GopherIcon):
 
 
 class GopherSound(GopherIcon):
-    color = COLOR_GOPHER_SOUND
+    color = Color(223, 116, 0)
 
     def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
             position=self.position,
             rotation=self.rotation,
-            obj="#sound-obj",
             color=self.color,
+            obj="#sound-obj",
+            url=self.item.url,
         )
-        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -192, -157),
@@ -253,16 +272,16 @@ class GopherSound(GopherIcon):
 
 
 class GopherTelnet(GopherIcon):
-    color = COLOR_GOPHER_TELNET
+    color = Color(255, 178, 0)
 
     def build(self) -> AFrameEntity:
         obj = AFrameEntity.build_obj(
             position=self.position,
             rotation=self.rotation,
-            obj="#telnet-obj",
             color=self.color,
+            obj="#telnet-obj",
+            url=self.item.url,
         )
-        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -236, -87),
@@ -304,8 +323,8 @@ def build_kiosk(text: str) -> AFrameEntity:
     obj = AFrameEntity.build_obj(
         position=Position(),
         rotation=Rotation(),
+        color=Color(150, 0, 0),
         obj="#kiosk-obj",
-        color=COLOR_GOPHER_KIOSK,
     )
     obj.children.extend(
         [
