@@ -81,6 +81,8 @@ class URLReference:
         self.scheme = url_parts.scheme
         self.port = url_parts.port or self.DEFAULT_PORTS.get(self.scheme, None)
         self.hostname = url_parts.hostname
+        self.username = url_parts.username
+        self.password = url_parts.password
 
         # HTTP/Gemini/Spartan URL components (RFC 3986)
         self.path = url_parts.path
@@ -179,12 +181,21 @@ class URLReference:
         """
         Return the normalized netloc value for constructing URLs.
         """
-        if self.port and self.port != self.DEFAULT_PORTS.get(self.scheme):
-            return f"{self.hostname}:{self.port}"
-        elif self.hostname:
-            return self.hostname
-        else:
+        if not self.hostname:
             return ""
+
+        netloc = self.hostname
+
+        if self.username:
+            if self.password:
+                netloc = f"{self.username}:{self.password}@{netloc}"
+            else:
+                netloc = f"{self.username}@{netloc}"
+
+        if self.port and self.port != self.DEFAULT_PORTS.get(self.scheme):
+            netloc = f"{netloc}:{self.port}"
+
+        return netloc
 
     @property
     def conn_info(self) -> tuple[str, int]:
