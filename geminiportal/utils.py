@@ -71,7 +71,7 @@ def split_emoji(line: str) -> tuple[str, str]:
         # emojis that span multiple code points.
         if is_emoji(line[:i]):
             emoji = line[:i]
-            link_text = line[i + 1 :].strip()
+            link_text = line[i:].strip()
             return emoji, link_text
 
     return "", line
