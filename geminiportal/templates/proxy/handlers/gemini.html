@@ -29,10 +29,10 @@
         <hr>
     {% elif item.item_type == "prompt" -%}
         <form method="get" action="{{ item.url }}" class="input-line">
-            <label>{{ item.prefix }}{{ item.text }}
-                <textarea name="q" rows="1" placeholder="Enter text..."></textarea>
+            <label>{{ item.prefix }}<span class="input-text">{{ item.text }}</span>
+                <textarea name="q" rows="1"></textarea>
             </label>
-            <input type="submit" value="Submit">
+            <input type="submit" value="Upload">
         </form>
     {% endif %}
 {%- endfor %}

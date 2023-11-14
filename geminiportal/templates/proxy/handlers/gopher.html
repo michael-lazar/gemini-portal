@@ -13,10 +13,10 @@
     <td class="type-description">{% if item.icon %}<img src="{{ item.icon.url }}" alt="{{ item.icon.display }}" title="{{ item.icon.short_name }}">{% endif %}</td>
     {% if item.is_query %}
         <td class="query-form">
-          <i>{{ item.item_text }}</i><br>
           <form method="get" action="{{ item.url.get_proxy_url() }}" class="input-line">
+              <span class="input-text">{{ item.item_text }}</span>
               <input title="{{ item.item_text }}" name="q" autocomplete="off">
-              <input type="submit" value="Submit">
+              <input type="submit" value="Find">
           </form>
         </td>
     {% elif item.url %}

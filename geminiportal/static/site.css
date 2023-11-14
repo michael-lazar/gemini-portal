@@ -137,12 +137,17 @@ details summary {
 .gemini > figure {
     margin-bottom: 1em;
 }
+.gemini > .input-line {
+    margin-top: 5px;
+}
+.gemini > .input-line .input-text {
+    text-decoration: underline;
+    font-size: medium;
+}
 .gemini > .input-line input {
-    margin-left: 4px;
     vertical-align: text-bottom;
 }
 .gemini > .input-line textarea {
-    margin-left: 4px;
     vertical-align: text-bottom;
 }
 .gopher {
@@ -192,8 +197,7 @@ details summary {
 }
 .gopher td.query-form > form {
     display: inline-flex;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    align-items: baseline;
 }
 .gopher td.query-form > form > * {
     margin-right: 5px;
@@ -201,6 +205,10 @@ details summary {
 .gopher input::placeholder {
     white-space: pre;
     font-family: monospace;
+}
+.gopher .input-text {
+    text-decoration: underline;
+    font-size: medium;
 }
 .gopherp tr td:last-child {
     border-left: 1px solid black;
