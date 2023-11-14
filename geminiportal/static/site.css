@@ -88,6 +88,9 @@ details summary {
     max-height: initial;
     cursor: zoom-out;
 }
+.inline-save {
+    margin-bottom: 1em;
+}
 .protocol-grid {
     display: flex;
     flex-wrap: wrap;

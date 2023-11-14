@@ -1,7 +1,9 @@
 {% extends "proxy/base.html" %}
 
 {% block content %}
-  <p>Click to save as file: <a href="{{ data_url }}" download="{{ filename or "download" }}">{{ data_url|truncate(60) }}</a></p>
-  <h2>Preview <em>({{ mimetype }})</em></h2>
+  <h3>Response Preview <em>({{ mimetype }})</em></h3>
+  <div class="inline-save">
+    <a href="{{ data_url }}" download="{{ filename or "download" }}">click to save as file...</a>
+  </div>
   <iframe src="{{ data_url }}"></iframe>
 {% endblock %}
