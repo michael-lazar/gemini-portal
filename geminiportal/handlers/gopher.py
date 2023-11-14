@@ -123,7 +123,7 @@ class GopherItem:
                 parts[0][1:],
                 parts[1],
                 parts[2],
-                int(parts[3]),
+                int(parts[3]) if parts[3] else 0,
                 "\t".join(parts[4:]),
             )
         except Exception:
@@ -147,7 +147,6 @@ class GopherHandler(TemplateHandler):
 
     def iter_content(self) -> Iterable[GopherItem]:
         for line in self.text.splitlines():
-            line = line.rstrip()
             if line == ".":
                 break  # Gopher directory EOF
             yield GopherItem.from_item_description(line, self.url)
