@@ -7,17 +7,18 @@ body {
     -webkit-text-size-adjust: 100%;
 }
 .response-table {
-    border: 1px solid black;
-    margin: 10px;
+    border: 0 solid black;
+    border-collapse: collapse;
+    margin: 10px 20px;
 }
 .response-table th {
-    border: 1px solid black;
     min-width: 3em;
+    text-align: left;
+    padding-right: 10px;
 }
 .response-table td {
-    border: 1px solid black;
     min-width: 3em;
-    padding: 0.2em
+    padding: 5px;
 }
 div {
     margin-bottom: 0.6em;
@@ -26,8 +27,7 @@ img {
     max-width: 300px;
 }
 details {
-    margin-top: 1em;
-    margin-bottom: 1em;
+    margin-top: 2em;
 }
 details:not([open]) summary {
 }
@@ -75,6 +75,7 @@ details summary {
 .body {
 }
 .content {
+    margin-top: 1em;
 }
 .pillars {
     margin: 0;

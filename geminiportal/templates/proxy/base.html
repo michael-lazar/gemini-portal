@@ -26,6 +26,7 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
 </div>
 
 <div class="content">
+{% block content %}{%- endblock %}
 {% if response %}
 {% set charset = (handler.charset if handler else "") or response.charset or "" %}
 <details>
@@ -34,12 +35,11 @@ font-size=%2290%22&gt;{{ favicon }}&lt;/text&gt;&lt;/svg&gt;">
     {% if response.mimetype %}{{ response.mimetype }}{% endif %}
   </summary>
   <table class="response-table">
-    <tr><td>Original&nbsp;URL</td><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
-    {% if response.status %}<tr><td>Status Code</td><td>{{ response.status_display }}</td></tr>{% endif %}
-    {% if response.mimetype %}<tr><td>Content-Type</td><td>{{ response.mimetype }}{% if charset %}; charset={{ charset.lower() }}{% endif %}{% if response.lang %}; lang={{ response.lang }}{% endif %}</td></tr>{% endif %}
+    <tr><th>Original&nbsp;URL</th><td><a href="{{ response.url }}">{{ response.url.get_url()|truncate(60, True) }}</a></td></tr>
+    {% if response.status %}<tr><th>Status Code</th><td>{{ response.status_display }}</td></tr>{% endif %}
+    {% if response.mimetype %}<tr><th>Content-Type</th><td>{{ response.mimetype }}{% if charset %}; charset={{ charset.lower() }}{% endif %}{% if response.lang %}; lang={{ response.lang }}{% endif %}</td></tr>{% endif %}
   </table>
 </details>
 {% endif %}
-{% block content %}{%- endblock %}
 </div>
 {% endblock %}
