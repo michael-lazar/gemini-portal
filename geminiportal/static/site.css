@@ -201,7 +201,7 @@ details summary {
 }
 .gopher td.query-form > form {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
 }
 .gopher td.query-form > form > * {
     margin-right: 5px;
