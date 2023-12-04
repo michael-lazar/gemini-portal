@@ -5,9 +5,9 @@
 {% for item in content -%}
   {% if item.item_type == "a" -%}
     {% if item.external_indicator%}
-{{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a> <span>({{ item.external_indicator }})</span>
+=> {{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a> <span>({{ item.external_indicator }})</span>
     {% else %}
-{{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a>
+=> {{ item.prefix }}<a href="{{ item.url }}">{{ item.text }}</a>
     {% endif %}
   {% elif item.item_type == "p" -%}
     {{ item.text }}
