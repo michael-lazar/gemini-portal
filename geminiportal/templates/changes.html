@@ -2,6 +2,15 @@
 
 {% block body %}
   <h2>Changes</h2>
+  <h3>2025-01-29</h3>
+  <p>
+    Note: I'm aware that recent activity from web crawlers has been spamming some gemini/gopher
+    servers with a large amount of traffic from this web proxy. Sorry about that! If it's causing
+    issues for you, you can block this server's IP address and/or reach out to me over email at
+    <a href="mailto:michael@mozz.us">michael@mozz.us</a> with details, and I'll work on mitigation. </p>
+  <ul>
+    <li>Added a hidden bot-prevention link to the bottom of the page.</li>
+  </ul>
   <h3>2023-11-13</h3>
   <ul>
     <li>Moved the response details from the top of the page to the bottom of the page.</li>
@@ -12,22 +21,27 @@
   <h3>2023-10-08</h3>
   <ul>
     <li>Fixed username/password components from being stripped from links,
-      for example in <i>mailto://</i> URLs.</li>
+      for example in <i>mailto://</i> URLs.
+    </li>
   </ul>
   <h3>2023-08-13</h3>
   <ul>
     <li>Gopher menus now use icons for item types.
       The icons were borrowed from <a href="https://www.apache.org/icons/">apache's httpd</a>
-      and are licensed under public domain.</li>
+      and are licensed under public domain.
+    </li>
     <li>Fixed missing line breaks in <i>text/gemini</i> pages when using Lynx (if you use Lynx, you should
-      also set <i>COLLAPSE_BR_TAGS:FALSE</i> in your browser config to preserve blank lines).</li>
+      also set <i>COLLAPSE_BR_TAGS:FALSE</i> in your browser config to preserve blank lines).
+    </li>
     <li>Fiddling around with the site style.</li>
   </ul>
   <h3>2023-08-09</h3>
   <ul>
-    <li>Text responses that are not valid UTF-8 will now use the <a href="https://github.com/chardet/chardet">chardet</a>
+    <li>Text responses that are not valid UTF-8 will now use the <a
+      href="https://github.com/chardet/chardet">chardet</a>
       library to attempt to guess the correct character encoding. The desired file encoding can also be indicated by
-      appending <i>?charset=...</i> to the end of the URL.</li>
+      appending <i>?charset=...</i> to the end of the URL.
+    </li>
     <li>The following response types will now be displayed inside of an iframe preview window:
       <ul>
         <li><i>text/html</i></li>
@@ -44,9 +58,11 @@
   </ul>
   <h3>2023-08-03</h3>
   <h4>Gopher+</h4>
-  <p>This update adds initial support for the <a href="https://github.com/gopher-protocol/gopher-plus">Gopher+ protocol</a>! 🎉</p>
+  <p>This update adds initial support for the <a href="https://github.com/gopher-protocol/gopher-plus">Gopher+
+    protocol</a>! 🎉</p>
   <ul>
-    <li>Gopher+ URLs are now fully supported, per <a href="https://datatracker.ietf.org/doc/html/rfc4266">RFC 4266</a>.</li>
+    <li>Gopher+ URLs are now fully supported, per <a href="https://datatracker.ietf.org/doc/html/rfc4266">RFC 4266</a>.
+    </li>
     <li>Gopher menus will include an [i] icon next to Gopher+ capable links.</li>
     <li>There's a new [gopher+ info] shortcut below the URL bar.</li>
     <li>Gopher+ attributes will be rendered using as <em>application/gopher+-attribute</em>.</li>
@@ -55,8 +71,10 @@
   <p>Here are some example URLs to try it out:</p>
   <ul>
     <li><a href="/gopher/gopher.quux.org/1%2509%2509+">gopher://gopher.quux.org/1%09%09+</a> <i>(gopher+ menu)</i></li>
-    <li><a href="/gopher/gopher.quux.org/1%2509%2509!">gopher://gopher.quux.org/1%09%09!</a> <i>(gopher+ attributes, single item)</i></li>
-    <li><a href="/gopher/gopher.quux.org/1%2509%2509$">gopher://gopher.quux.org/1%09%09$</a> <i>(gopher+ attributes, directory)</i></li>
+    <li><a href="/gopher/gopher.quux.org/1%2509%2509!">gopher://gopher.quux.org/1%09%09!</a> <i>(gopher+ attributes,
+      single item)</i></li>
+    <li><a href="/gopher/gopher.quux.org/1%2509%2509$">gopher://gopher.quux.org/1%09%09$</a> <i>(gopher+ attributes,
+      directory)</i></li>
   </ul>
   <h4>Other Changes</h4>
   <ul>
@@ -64,7 +82,8 @@
     <li>The Response Details table is new minimized by default to reduce visual clutter.</li>
     <li><i>gopher://</i> URLs will now have their path component percent-encoded. Although
       this is not required by the RFC, I have found that gopher URLs that contain special
-      characters such as spaces will confuse most URL-parsing libraries.</li>
+      characters such as spaces will confuse most URL-parsing libraries.
+    </li>
     <li>Ports 77 and 8070 are now whitelisted for proxy requests.</li>
     <li>Fixed emoji detection to work with multi-codepoint sequences.</li>
     <li>Fixed empty gopher info lines being collapsed.</li>
@@ -102,8 +121,7 @@
     This release marks a major milestone and rewrite of the proxy server,
     geared towards improving performance on my poor VPC instance. Please
     let me know if you encounter any broken links or pages that were
-    previously working, and I'll do my best to fix them.
-  </p>
+    previously working, and I'll do my best to fix them. </p>
   <ul>
     <li>The proxy codebase is now hosted publicly at <a href="https://github.com/michael-lazar/gemini-portal">https://github.com/michael-lazar/gemini-portal</a>
     </li>

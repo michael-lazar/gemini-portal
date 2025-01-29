@@ -1,8 +1,9 @@
 import logging
+import uuid
 from datetime import datetime
 from urllib.parse import quote
 
-from quart import Quart, Response, g, render_template, request
+from quart import Quart, Response, g, render_template, request, url_for
 from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
@@ -38,6 +39,9 @@ async def handle_proxy_error(e):
 @app.context_processor
 def inject_context():
     kwargs = {}
+
+    kwargs["trap_url"] = url_for("trap", token=uuid.uuid4().hex)
+
     if "response" in g:
         kwargs["response"] = g.response
         if hasattr(g.response, "tls_cert"):
@@ -80,6 +84,11 @@ async def about() -> Response:
 async def changes() -> Response:
     content = await render_template("changes.html")
     return Response(content)
+
+
+@app.route("/trap/<token>", endpoint="trap")
+async def trap(token: str) -> Response | WerkzeugResponse:
+    return Response("Your IP Address has been banned 🧑‍⚖️.", status=404)
 
 
 @app.route("/")
