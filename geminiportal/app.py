@@ -88,6 +88,8 @@ async def changes() -> Response:
 
 @app.route("/trap/<token>", endpoint="trap")
 async def trap(token: str) -> Response | WerkzeugResponse:
+    # Note: this endpoint doesn't actually do anything, I have a fail2ban rule setup
+    # that watches the logs for requests to the path /trap/* and adds them to a ban list.
     return Response("Your IP Address has been banned 🧑‍⚖️.", status=404)
 
 
@@ -109,8 +111,32 @@ async def old_scheme(scheme: str) -> Response | WerkzeugResponse:
     return app.redirect("/", 301)
 
 
-@app.route("/<scheme>/<netloc>/", endpoint="proxy-netloc")
-@app.route("/<scheme>/<netloc>/<path:path>", endpoint="proxy-path")
+async def check_captcha() -> Response | WerkzeugResponse | None:
+    if request.method == "POST":
+        form = await request.form
+        if form.get("captcha"):
+            response = app.redirect(request.url, code=303)
+            response.set_cookie("captcha", "1", samesite="Lax", max_age=31557600, httponly=True)
+            return response
+        else:
+            return Response(status=400)
+
+    user_agent = request.headers.get("User-Agent", "")
+    if "Mozilla" not in user_agent:
+        # Allow any bots that don't spoof their user agent.
+        # Allow niche browsers like curl, lynx, etc.
+        return None
+
+    captcha = request.cookies.get("captcha")
+    if captcha:
+        return None
+
+    content = await render_template("proxy/captcha.html")
+    return Response(content)
+
+
+@app.route("/<scheme>/<netloc>/", endpoint="proxy-netloc", methods=["GET", "POST"])
+@app.route("/<scheme>/<netloc>/<path:path>", endpoint="proxy-path", methods=["GET", "POST"])
 async def proxy(
     scheme: str = "gemini", netloc: str | None = None, path: str | None = None
 ) -> Response | WerkzeugResponse:
@@ -140,6 +166,10 @@ async def proxy(
 
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
+
+    captcha_response = await check_captcha()
+    if captcha_response:
+        return captcha_response
 
     options = ProxyOptions(
         charset=request.args.get("charset") or None,

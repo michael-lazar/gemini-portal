@@ -1,0 +1,17 @@
+{% extends "proxy/base.html" %}
+
+{% block content %}
+  <h2>Smolnet Captcha!</h2>
+  <p><i>Click "Continue" to verify that you are a human.</i></p>
+  <form id="captcha" method="post">
+    <input type="submit" name="captcha" value="Continue">
+  </form>
+  <br><br>
+  <h3>What's this?</h3>
+  <p>This is a check to prevent crawlers from abusing this proxy.</p>
+  <p>A cookie will be saved in your browser. It does not contain any tracking information.</p>
+  <h3>Developers</h3>
+  <p>You can bypass this captcha by sending a custom <i>User-Agent</i> header.</p>
+  <p>Please include your email address in the string so I can reach you in case of issues. E.g. </p>
+  <pre>User-Agent: My custom software v1.0 (by admin@example.com)</pre>
+{% endblock %}
