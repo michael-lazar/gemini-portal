@@ -3,7 +3,15 @@ import uuid
 from datetime import datetime
 from urllib.parse import quote
 
-from quart import Quart, Response, g, render_template, request, url_for
+from quart import (
+    Quart,
+    Response,
+    after_this_request,
+    g,
+    render_template,
+    request,
+    url_for,
+)
 from quart.logging import default_handler
 from werkzeug.wrappers.response import Response as WerkzeugResponse
 
@@ -111,13 +119,21 @@ async def old_scheme(scheme: str) -> Response | WerkzeugResponse:
     return app.redirect("/", 301)
 
 
+def set_captcha_cookie(response: Response) -> Response:
+    # Set all cookies to expire on Jan 1st to reduce the possibility of
+    # tracking users based on their unique cookie expiration timestamp.
+    now = datetime.now()
+    expires = datetime(now.year + 2, 1, 1)
+    response.set_cookie("captcha", "1", samesite="Lax", expires=expires, httponly=True)
+    return response
+
+
 async def check_captcha() -> Response | WerkzeugResponse | None:
     if request.method == "POST":
         form = await request.form
         if form.get("captcha"):
-            response = app.redirect(request.url, code=303)
-            response.set_cookie("captcha", "1", samesite="Lax", max_age=31557600, httponly=True)
-            return response
+            after_this_request(set_captcha_cookie)
+            return app.redirect(request.url, code=303)
         else:
             return Response(status=400)
 
@@ -129,6 +145,7 @@ async def check_captcha() -> Response | WerkzeugResponse | None:
 
     captcha = request.cookies.get("captcha")
     if captcha:
+        after_this_request(set_captcha_cookie)
         return None
 
     content = await render_template("proxy/captcha.html")
