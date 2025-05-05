@@ -133,7 +133,7 @@ async def check_captcha() -> Response | WerkzeugResponse | None:
         form = await request.form
         if form.get("captcha"):
             after_this_request(set_captcha_cookie)
-            return app.redirect(request.url, code=303)
+            return app.redirect(request.full_path, code=303)
         else:
             return Response(status=400)
 
