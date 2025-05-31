@@ -128,7 +128,7 @@ def set_captcha_cookie(response: Response) -> Response:
     return response
 
 
-async def check_captcha() -> Response | WerkzeugResponse | None:
+async def check_captcha(options: ProxyOptions) -> Response | WerkzeugResponse | None:
     if request.method == "POST":
         form = await request.form
         if form.get("captcha"):
@@ -136,6 +136,10 @@ async def check_captcha() -> Response | WerkzeugResponse | None:
             return app.redirect(request.full_path, code=303)
         else:
             return Response(status=400)
+
+    if options.raw or options.raw_crt:
+        # Allow requests to the raw files.
+        return None
 
     user_agent = request.headers.get("User-Agent", "")
     if "Mozilla" not in user_agent:
@@ -184,10 +188,6 @@ async def proxy(
         proxy_url = g.url.get_proxy_url(external=False)
         return app.redirect(proxy_url)
 
-    captcha_response = await check_captcha()
-    if captcha_response:
-        return captcha_response
-
     options = ProxyOptions(
         charset=request.args.get("charset") or None,
         format=request.args.get("format") or None,
@@ -196,6 +196,11 @@ async def proxy(
         vr=bool(request.args.get("vr")),
         crt=bool(request.args.get("crt")),
     )
+
+    captcha_response = await check_captcha(options)
+    if captcha_response:
+        return captcha_response
+
     proxy_request = build_proxy_request(g.url, options)
     response = await proxy_request.get_response()
 
