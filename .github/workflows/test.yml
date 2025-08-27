@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Install python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
     - name: Run pre-commit checks
-      uses: pre-commit/actions@v2.0.3
+      uses: pre-commit/action@v3.0.1
     - name: Run bootstrap
       run: tools/bootstrap
     - name: Run mypy
