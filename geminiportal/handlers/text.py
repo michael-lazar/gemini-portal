@@ -60,8 +60,8 @@ class PlaintextLinkConverter:
         except ValueError:
             return link_safe  # Invalid URL, skip adding the anchor tag
         else:
-            url = escape(url.get_proxy_url())
-            return f'<a href="{url}">{link_safe}</a>'
+            url_safe = escape(url.get_proxy_url())
+            return f'<a href="{url_safe}">{link_safe}</a>'
 
 
 class TextHandler(TemplateHandler):

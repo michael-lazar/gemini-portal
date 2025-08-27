@@ -211,7 +211,7 @@ class GopherDocument(GopherIcon):
             obj="#document-obj",
             url=self.item.url,
         )
-        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"
+        obj.attributes["navigate-on-click"] = f"url: {self.item.url.get_proxy_url(vr=1)}"  # type: ignore
         obj.children.append(
             AFrameEntity.build_text(
                 position=Position(0, -213, -57),
