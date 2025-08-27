@@ -1,6 +1,6 @@
-[![Build](https://github.com/michael-lazar/gemini-portal/workflows/test/badge.svg)](https://github.com/michael-lazar/gemini-portal/actions/workflows/test.yml)
+[![Build](https://github.com/michael-lazar/smolnet-portal/workflows/test/badge.svg)](https://github.com/michael-lazar/smolnet-portal/actions/workflows/test.yml)
 
-# Gemini Portal (v2)
+# Smolnet Portal
 
 This repository contains the code powering https://portal.mozz.us.
 
@@ -14,16 +14,16 @@ rewrite (version 2) with following goals:
   unit tests, type hints, and linters.
 
 This is probably only useful for myself. You are welcome to use the
-code, but I am not writing this with the goal of making a general
-purpose gemini-to-http proxy, of which there are already many other
-open source alternatives.
+code if you want, but I am not publishing this with the goal of
+turning it into a collaborative open-source project. That being said,
+bug reports are always welcome!
 
 ## Development
 
 ```bash
 # Download the source
-git clone https://github.com/michael-lazar/gemini-portal
-cd gemini-portal/
+git clone https://github.com/michael-lazar/smolnet-portal
+cd smolnet-portal/
 
 # Initialize a virtual environment and install pip dependencies, etc.
 tools/boostrap
