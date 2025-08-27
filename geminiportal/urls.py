@@ -438,10 +438,14 @@ class URLReference:
 
         if self.scheme == "finger":
             path = self.get_finger_path()
+            anchor = None
         elif self.scheme in ("gopher", "gophers"):
             path = self.get_gopher_path()
+            # Note: gopher/finger do not support #anchor tags
+            anchor = None
         else:
             path = urlunparse(("", "", self.path, self.params, self.query, ""))
+            anchor = self.fragment or None
 
         if path:
             return url_for(
@@ -449,7 +453,7 @@ class URLReference:
                 scheme=self.scheme,
                 netloc=self.netloc,
                 path=path.lstrip("/"),
-                _anchor=self.fragment or None,
+                _anchor=anchor,
                 **query_params,
             )
         else:
@@ -457,7 +461,7 @@ class URLReference:
                 "proxy-netloc",
                 scheme=self.scheme,
                 netloc=self.netloc,
-                _anchor=self.fragment or None,
+                _anchor=anchor,
                 **query_params,
             )
 
@@ -553,7 +557,7 @@ def quote_gopher(selector: str) -> str:
         Gopher selector strings are a sequence of octets that may contain
         any octets except <tab>, <lf>, and <cr>.
 
-    However, if you take this at ace value if means that a gopher URL can
+    However, if you take this at face value if means that a gopher URL can
     can contain spaces. Most URL parsing libraries are going to be confused
     by this and screw up. For example, curl won't load a gopher URL with a
     space in it.
