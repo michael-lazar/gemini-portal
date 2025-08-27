@@ -19,8 +19,49 @@ URL_SCHEMES = [
     "cso",
 ]
 
+URL_PLACEHOLDER = "__URL_PLACEHOLDER__"
 
-url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://[\S]+[\w/]", flags=re.UNICODE)
+
+class PlaintextLinkConverter:
+    url_re = re.compile(rf"(?:{'|'.join(URL_SCHEMES)})://\S+[\w/]", flags=re.UNICODE)
+    placeholder_re = re.compile(URL_PLACEHOLDER)
+
+    def __init__(self, text: str):
+        self.text = text
+        self.links: list[str] = []
+
+    def convert(self) -> str:
+        # Step 1. Replace any links in the text with a placeholder string.
+        if URL_PLACEHOLDER not in self.text:
+            self.text = self.url_re.sub(self._insert_placeholder, self.text)
+
+        # Step 2. Escape the entire thing
+        self.text = escape(self.text)
+
+        self.links.reverse()
+        if not self.links:
+            return self.text
+
+        # Step 3. Replace the placeholder strings with escaped anchor tags
+        self.text = self.placeholder_re.sub(self._insert_anchor, self.text)
+
+        return self.text
+
+    def _insert_placeholder(self, match: re.Match) -> str:
+        self.links.append(match.group())
+        return URL_PLACEHOLDER
+
+    def _insert_anchor(self, _) -> str:
+        link = self.links.pop()
+        link_safe = escape(link)
+
+        try:
+            url = URLReference(link)
+        except ValueError:
+            return link_safe  # Invalid URL, skip adding the anchor tag
+        else:
+            url = escape(url.get_proxy_url())
+            return f'<a href="{url}">{link_safe}</a>'
 
 
 class TextHandler(TemplateHandler):
@@ -36,20 +77,5 @@ class TextHandler(TemplateHandler):
         return context
 
     def get_body(self) -> str:
-        buffer = []
-        for line in self.text.splitlines(keepends=False):
-            line = escape(line)
-            line = url_re.sub(self.insert_anchor, line)
-            buffer.append(line)
-
-        body = "\n".join(buffer)
-        return body
-
-    def insert_anchor(self, match: re.Match) -> str:
-        m = match.group()
-        try:
-            url = URLReference(m)
-        except ValueError:
-            return m  # Invalid URL, skip adding the anchor tag
-        else:
-            return f'<a href="{url.get_proxy_url()}">{url}</a>'
+        converter = PlaintextLinkConverter(self.text)
+        return converter.convert()
